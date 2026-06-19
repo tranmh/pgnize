@@ -11,6 +11,8 @@ import (
 	"image/jpeg"
 	_ "image/png"
 	"net/http"
+	"os"
+	"strconv"
 	"strings"
 	"time"
 
@@ -40,14 +42,24 @@ type Ollama struct {
 }
 
 // NewOllama builds an Ollama-backed recognizer with CPU-friendly defaults.
+// OLLAMA_NUM_PREDICT and OLLAMA_MAX_DIM override the token cap and downscale size.
 func NewOllama(host, model string) *Ollama {
 	return &Ollama{
 		Host:       host,
 		Model:      model,
 		Client:     &http.Client{Timeout: defaultTimeout},
-		NumPredict: defaultNumPredict,
-		MaxDim:     defaultMaxDim,
+		NumPredict: envInt("OLLAMA_NUM_PREDICT", defaultNumPredict),
+		MaxDim:     envInt("OLLAMA_MAX_DIM", defaultMaxDim),
 	}
+}
+
+func envInt(key string, def int) int {
+	if v := os.Getenv(key); v != "" {
+		if n, err := strconv.Atoi(v); err == nil {
+			return n
+		}
+	}
+	return def
 }
 
 func (o *Ollama) Name() string { return "ollama:" + o.Model }

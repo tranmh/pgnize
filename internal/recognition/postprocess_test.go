@@ -63,19 +63,49 @@ func TestReconcileLegalGame(t *testing.T) {
 }
 
 func TestReconcileIllegalBlocksDownstream(t *testing.T) {
-	// 3rd move "Sf6" is illegal for White here (no knight reaches f6); everything after must block.
+	// "zzz" is garbage with no near-legal move, so it can't be auto-corrected;
+	// it and everything after it must block.
 	tokens := []MoveToken{
-		{Text: "e4"}, {Text: "e5"}, {Text: "Sf6"}, {Text: "Sc6"},
+		{Text: "e4"}, {Text: "e5"}, {Text: "zzz"}, {Text: "Sc6"},
 	}
 	moves := Reconcile("", tokens)
 	if !moves[0].IsLegal || !moves[1].IsLegal {
 		t.Fatal("first two moves should be legal")
 	}
 	if moves[2].IsLegal {
-		t.Fatal("third move (Sf6) should be illegal")
+		t.Fatal("garbage move should be illegal")
 	}
 	if moves[3].IsLegal {
 		t.Fatal("fourth move must be blocked after an illegal move")
+	}
+}
+
+func TestReconcileAutoCorrectsConfidentMisread(t *testing.T) {
+	// After 1.e4 e5, White "Nf6" is illegal (digit misread); the only legal move within
+	// one edit is Nf3, so it is auto-corrected and the game continues.
+	tokens := []MoveToken{{Text: "e4"}, {Text: "e5"}, {Text: "Nf6"}}
+	moves := Reconcile("", tokens)
+	m := moves[2]
+	if !m.IsLegal || !m.Corrected || m.SAN != "Nf3" {
+		t.Fatalf("expected auto-correct to Nf3 (legal,corrected), got san=%q legal=%v corrected=%v",
+			m.SAN, m.IsLegal, m.Corrected)
+	}
+	if m.RecognizedText != "Nf6" {
+		t.Fatalf("recognizedText must preserve the original read, got %q", m.RecognizedText)
+	}
+}
+
+func TestReconcileSuggestsWhenAmbiguous(t *testing.T) {
+	// "Qh4" after 1.e4 e5 is illegal with two equally-close legal moves (Qg4, Qh5),
+	// so it is NOT auto-applied but ranked suggestions are offered.
+	tokens := []MoveToken{{Text: "e4"}, {Text: "e5"}, {Text: "Qh4"}}
+	moves := Reconcile("", tokens)
+	m := moves[2]
+	if m.IsLegal || m.Corrected {
+		t.Fatalf("ambiguous misread must not be auto-applied, got legal=%v corrected=%v", m.IsLegal, m.Corrected)
+	}
+	if len(m.Suggestions) == 0 {
+		t.Fatal("expected ranked legal-move suggestions")
 	}
 }
 

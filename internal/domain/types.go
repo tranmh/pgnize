@@ -70,6 +70,10 @@ type Move struct {
 	IsLegal        bool   `json:"isLegal"`
 	RecognizedText string `json:"recognizedText"`
 	Corrected      bool   `json:"corrected"`
+	// Suggestions are legal moves in this position ranked by similarity to the
+	// recognized text — populated when the read move is illegal/ambiguous, so the
+	// review UI can offer ranked corrections instead of a raw legal-move list.
+	Suggestions []string `json:"suggestions,omitempty"`
 }
 
 // GameDraft is the full reviewable game returned by the API.

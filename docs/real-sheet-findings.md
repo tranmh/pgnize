@@ -42,12 +42,35 @@ Latency after the fixes (minicpm-v, `num_predict=512`, downscale≤1600px), 3-im
 | sheet-02.jpg | 1708×1200 | 2m04s | ✅ parsed; header read correctly (`Event=Olympiade, Site=Siegen, Date=September 1970`), a few legible moves, rest `?` |
 | sheet-03.jpg | 4928×3264 → 1600 | 3m48s | JSON truncated at the cap → recoverable via salvage (#6) |
 
-(The salvage fix #6 was added after this measurement run; it is unit-tested and converts the
-two "truncated → total loss" cases into partial transcriptions.)
+(The salvage fix #6 converts the two "truncated → total loss" cases into partial
+transcriptions. **Confirmed live**: a forced-truncation run (`OLLAMA_NUM_PREDICT=200`) on
+sheet-01 produced JSON cut off mid-object, and salvage recovered all 16 complete half-moves —
+0 errors, vs. the previous whole-job failure.)
 
 ### moondream (1.7 B) comparison
 ~49 s/image but output is hallucinated ("White king, Black queen…") — too weak to read
 handwritten chess notation. Useful only as a fast smoke recognizer.
+
+## Follow-up: legality-constrained correction (reasoning over the read)
+
+The VLM frequently emits *wrong* or non-move tokens. Rather than only flag them, we now use
+chess legality as a prior in `Reconcile`:
+
+- Each read move is validated against the position. If legal → accept.
+- If **illegal**, we compute the legal moves (`chesskit.LegalMovesSAN`) and rank them by edit
+  distance to the recognized SAN.
+  - If the closest legal move is within **one edit and uniquely closest**, it is
+    **auto-applied** (`corrected: true`, the game continues), with `recognizedText` preserving
+    the original read. e.g. a digit misread `Nf6 → Nf3`.
+  - Otherwise the ply stays illegal and carries ranked **`suggestions`** for the review
+    dropdown (e.g. ambiguous `Qh4 → [Qh5, Qg4]`).
+- Genuinely illegible/garbage tokens (`?`, `zzz`) match nothing → stay blocked.
+
+This "only predict what *can be*" step both unblocks the move list past a single misread and
+turns the correction UI from a raw legal-move list into a ranked, recognized-text-aware one.
+The human review loop remains the final authority — auto-corrections are flagged, not silent.
+Unit-tested in `postprocess_test.go` (`TestReconcileAutoCorrectsConfidentMisread`,
+`TestReconcileSuggestsWhenAmbiguous`).
 
 ## Conclusions
 

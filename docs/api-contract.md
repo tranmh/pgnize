@@ -15,9 +15,16 @@ session cookie (`pgnize_session`, HttpOnly, SameSite=Lax). Base path `/api`.
 ### Move (in a draft)
 ```json
 { "ply": 1, "side": "white", "san": "e4", "fenAfter": "rnbq...",
-  "clockSec": null, "isLegal": true, "recognizedText": "e4", "corrected": false }
+  "clockSec": null, "isLegal": true, "recognizedText": "e4", "corrected": false,
+  "suggestions": ["Nf3", "Nc3"] }
 ```
-`side` ∈ `"white" | "black"`.
+`side` ∈ `"white" | "black"`. `recognizedText` is the raw OCR token; `san` may differ when
+the move was auto-corrected (`corrected: true`). `suggestions` (optional) holds legal moves
+in this position ranked by similarity to the recognized text, for illegal/ambiguous plies —
+the review UI should offer these as the correction dropdown. **Legality-constrained
+correction:** an illegal read within one edit of a *unique* legal move is auto-applied
+(`corrected: true`, `isLegal: true`) so the game continues; otherwise the ply stays
+`isLegal: false` and carries `suggestions`. The server remains authoritative on save.
 
 ### GameDraft  (GET /games/{id}, GET /convert/{jobId}/game)
 ```json
