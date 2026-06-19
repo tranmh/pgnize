@@ -16,7 +16,7 @@ import (
 type Deps struct {
 	Store      *store.Store
 	Storage    storageGetter
-	Recognizer recognition.Recognizer
+	Registry   *recognition.Registry
 	FewShotMax int
 }
 
@@ -36,6 +36,11 @@ func Process(ctx context.Context, d Deps, job store.ClaimedJob) error {
 		return d.Store.MarkJobFailed(ctx, job.JobID, "read image: "+err.Error())
 	}
 
+	rec, ok := d.Registry.Resolve(job.Backend)
+	if !ok {
+		return d.Store.MarkJobFailed(ctx, job.JobID, "unknown recognition backend: "+job.Backend)
+	}
+
 	in := recognition.ScoreSheetInput{Image: img, MimeType: mime}
 	if job.UserID != nil {
 		if rows, err := d.Store.RecentExamples(ctx, *job.UserID, d.FewShotMax); err == nil {
@@ -43,7 +48,7 @@ func Process(ctx context.Context, d Deps, job store.ClaimedJob) error {
 		}
 	}
 
-	res, err := d.Recognizer.Recognize(ctx, in)
+	res, err := rec.Recognize(ctx, in)
 	if err != nil {
 		return d.Store.MarkJobFailed(ctx, job.JobID, "recognize: "+err.Error())
 	}

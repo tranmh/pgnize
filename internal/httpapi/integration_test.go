@@ -62,13 +62,15 @@ func setup(t *testing.T) *harness {
 		t.Fatal(err)
 	}
 	cfg := config.Config{AuthSecret: "test-secret-32-bytes-xxxxxxxxxxxx", PublicBase: "http://x", UploadMaxBytes: 5 << 20, FewShotMax: 3}
-	rec := recognition.NewFake()
-	srv := &httpapi.Server{Cfg: cfg, Store: st, Storage: blob, Recognizer: rec}
+	reg := recognition.NewRegistry()
+	reg.Register("fake", "Built-in test recognizer", true, recognition.NewFake())
+	reg.SetDefault("fake")
+	srv := &httpapi.Server{Cfg: cfg, Store: st, Storage: blob, Recognizers: reg}
 	jar, _ := cookiejar.New(nil)
 	h := &harness{
 		ts:     httptest.NewServer(srv.Routes()),
 		st:     st,
-		deps:   jobs.Deps{Store: st, Storage: blob, Recognizer: rec, FewShotMax: 3},
+		deps:   jobs.Deps{Store: st, Storage: blob, Registry: reg, FewShotMax: 3},
 		client: &http.Client{Jar: jar},
 	}
 	t.Cleanup(func() { h.ts.Close(); st.Close() })

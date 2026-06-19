@@ -57,15 +57,23 @@ correction:** an illegal read within one edit of a *unique* legal move is auto-a
 - `POST /api/auth/logout` → 204 (clears cookie).
 - `GET  /api/auth/me` → 200 `{user}` / 401.
 
+### Recognition backends
+- `GET /api/recognizers` → 200 `{recognizers:[{key, label, default}], default}`. Lists the
+  selectable recognition engines (public). Only configured/available backends are returned
+  (e.g. `gemini` appears only when a Gemini API key is set); a single-backend deployment
+  returns one entry. Clients pick one via the optional `backend` form field on upload/convert.
+
 ### Anonymous convert (no account; ephemeral, TTL-purged)
-- `POST /api/convert` multipart field `image` → 202 `{jobId}`. Tight per-IP rate limit.
+- `POST /api/convert` multipart field `image`, optional form field `backend=<key>` → 202 `{jobId}`.
+  Tight per-IP rate limit. 400 `{error:"unknown_backend"}` if the chosen backend is unavailable.
 - `GET  /api/convert/{jobId}` → 200 `{status:"queued|running|done|failed", gameId?, error?}`.
 - `GET  /api/convert/{jobId}/game` → 200 `GameDraft` (once done).
 - `POST /api/convert/{jobId}/export` `{header, moves:[{ply,san,clockSec?}]}` → 200 `text/plain` PGN.
   Server replays moves via chesskit; 422 `{error:"illegal_move",failedAt}` if any move illegal.
 
 ### Account: upload → job → review → save
-- `POST /api/uploads` multipart `image`, optional form field `consentTraining=true` → 202 `{uploadId, jobId}`.
+- `POST /api/uploads` multipart `image`, optional form fields `consentTraining=true` and
+  `backend=<key>` → 202 `{uploadId, jobId}`. 400 `{error:"unknown_backend"}` if `backend` is unavailable.
 - `GET  /api/jobs/{jobId}` → 200 `{status, gameId?, error?}`.
 - `POST /api/games` `{source:"manual"}` → 201 `{game: GameDraft}` (empty draft for manual entry).
 - `GET  /api/games/{id}` → 200 `GameDraft`.

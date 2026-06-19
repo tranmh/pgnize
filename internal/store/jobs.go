@@ -8,12 +8,14 @@ import (
 	"github.com/tranmh/pgnize/internal/domain"
 )
 
-// CreateJob enqueues a recognition job for an upload.
-func (s *Store) CreateJob(ctx context.Context, uploadID string, userID *string, recognizerName string) (string, error) {
+// CreateJob enqueues a recognition job for an upload. backend is the selectable
+// recognizer key ("" = server default) the worker resolves at claim time; recognizerName
+// is the resolved Recognizer.Name() recorded for provenance.
+func (s *Store) CreateJob(ctx context.Context, uploadID string, userID *string, recognizerName, backend string) (string, error) {
 	var id string
 	err := s.Pool.QueryRow(ctx,
-		`INSERT INTO recognition_jobs (upload_id, user_id, recognizer_name) VALUES ($1, $2, $3) RETURNING id`,
-		uploadID, userID, recognizerName).Scan(&id)
+		`INSERT INTO recognition_jobs (upload_id, user_id, recognizer_name, backend) VALUES ($1, $2, $3, $4) RETURNING id`,
+		uploadID, userID, recognizerName, backend).Scan(&id)
 	return id, err
 }
 
@@ -23,6 +25,7 @@ type ClaimedJob struct {
 	UploadID   string
 	UserID     *string
 	StorageKey string
+	Backend    string
 }
 
 // ClaimNextJob atomically claims one queued job (FOR UPDATE SKIP LOCKED) and marks it running.
@@ -40,8 +43,8 @@ func (s *Store) ClaimNextJob(ctx context.Context) (ClaimedJob, error) {
 		         FOR UPDATE SKIP LOCKED
 		         LIMIT 1)
 		    AND u.id = j.upload_id
-		 RETURNING j.id, j.upload_id, j.user_id, u.storage_key`,
-	).Scan(&c.JobID, &c.UploadID, &c.UserID, &c.StorageKey)
+		 RETURNING j.id, j.upload_id, j.user_id, u.storage_key, j.backend`,
+	).Scan(&c.JobID, &c.UploadID, &c.UserID, &c.StorageKey, &c.Backend)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return c, ErrNotFound
 	}

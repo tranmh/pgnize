@@ -43,7 +43,7 @@ func TestClaimNextJobNoDoubleClaim(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		if _, err := st.CreateJob(ctx, up.ID, nil, "fake"); err != nil {
+		if _, err := st.CreateJob(ctx, up.ID, nil, "fake", "fake"); err != nil {
 			t.Fatal(err)
 		}
 	}

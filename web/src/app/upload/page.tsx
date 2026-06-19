@@ -6,6 +6,7 @@ import { ApiError, getJob, upload } from "@/lib/api-client";
 import { useJobPoller } from "@/hooks/useJobPoller";
 import { useAuth } from "@/components/AuthProvider";
 import UploadDropzone from "@/components/UploadDropzone";
+import RecognizerSelect from "@/components/RecognizerSelect";
 import Spinner from "@/components/Spinner";
 
 export default function UploadPage() {
@@ -14,6 +15,7 @@ export default function UploadPage() {
 
   const [file, setFile] = useState<File | null>(null);
   const [consent, setConsent] = useState(false);
+  const [backend, setBackend] = useState("");
   const [jobId, setJobId] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -38,7 +40,7 @@ export default function UploadPage() {
     setSubmitting(true);
     setError(null);
     try {
-      const { jobId } = await upload(file, consent);
+      const { jobId } = await upload(file, consent, backend || undefined);
       setJobId(jobId);
     } catch (e) {
       setError(
@@ -89,6 +91,12 @@ export default function UploadPage() {
       ) : (
         <>
           <UploadDropzone onFile={setFile} disabled={submitting} />
+
+          <RecognizerSelect
+            value={backend}
+            onChange={setBackend}
+            disabled={submitting}
+          />
 
           <label className="flex items-start gap-2 text-sm text-gray-600">
             <input

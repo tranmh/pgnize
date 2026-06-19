@@ -72,14 +72,14 @@ func main() {
 	if err != nil {
 		fatal("storage", err)
 	}
-	rec := buildRecognizer(cfg)
-	slog.Info("recognizer", "name", rec.Name())
+	reg := buildRegistry(cfg)
+	slog.Info("recognizers", "default", reg.Default(), "available", reg.Advertised())
 
-	srv := &httpapi.Server{Cfg: cfg, Store: st, Storage: blob, Recognizer: rec}
+	srv := &httpapi.Server{Cfg: cfg, Store: st, Storage: blob, Recognizers: reg}
 
 	// In-process recognition worker pool.
 	pool := &jobs.Pool{
-		Deps: jobs.Deps{Store: st, Storage: blob, Recognizer: rec, FewShotMax: cfg.FewShotMax},
+		Deps: jobs.Deps{Store: st, Storage: blob, Registry: reg, FewShotMax: cfg.FewShotMax},
 		Workers: cfg.RecognitionWorker,
 	}
 	go pool.Run(ctx)
@@ -99,13 +99,37 @@ func main() {
 	_ = httpSrv.Shutdown(shutCtx)
 }
 
-func buildRecognizer(cfg config.Config) recognition.Recognizer {
+// buildRegistry assembles the selectable recognition backends. The backend named by
+// RECOGNIZER is always registered; Gemini is added when GEMINI_API_KEY is set and, when
+// present, becomes the default. The deterministic fake backend is only advertised when no
+// real backend is configured (so it stays available for tests/CI without leaking into prod).
+func buildRegistry(cfg config.Config) *recognition.Registry {
+	reg := recognition.NewRegistry()
+	hasGemini := cfg.GeminiAPIKey != ""
+
 	switch cfg.Recognizer {
 	case "ollama":
-		return recognition.NewOllama(cfg.OllamaHost, cfg.RecognizerModel)
-	default:
-		return recognition.NewFake()
+		reg.Register("ollama", "Ollama (local model)", true,
+			recognition.NewOllama(cfg.OllamaHost, cfg.RecognizerModel))
+	default: // "fake", "gemini", or unset → deterministic fallback recognizer
+		reg.Register("fake", "Built-in test recognizer", !hasGemini, recognition.NewFake())
 	}
+
+	if hasGemini {
+		reg.Register("gemini", "Gemini Flash (Google)", true,
+			recognition.NewGemini(cfg.GeminiHost, cfg.GeminiModel, cfg.GeminiAPIKey))
+	}
+
+	// Default: Gemini when configured, else the configured RECOGNIZER (fake fallback).
+	switch {
+	case hasGemini:
+		reg.SetDefault("gemini")
+	case cfg.Recognizer == "ollama":
+		reg.SetDefault("ollama")
+	default:
+		reg.SetDefault("fake")
+	}
+	return reg
 }
 
 func seedDemo(ctx context.Context, st *store.Store) error {

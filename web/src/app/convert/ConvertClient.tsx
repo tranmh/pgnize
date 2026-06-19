@@ -12,6 +12,7 @@ import {
 } from "@/lib/api-client";
 import { useJobPoller } from "@/hooks/useJobPoller";
 import UploadDropzone from "@/components/UploadDropzone";
+import RecognizerSelect from "@/components/RecognizerSelect";
 import Spinner from "@/components/Spinner";
 import ReviewWorkbench from "@/components/ReviewWorkbench";
 import { downloadText, pgnFilename } from "@/lib/download";
@@ -25,6 +26,7 @@ export default function ConvertClient() {
   const [error, setError] = useState<string | null>(null);
   const [exporting, setExporting] = useState(false);
   const [failedAt, setFailedAt] = useState<number | null>(null);
+  const [backend, setBackend] = useState("");
 
   const poll = useJobPoller(jobId, getConvertJob);
 
@@ -49,7 +51,7 @@ export default function ConvertClient() {
     setError(null);
     setFailedAt(null);
     try {
-      const { jobId } = await convert(file);
+      const { jobId } = await convert(file, backend || undefined);
       setJobId(jobId);
       setStage("processing");
     } catch (e) {
@@ -112,7 +114,10 @@ export default function ConvertClient() {
       <AnonymousBanner />
 
       {stage === "upload" && (
-        <UploadDropzone onFile={start} />
+        <div className="flex flex-col gap-4">
+          <RecognizerSelect value={backend} onChange={setBackend} />
+          <UploadDropzone onFile={start} />
+        </div>
       )}
 
       {stage === "processing" && (

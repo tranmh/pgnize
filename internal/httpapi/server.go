@@ -20,10 +20,10 @@ import (
 
 // Server holds API dependencies.
 type Server struct {
-	Cfg        config.Config
-	Store      *store.Store
-	Storage    storage.Storage
-	Recognizer recognition.Recognizer
+	Cfg         config.Config
+	Store       *store.Store
+	Storage     storage.Storage
+	Recognizers *recognition.Registry
 }
 
 // Routes builds the HTTP handler.
@@ -42,6 +42,9 @@ func (s *Server) Routes() http.Handler {
 		r.Post("/auth/login", s.handleLogin)
 		r.Post("/auth/logout", s.handleLogout)
 		r.Get("/auth/me", s.handleMe)
+
+		// Available recognition backends (public; the anonymous convert flow needs it).
+		r.Get("/recognizers", s.handleRecognizers)
 
 		// Anonymous convert (no auth required).
 		r.Post("/convert", s.handleConvert)
