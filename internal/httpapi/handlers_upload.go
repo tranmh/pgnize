@@ -80,7 +80,11 @@ func (s *Server) handleUpload(w http.ResponseWriter, r *http.Request) {
 	if !ok {
 		return
 	}
-	jobID, err := s.Store.CreateJob(r.Context(), uploadID, &u.ID, s.Recognizer.Name())
+	backend, recName, ok := s.jobBackend(w, r)
+	if !ok {
+		return
+	}
+	jobID, err := s.Store.CreateJob(r.Context(), uploadID, &u.ID, recName, backend)
 	if err != nil {
 		s.writeErr(w, http.StatusInternalServerError, "internal", "could not enqueue job")
 		return

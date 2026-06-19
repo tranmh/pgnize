@@ -225,9 +225,15 @@ export function me(): Promise<{ user: User }> {
 // Anonymous convert
 // ---------------------------------------------------------------------------
 
-export function convert(image: File): Promise<{ jobId: string }> {
+export function convert(
+  image: File,
+  backend?: string,
+): Promise<{ jobId: string }> {
   const fd = new FormData();
   fd.append("image", image);
+  if (backend) {
+    fd.append("backend", backend);
+  }
   return requestJson("/convert", { method: "POST", body: fd });
 }
 
@@ -260,13 +266,34 @@ export function exportConvertPgn(
 export function upload(
   image: File,
   consentTraining: boolean,
+  backend?: string,
 ): Promise<{ uploadId: string; jobId: string }> {
   const fd = new FormData();
   fd.append("image", image);
   if (consentTraining) {
     fd.append("consentTraining", "true");
   }
+  if (backend) {
+    fd.append("backend", backend);
+  }
   return requestJson("/uploads", { method: "POST", body: fd });
+}
+
+// ---------------------------------------------------------------------------
+// Recognition backends (which engine reads the score sheet)
+// ---------------------------------------------------------------------------
+
+export interface RecognizerInfo {
+  key: string;
+  label: string;
+  default: boolean;
+}
+
+export function fetchRecognizers(): Promise<{
+  recognizers: RecognizerInfo[];
+  default: string;
+}> {
+  return requestJson("/recognizers", { method: "GET" });
 }
 
 export function getJob(jobId: string): Promise<JobState> {

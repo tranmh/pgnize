@@ -30,6 +30,16 @@ docker exec -it $(docker compose ps -q ollama) ollama pull minicpm-v
 RECOGNIZER=ollama make dev
 ```
 
+For Google Gemini Flash (cloud), set an API key — the `gemini` backend is then offered to
+clients and becomes the default recognizer:
+
+```bash
+GEMINI_API_KEY=… make dev   # optional: GEMINI_MODEL (default gemini-2.5-flash)
+```
+
+The recognition backend is also selectable per upload/convert request when more than one is
+configured; `GET /api/recognizers` lists the available engines.
+
 ## Tests (TDD)
 
 ```bash

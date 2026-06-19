@@ -65,6 +65,8 @@ services:
       RECOGNIZER: ${RECOGNIZER:-ollama}
       RECOGNIZER_MODEL: ${RECOGNIZER_MODEL:-minicpm-v}
       OLLAMA_HOST: http://ollama:11434
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+      GEMINI_MODEL: ${GEMINI_MODEL:-gemini-2.5-flash}
     depends_on:
       db:
         condition: service_healthy

@@ -24,9 +24,12 @@ type Config struct {
 	S3Bucket      string
 	S3PathStyle   bool
 
-	Recognizer        string // fake | ollama
+	Recognizer        string // fake | ollama | gemini
 	RecognizerModel   string
 	OllamaHost        string
+	GeminiAPIKey      string // Google AI Studio API key; enables the gemini backend
+	GeminiModel       string
+	GeminiHost        string
 	RecognitionWorker int
 	FewShotMax        int
 
@@ -52,6 +55,9 @@ func Load() (Config, error) {
 		Recognizer:        env("RECOGNIZER", "fake"),
 		RecognizerModel:   env("RECOGNIZER_MODEL", "minicpm-v"),
 		OllamaHost:        env("OLLAMA_HOST", "http://localhost:11434"),
+		GeminiAPIKey:      env("GEMINI_API_KEY", ""),
+		GeminiModel:       env("GEMINI_MODEL", "gemini-2.5-flash"),
+		GeminiHost:        env("GEMINI_HOST", "https://generativelanguage.googleapis.com"),
 		RecognitionWorker: envInt("RECOGNITION_WORKERS", 2),
 		FewShotMax:        envInt("FEWSHOT_MAX_EXAMPLES", 3),
 		UploadMaxBytes:    int64(envInt("UPLOAD_MAX_BYTES", 15<<20)),
