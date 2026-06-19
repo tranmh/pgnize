@@ -1,0 +1,235 @@
+"use client";
+
+import { useMemo, useState } from "react";
+import type { GameDraft, Header, MoveInput } from "@/lib/api-client";
+import {
+  allLegal,
+  PLACEHOLDER,
+  rebuild,
+  sanForDrag,
+  STARTING_FEN,
+  tailFen,
+  toEditablePlies,
+  type EditMove,
+} from "@/lib/chess";
+import Board from "./Board";
+import MoveList from "./MoveList";
+import HeaderFields from "./HeaderFields";
+import PhotoViewer from "./PhotoViewer";
+
+type Ply = { san: string; clockSec: number | null; recognizedText: string };
+
+export interface ReviewWorkbenchProps {
+  draft: GameDraft;
+  // The primary action: save (account flow) or export PGN (anonymous flow).
+  // Receives the editable payload; should throw ApiError on failure so we can
+  // surface failedAt highlighting.
+  onPrimary: (payload: {
+    header: Header;
+    moves: MoveInput[];
+    startFen?: string;
+  }) => Promise<void>;
+  primaryLabel: string;
+  // Banner / status content rendered above the workbench (e.g. anonymous note).
+  banner?: React.ReactNode;
+  // Index of a ply the server reported illegal (from 422 failedAt), to highlight.
+  serverFailedAt?: number | null;
+  saving?: boolean;
+  // Post-success element (e.g. "saved — link to library").
+  footer?: React.ReactNode;
+  readOnly?: boolean;
+}
+
+export default function ReviewWorkbench({
+  draft,
+  onPrimary,
+  primaryLabel,
+  banner,
+  serverFailedAt,
+  saving,
+  footer,
+  readOnly = false,
+}: ReviewWorkbenchProps) {
+  const startFen = draft.startFen || STARTING_FEN;
+  const [header, setHeader] = useState<Header>(draft.header);
+  const [plies, setPlies] = useState<Ply[]>(toEditablePlies(draft.moves));
+  const [activeIndex, setActiveIndex] = useState<number | null>(null);
+
+  // Recompute legality whenever the plies change.
+  const moves: EditMove[] = useMemo(
+    () => rebuild(startFen, plies),
+    [startFen, plies],
+  );
+
+  const boardFen =
+    activeIndex === null
+      ? startFen
+      : moves[activeIndex]?.fenAfter ?? startFen;
+
+  // For appending new moves by dragging: use the position at the end of the
+  // legal prefix when nothing is selected, else the active ply's position.
+  const dragFen =
+    activeIndex === null ? tailFen(moves, startFen) : boardFen;
+
+  const canEdit = !readOnly && !saving;
+
+  const handleDrag = (from: string, to: string): boolean => {
+    if (!canEdit) return false;
+    const san = sanForDrag(dragFen, from, to);
+    if (!san) return false;
+
+    // If a ply is selected, replace it; otherwise append.
+    if (activeIndex !== null) {
+      replaceSan(activeIndex, san);
+    } else {
+      // Append after the legal prefix.
+      const insertAt = lastLegalIndex(moves);
+      const next = [...plies];
+      next.splice(insertAt + 1, 0, { san, clockSec: null, recognizedText: "" });
+      setPlies(next);
+      setActiveIndex(insertAt + 1);
+    }
+    return true;
+  };
+
+  const replaceSan = (index: number, san: string) => {
+    setPlies((prev) => {
+      const next = [...prev];
+      next[index] = { ...next[index], san };
+      return next;
+    });
+  };
+
+  const insertAfter = (index: number) => {
+    setPlies((prev) => {
+      const next = [...prev];
+      next.splice(index + 1, 0, {
+        san: PLACEHOLDER,
+        clockSec: null,
+        recognizedText: "",
+      });
+      return next;
+    });
+  };
+
+  const remove = (index: number) => {
+    setPlies((prev) => prev.filter((_, i) => i !== index));
+    setActiveIndex(null);
+  };
+
+  const placeholder = (index: number) => replaceSan(index, PLACEHOLDER);
+
+  const truncate = (index: number) => {
+    setPlies((prev) => prev.slice(0, index));
+    setActiveIndex(null);
+  };
+
+  const orientation: "white" | "black" =
+    startFen.split(" ")[1] === "b" ? "black" : "white";
+
+  // Save gate: empty is allowed; otherwise every ply must be legal.
+  const saveEnabled = canEdit && allLegal(moves);
+
+  const buildPayload = () => ({
+    header,
+    startFen: draft.startFen || undefined,
+    moves: moves.map<MoveInput>((m, i) => ({
+      ply: i + 1,
+      san: m.san,
+      clockSec: m.clockSec,
+    })),
+  });
+
+  // Highlight a server-reported failed ply on the board square set.
+  const squareStyles = useMemo(() => {
+    if (serverFailedAt == null) return undefined;
+    return {} as Record<string, React.CSSProperties>;
+  }, [serverFailedAt]);
+
+  return (
+    <div className="flex flex-col gap-4">
+      {banner}
+
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+        {/* Left: photo (hidden for manual entries with no image) */}
+        {draft.imageUrl ? (
+          <section className="min-h-[420px] rounded-lg border border-gray-200 bg-white p-3">
+            <PhotoViewer src={draft.imageUrl} />
+          </section>
+        ) : (
+          <section className="flex min-h-[420px] items-center justify-center rounded-lg border border-dashed border-gray-200 bg-gray-50 p-3 text-sm text-gray-400">
+            Manual entry — no photo.
+          </section>
+        )}
+
+        {/* Right: board + header + move list */}
+        <section className="flex flex-col gap-4 rounded-lg border border-gray-200 bg-white p-4">
+          <div className="flex flex-col items-center gap-2">
+            <Board
+              fen={boardFen}
+              orientation={orientation}
+              allowDragging={canEdit}
+              onMove={handleDrag}
+              squareStyles={squareStyles}
+            />
+            <p className="text-xs text-gray-400">
+              {readOnly
+                ? "Read-only"
+                : "Drag a piece to add or replace the selected move. Click a move to view its position."}
+            </p>
+          </div>
+
+          <HeaderFields header={header} onChange={setHeader} readOnly={readOnly} />
+
+          <MoveList
+            moves={moves}
+            activeIndex={activeIndex}
+            onSelect={setActiveIndex}
+            onEditSan={(i, san) => replaceSan(i, san)}
+            onInsertAfter={insertAfter}
+            onDelete={remove}
+            onPlaceholder={placeholder}
+            onTruncate={truncate}
+            readOnly={readOnly}
+          />
+
+          {serverFailedAt != null && (
+            <p className="rounded border border-red-300 bg-red-50 px-3 py-2 text-sm text-red-700">
+              Server rejected move #{serverFailedAt + 1} as illegal. Fix it and
+              try again.
+            </p>
+          )}
+
+          {footer}
+
+          {!readOnly && (
+            <div className="flex items-center gap-3">
+              <button
+                type="button"
+                disabled={!saveEnabled}
+                onClick={() => onPrimary(buildPayload())}
+                className="rounded bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-gray-300"
+              >
+                {saving ? "Working…" : primaryLabel}
+              </button>
+              {!allLegal(moves) && (
+                <span className="text-xs text-amber-600">
+                  Resolve all illegal/ambiguous moves (or truncate) to continue.
+                </span>
+              )}
+            </div>
+          )}
+        </section>
+      </div>
+    </div>
+  );
+}
+
+function lastLegalIndex(moves: EditMove[]): number {
+  let idx = -1;
+  for (let i = 0; i < moves.length; i++) {
+    if (moves[i].legality === "legal") idx = i;
+    else break;
+  }
+  return idx;
+}
