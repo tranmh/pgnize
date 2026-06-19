@@ -1,0 +1,21 @@
+# Reverse proxy: /api/* -> Go backend, everything else -> Next.js.
+# Set the site address via env at deploy time (e.g. pgnize.example.com).
+{$PGNIZE_DOMAIN:localhost} {
+	encode gzip
+
+	handle /api/* {
+		reverse_proxy api:8080
+	}
+	handle /healthz {
+		reverse_proxy api:8080
+	}
+	handle {
+		reverse_proxy web:3000
+	}
+
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		X-Content-Type-Options "nosniff"
+		Referrer-Policy "strict-origin-when-cross-origin"
+	}
+}

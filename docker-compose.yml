@@ -1,0 +1,134 @@
+# pgnize service topology.
+#
+# Default profile (always up):  db, minio
+# Profile "vlm":                 ollama (local vision model; pulls GBs on first run)
+# Profile "prod":                api, web, caddy, db-backup
+#
+# Local dev: `docker compose up -d db minio` then `make dev`.
+# Full local stack incl. AI:     `docker compose --profile vlm up -d`
+# Production:                     `docker compose --profile prod --profile vlm up -d`
+
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-pgnize}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-pgnize}
+      POSTGRES_DB: ${POSTGRES_DB:-pgnize}
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-pgnize}"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    restart: unless-stopped
+
+  minio:
+    image: minio/minio:latest
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-minioadmin}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-minioadmin}
+    volumes:
+      - minio_data:/data
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  ollama:
+    image: ollama/ollama:latest
+    profiles: ["vlm"]
+    volumes:
+      - ollama_models:/root/.ollama
+    restart: unless-stopped
+
+  api:
+    build:
+      context: .
+      target: api
+    profiles: ["prod"]
+    environment:
+      DATABASE_URL: postgres://${POSTGRES_USER:-pgnize}:${POSTGRES_PASSWORD:-pgnize}@db:5432/${POSTGRES_DB:-pgnize}?sslmode=disable
+      AUTH_SECRET: ${AUTH_SECRET}
+      API_ADDR: ":8080"
+      STORAGE_DRIVER: s3
+      S3_ENDPOINT: http://minio:9000
+      S3_REGION: ${S3_REGION:-us-east-1}
+      S3_ACCESS_KEY: ${MINIO_ROOT_USER:-minioadmin}
+      S3_SECRET_KEY: ${MINIO_ROOT_PASSWORD:-minioadmin}
+      S3_BUCKET: ${S3_BUCKET:-pgnize-uploads}
+      S3_FORCE_PATH_STYLE: "true"
+      RECOGNIZER: ${RECOGNIZER:-ollama}
+      RECOGNIZER_MODEL: ${RECOGNIZER_MODEL:-minicpm-v}
+      OLLAMA_HOST: http://ollama:11434
+    depends_on:
+      db:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "/app/api", "-healthcheck"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  web:
+    build:
+      context: .
+      target: web
+    profiles: ["prod"]
+    environment:
+      PGNIZE_API_URL: http://api:8080
+    depends_on:
+      - api
+    restart: unless-stopped
+
+  caddy:
+    image: caddy:2-alpine
+    profiles: ["prod"]
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - api
+      - web
+    restart: unless-stopped
+
+  db-backup:
+    image: postgres:16-alpine
+    profiles: ["prod"]
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - |
+        while true; do
+          PGPASSWORD=$${POSTGRES_PASSWORD} pg_dump -h db -U $${POSTGRES_USER} $${POSTGRES_DB} \
+            | gzip > /backups/pgnize-$$(date +%Y%m%d-%H%M%S).sql.gz
+          find /backups -name '*.sql.gz' -mtime +30 -delete
+          sleep 86400
+        done
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-pgnize}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-pgnize}
+      POSTGRES_DB: ${POSTGRES_DB:-pgnize}
+    volumes:
+      - ./backups:/backups
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+
+volumes:
+  pg_data:
+  minio_data:
+  ollama_models:
+  caddy_data:
+  caddy_config:
