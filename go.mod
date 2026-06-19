@@ -10,6 +10,7 @@ require (
 	github.com/pressly/goose/v3 v3.27.1
 	github.com/tranmh/chesskit v0.0.0
 	golang.org/x/crypto v0.53.0
+	golang.org/x/image v0.43.0
 )
 
 require (
