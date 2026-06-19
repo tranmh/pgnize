@@ -1,4 +1,4 @@
-# pgnize — Handwritten Chess Score Sheet → PGN
+# PGNize — Handwritten Chess Score Sheet → PGN
 
 ## Context
 

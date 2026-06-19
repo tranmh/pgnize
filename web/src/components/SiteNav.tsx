@@ -12,7 +12,7 @@ export default function SiteNav() {
     <header className="border-b border-gray-200 bg-white">
       <nav className="mx-auto flex max-w-6xl items-center gap-4 px-4 py-3">
         <Link href="/" className="flex items-center gap-2 text-lg font-bold text-gray-900">
-          <span aria-hidden>♟</span> pgnize
+          <span aria-hidden>♟</span> PGNize
         </Link>
         <Link href="/convert" className="text-sm text-gray-600 hover:text-gray-900">
           Convert

@@ -4,7 +4,7 @@ import { AuthProvider } from "@/components/AuthProvider";
 import SiteNav from "@/components/SiteNav";
 
 export const metadata: Metadata = {
-  title: "pgnize — score sheet to PGN",
+  title: "PGNize — score sheet to PGN",
   description:
     "Convert photos of handwritten chess score sheets into human-verified PGN.",
 };

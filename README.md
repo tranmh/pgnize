@@ -1,4 +1,4 @@
-# pgnize
+# PGNize
 
 Convert photos of handwritten chess score sheets (German *Partieformular*) into
 human-verified PGN, and build a browsable, searchable library of your games.
