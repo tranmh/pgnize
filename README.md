@@ -53,3 +53,18 @@ make e2e-ui      # Playwright UI project (chromium)
 
 See [`docs/plans/pgnize.md`](./docs/plans/pgnize.md) for the full design and `CODEMAP.md` for a
 per-directory orientation.
+
+## License
+
+PGNize is licensed under the **GNU Affero General Public License v3.0** (AGPL-3.0) — see
+[`LICENSE`](./LICENSE). Because the app is network-served, AGPL §13 requires that users
+interacting with it over a network can obtain the complete corresponding source.
+
+### Third-party: Stockfish
+
+The web app bundles [Stockfish.js](https://github.com/nmrugg/stockfish.js) (a WebAssembly build of
+[Stockfish](https://github.com/official-stockfish/Stockfish)) under `web/public/engine/` for
+in-browser position evaluation. Stockfish is licensed under **GPL-3.0**, which is compatible with
+AGPL-3.0 (see AGPL §13 / GPL §13): the engine remains under GPL-3.0 within this AGPL-3.0 project.
+The corresponding source and full license text are referenced in
+[`web/public/engine/NOTICE.txt`](./web/public/engine/NOTICE.txt) and `Copying.txt`.
