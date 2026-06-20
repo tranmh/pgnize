@@ -272,7 +272,7 @@ export function toEditablePlies(moves: Move[]): {
   clockSec: number | null;
   recognizedText: string;
 }[] {
-  return moves.map((m) => ({
+  return (moves ?? []).map((m) => ({
     san: m.san,
     clockSec: m.clockSec,
     recognizedText: m.recognizedText,

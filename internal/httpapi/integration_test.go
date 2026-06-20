@@ -213,6 +213,38 @@ func TestAccountJourney(t *testing.T) {
 	}
 }
 
+func TestManualGameMovesNeverNull(t *testing.T) {
+	h := setup(t)
+	h.json(t, "POST", "/api/auth/register",
+		map[string]string{"name": "A", "email": "a@b.c", "password": "password12"})
+	resp, body := h.json(t, "POST", "/api/games", map[string]string{"source": "manual"})
+	if resp.StatusCode != http.StatusCreated {
+		t.Fatalf("manual create %d: %s", resp.StatusCode, body)
+	}
+	var created struct {
+		Game struct {
+			ID    string            `json:"id"`
+			Moves []json.RawMessage `json:"moves"`
+		} `json:"game"`
+	}
+	json.Unmarshal(body, &created)
+	if created.Game.Moves == nil {
+		t.Fatalf("manual create returned null moves: %s", body)
+	}
+
+	resp, body = h.do(t, "GET", "/api/games/"+created.Game.ID, "", nil)
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("get game %d: %s", resp.StatusCode, body)
+	}
+	var got struct {
+		Moves []json.RawMessage `json:"moves"`
+	}
+	json.Unmarshal(body, &got)
+	if got.Moves == nil {
+		t.Fatalf("get game returned null moves: %s", body)
+	}
+}
+
 func TestSaveRejectsIllegalMove(t *testing.T) {
 	h := setup(t)
 	h.json(t, "POST", "/api/auth/register",

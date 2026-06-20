@@ -94,6 +94,7 @@ func (s *Store) GetGame(ctx context.Context, id string) (domain.GameDraft, GameM
 		return g, meta, err
 	}
 	defer rows.Close()
+	g.Moves = []domain.Move{} // never nil: the API contract is moves: Move[]
 	for rows.Next() {
 		var m domain.Move
 		if err := rows.Scan(&m.Ply, &m.Side, &m.SAN, &m.FenAfter, &m.ClockSec, &m.IsLegal,
