@@ -140,9 +140,17 @@ export default function ReviewPage({
             {saved && (
               <p className="rounded border border-green-300 bg-green-50 px-3 py-2 text-sm text-green-700">
                 Saved.{" "}
+                <Link
+                  href={`/games/${gameId}/view`}
+                  className="font-medium underline"
+                >
+                  View game
+                </Link>{" "}
+                or{" "}
                 <Link href="/library" className="font-medium underline">
-                  Go to library
+                  go to library
                 </Link>
+                .
               </p>
             )}
           </div>

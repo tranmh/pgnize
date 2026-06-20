@@ -13,6 +13,8 @@ export interface BoardProps {
   onMove?: (from: string, to: string) => boolean;
   // Highlight styles keyed by square (e.g. { e4: { background: ... } }).
   squareStyles?: Record<string, React.CSSProperties>;
+  // Overlay arrows (e.g. the engine's best move).
+  arrows?: { from: string; to: string; color?: string }[];
 }
 
 // Thin wrapper over react-chessboard v5's options-based API so the rest of the
@@ -23,6 +25,7 @@ export default function Board({
   allowDragging = false,
   onMove,
   squareStyles,
+  arrows,
 }: BoardProps) {
   return (
     <div className="w-full max-w-[480px]">
@@ -35,6 +38,11 @@ export default function Board({
           showNotation: true,
           animationDurationInMs: 150,
           squareStyles,
+          arrows: arrows?.map((a) => ({
+            startSquare: a.from,
+            endSquare: a.to,
+            color: a.color ?? "rgba(37, 99, 235, 0.7)",
+          })),
           onPieceDrop: ({ sourceSquare, targetSquare }) => {
             if (!onMove || !targetSquare) return false;
             return onMove(sourceSquare, targetSquare);

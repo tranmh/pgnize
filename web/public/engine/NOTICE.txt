@@ -1,0 +1,25 @@
+Stockfish.js — bundled chess engine (WebAssembly)
+=================================================
+
+Files in this directory:
+  - stockfish-18-lite-single.js    UCI engine loader (runs as a Web Worker)
+  - stockfish-18-lite-single.wasm  WebAssembly binary (single-threaded "lite" build)
+  - Copying.txt                    GPLv3 license text
+
+This is the single-threaded "lite" build of Stockfish.js 18. It is used in the
+browser to provide on-device position evaluation and game analysis. The
+single-threaded build was chosen deliberately so it runs without
+cross-origin-isolation (COOP/COEP) headers, which would otherwise interfere
+with loading score-sheet images from object storage.
+
+License: GPLv3 (see Copying.txt).
+Stockfish.js is (c) Chess.com, LLC, based on Stockfish by T. Romstad,
+M. Costalba, J. Kiiski, G. Linscott and contributors.
+
+Corresponding source:
+  - Stockfish.js wrapper:  https://github.com/nmrugg/stockfish.js
+  - Stockfish engine:      https://github.com/official-stockfish/Stockfish
+
+Because PGNize distributes these GPLv3 binaries to browsers, the corresponding
+source must remain available to recipients (the upstream repositories above
+satisfy this). Update this NOTICE if the engine build is changed.

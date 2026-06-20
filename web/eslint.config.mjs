@@ -21,6 +21,8 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Vendored third-party assets (e.g. the Stockfish WASM engine loader).
+    "public/**",
   ]),
 ]);
 
