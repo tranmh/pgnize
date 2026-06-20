@@ -3,6 +3,13 @@
 GO ?= go
 TEST_DATABASE_URL ?= postgres://pgnize:pgnize@localhost:5432/pgnize_test?sslmode=disable
 
+# Load .env (gitignored) into recipe environments so `make dev`/`make migrate` pick up
+# AUTH_SECRET, GEMINI_API_KEY, etc. without a separate `source`. Real exported vars win.
+ifneq (,$(wildcard .env))
+include .env
+export
+endif
+
 help: ## Show this help
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN{FS=":.*?## "}{printf "  \033[36m%-14s\033[0m %s\n",$$1,$$2}'
 

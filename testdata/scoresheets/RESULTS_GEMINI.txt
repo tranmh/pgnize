@@ -1,0 +1,372 @@
+
+Real-world recognition confidence — model=gemini:gemini-2.5-flash, 8 fixtures
+
+=== cb_Bericht_ZugRaster.jpg === (19.4s)
+header: White="" Black="" Event=""  overall=0.30
+  ply  side   read -> san        legality  conf  state
+  1    white  e4                 legal     0.90  ok
+  2    black  e5                 legal     0.90  ok
+  3    white  Sf3 -> Nf3         legal     0.90  ok
+  4    black  Sc6 -> Nc6         legal     0.90  ok
+  5    white  Lb5 -> Bb5         legal     0.90  ok
+  6    black  a6                 legal     0.90  ok
+  7    white  La4 -> Ba4         legal     0.90  ok
+  8    black  Sf6 -> Nf6         legal     0.90  ok
+  9    white  0-0 -> O-O         legal     0.90  ok
+  10   black  Le7 -> Be7         legal     0.90  ok
+  11   white  Te1 -> Re1         legal     0.90  ok
+  12   black  b5                 legal     0.90  ok
+  13   white  Lb3 -> Bb3         legal     0.90  ok
+  14   black  d6                 legal     0.90  ok
+  15   white  c3                 legal     0.90  ok
+  16   black  0-0 -> O-O         legal     0.90  ok
+  17   white  h3                 legal     0.90  ok
+  18   black  Sa5 -> Na5         legal     0.90  ok
+  19   white  Lc2 -> Bc2         legal     0.90  ok
+  20   black  c5                 legal     0.90  ok
+  21   white  d4                 legal     0.90  ok
+  22   black  Dc7 -> Qc7         legal     0.90  ok
+  23   white  Sbd2 -> Nbd2       legal     0.90  ok
+  24   black  Sc6 -> Nc6         legal     0.90  ok
+  25   white  dxc5               legal     0.90  ok
+  26   black  dxc5               legal     0.90  ok
+  27   white  Sf1 -> Nf1         legal     0.90  ok
+  28   black  Td8 -> Rd8         legal     0.90  ok
+  29   white  De2 -> Qe2         legal     0.90  ok
+  30   black  Se8 -> Ne8         legal     0.90  ok
+  31   white  Se3 -> Ne3         legal     0.90  ok
+  32   black  Se7 -> Na7         legal     0.40  verify
+  33   white  Sg5 -> Ng5         legal     0.90  ok
+  34   black  Lxg5 -> Bxg5       legal     0.90  ok
+  35   white  Lxg5 -> Bxg5       illegal   0.00  illegal
+  36   white  f6                 illegal   0.00  illegal
+  37   white  Lh4 -> Bh4         illegal   0.00  illegal
+  38   white  Le6 -> Be6         illegal   0.00  illegal
+  39   white  Tad1 -> Rad1       illegal   0.00  illegal
+  40   white  Txd1 -> Rxd1       illegal   0.00  illegal
+  41   white  Txd1 -> Rxd1       illegal   0.00  illegal
+  42   white  Sg6 -> Ng6         illegal   0.00  illegal
+  43   white  Lg3 -> Bg3         illegal   0.00  illegal
+  44   white  Sf4 -> Nf4         illegal   0.00  illegal
+  45   white  Dd2 -> Qd2         illegal   0.00  illegal
+  46   white  Sg6 -> Ng6         illegal   0.00  illegal
+  47   white  Sd5 -> Nd5         illegal   0.00  illegal
+  48   white  Lxd5 -> Bxd5       illegal   0.00  illegal
+  49   white  Dxd5+ -> Qxd5+     illegal   0.00  illegal
+  50   white  Kh8                illegal   0.00  illegal
+  51   white  Dxa8 -> Qxa8       illegal   0.00  illegal
+  52   white  Sf4 -> Nf4         illegal   0.00  illegal
+  53   white  Lxf4 -> Bxf4       illegal   0.00  illegal
+  54   white  exf4               illegal   0.00  illegal
+  55   white  Td8+ -> Rd8+       illegal   0.00  illegal
+  56   white  Dxd8 -> Qxd8       illegal   0.00  illegal
+  57   white  Dxd8+ -> Qxd8+     illegal   0.00  illegal
+  58   white  Sg8 -> Ng8         illegal   0.00  illegal
+  59   white  Dd7 -> Qd7         illegal   0.00  illegal
+  60   white  h6                 illegal   0.00  illegal
+  61   white  Df7 -> Qf7         illegal   0.00  illegal
+  62   white  Kh7                illegal   0.00  illegal
+  63   white  Dxg8+ -> Qxg8+     illegal   0.00  illegal
+  64   white  Kxg8               illegal   0.00  illegal
+  65   white  f3                 illegal   0.00  illegal
+  66   white  Kf7                illegal   0.00  illegal
+  67   white  Kf2                illegal   0.00  illegal
+  68   white  Ke6                illegal   0.00  illegal
+  69   white  Ke2                illegal   0.00  illegal
+  70   white  Ke5                illegal   0.00  illegal
+  71   white  Kd3                illegal   0.00  illegal
+  72   white  g5                 illegal   0.00  illegal
+  73   white  c4                 illegal   0.00  illegal
+  74   white  bxc4+              illegal   0.00  illegal
+  75   white  Kxc4               illegal   0.00  illegal
+  76   white  Kd6                illegal   0.00  illegal
+  77   white  Lb3 -> Bb3         illegal   0.00  illegal
+  78   white  Kc6                illegal   0.00  illegal
+  79   white  La4+ -> Ba4+       illegal   0.00  illegal
+  80   white  Kb6                illegal   0.00  illegal
+  81   white  Kd5                illegal   0.00  illegal
+  82   white  Kc7                illegal   0.00  illegal
+  83   white  Lc6 -> Bc6         illegal   0.00  illegal
+  84   white  Kb6                illegal   0.00  illegal
+  85   white  Ld7 -> Bd7         illegal   0.00  illegal
+  86   white  Kc7                illegal   0.00  illegal
+  87   white  Lf5 -> Bf5         illegal   0.00  illegal
+  88   white  Kb6                illegal   0.00  illegal
+  89   white  Ke6                illegal   0.00  illegal
+  90   white  Ka5                illegal   0.00  illegal
+  91   white  Kxf6               illegal   0.00  illegal
+  92   white  Kb4                illegal   0.00  illegal
+  93   white  e5                 illegal   0.00  illegal
+  94   white  Kc4                illegal   0.00  illegal
+  95   white  e6                 illegal   0.00  illegal
+  96   white  Kd5                illegal   0.00  illegal
+  97   white  e7                 illegal   0.00  illegal
+  98   white  Kd6                illegal   0.00  illegal
+  99   white  e8D -> e8=Q        illegal   0.00  illegal
+  100  white  Kc7                illegal   0.00  illegal
+  101  white  De7+ -> Qe7+       illegal   0.00  illegal
+  102  white  Kb6                illegal   0.00  illegal
+  103  white  Dd6+ -> Qd6+       illegal   0.00  illegal
+  104  white  Kb5                illegal   0.00  illegal
+  105  white  Dd5 -> Qd5         illegal   0.00  illegal
+  106  white  Kb4                illegal   0.00  illegal
+  107  white  Ld3 -> Bd3         illegal   0.00  illegal
+  108  white  Ka3                illegal   0.00  illegal
+  109  white  Db3+ -> Qb3+       illegal   0.00  illegal
+  110  white  Kb4                illegal   0.00  illegal
+  111  white  Lc4 -> Bc4         illegal   0.00  illegal
+  112  white  a5                 illegal   0.00  illegal
+  113  white  Db5 -> Qb5         illegal   0.00  illegal
+  114  white  a4                 illegal   0.00  illegal
+  115  white  Dxc5+ -> Qxc5+     illegal   0.00  illegal
+  116  white  Kxb2               illegal   0.00  illegal
+  summary: 116 plies · 33 ok · 1 verify · 82 illegal · mean conf 0.26
+
+=== cb_formulare-screenshot.jpg === (19.3s)
+header: White="" Black="" Event=""  overall=0.30
+  ply  side   read -> san        legality  conf  state
+  1    white  d4                 legal     0.90  ok
+  2    black  Sf6 -> Nf6         legal     0.90  ok
+  3    white  Sf3 -> Nf3         legal     0.90  ok
+  4    black  g6                 legal     0.90  ok
+  5    white  c4                 legal     0.90  ok
+  6    black  Lg7 -> Bg7         legal     0.90  ok
+  7    white  Sc3 -> Nc3         legal     0.90  ok
+  8    black  0-0 -> O-O         legal     0.90  ok
+  9    white  g3                 legal     0.90  ok
+  10   black  d6                 legal     0.90  ok
+  11   white  Lg2 -> Bg2         legal     0.90  ok
+  12   black  Sbd7 -> Nbd7       legal     0.90  ok
+  13   white  0-0 -> O-O         legal     0.90  ok
+  14   black  e5                 legal     0.90  ok
+  summary: 14 plies · 14 ok · 0 verify · 0 illegal · mean conf 0.90
+
+=== cb_formulare2.jpg === (16.1s)
+header: White="" Black="" Event=""  overall=0.50
+  ply  side   read -> san        legality  conf  state
+  1    white  e4                 legal     0.90  ok
+  2    black  Sc6 -> Nc6         legal     0.90  ok
+  3    white  d4                 legal     0.90  ok
+  4    black  d5                 legal     0.90  ok
+  5    white  e5                 legal     0.90  ok
+  6    black  f6                 legal     0.90  ok
+  7    white  f4                 legal     0.90  ok
+  8    black  Sh6 -> Nh6         legal     0.90  ok
+  9    white  Lb5 -> Bb5         legal     0.90  ok
+  10   black  Lg4 -> Bg4         legal     0.90  ok
+  11   white  Lxc6 -> Bxc6       legal     0.90  ok
+  12   black  x                  illegal   0.00  illegal
+  13   black  Dd3 -> Qd3         illegal   0.00  illegal
+  14   black  Db8 -> Qb8         illegal   0.00  illegal
+  15   black  h3                 illegal   0.00  illegal
+  16   black  Lf5 -> Bf5         illegal   0.00  illegal
+  17   black  De3 -> Qe3         illegal   0.00  illegal
+  18   black  xf5                illegal   0.00  illegal
+  19   black  fxe5               illegal   0.00  illegal
+  20   black  e6                 illegal   0.00  illegal
+  21   black  c3                 illegal   0.00  illegal
+  22   black  Db5 -> Qb5         illegal   0.00  illegal
+  23   black  Se2 -> Ne2         illegal   0.00  illegal
+  24   black  c5                 illegal   0.00  illegal
+  25   black  0-0 -> O-O         illegal   0.00  illegal
+  26   black  Ld3 -> Bd3         illegal   0.00  illegal
+  27   black  Te1 -> Re1         illegal   0.00  illegal
+  28   black  Sf5 -> Nf5         illegal   0.00  illegal
+  29   black  Df2 -> Qf2         illegal   0.00  illegal
+  30   black  Le7 -> Be7         illegal   0.00  illegal
+  31   black  g3                 illegal   0.00  illegal
+  32   black  Lxe2 -> Bxe2       illegal   0.00  illegal
+  33   black  Tx -> Rx           illegal   0.00  illegal
+  34   black  Sx93 -> Nx93       illegal   0.00  illegal
+  35   black  Te3 -> Re3         illegal   0.00  illegal
+  36   black  S45 -> N45         illegal   0.00  illegal
+  37   black  Tf3 -> Rf3         illegal   0.00  illegal
+  38   black  xd4                illegal   0.00  illegal
+  39   black  x                  illegal   0.00  illegal
+  40   black  Sx -> Nx           illegal   0.00  illegal
+  41   black  Te3 -> Re3         illegal   0.00  illegal
+  42   black  Tf8 -> Rf8         illegal   0.00  illegal
+  43   black  Dg2 -> Qg2         illegal   0.00  illegal
+  44   black  Sc2 -> Nc2         illegal   0.00  illegal
+  45   black  Sc3 -> Nc3         illegal   0.00  illegal
+  46   black  Da6 -> Qa6         illegal   0.00  illegal
+  47   black  Dxc2 -> Qxc2       illegal   0.00  illegal
+  48   black  Df1 -> Qf1         illegal   0.00  illegal
+  49   black  Kh2                illegal   0.00  illegal
+  50   black  T+2 -> R+2         illegal   0.00  illegal
+  51   black  Dx -> Qx           illegal   0.00  illegal
+  52   black  Dx -> Qx           illegal   0.00  illegal
+  53   black  Kh1                illegal   0.00  illegal
+  54   black  Lc5 -> Bc5         illegal   0.00  illegal
+  55   black  Sb5 -> Nb5         illegal   0.00  illegal
+  56   black  Kd7                illegal   0.00  illegal
+  summary: 56 plies · 11 ok · 0 verify · 45 illegal · mean conf 0.18
+
+=== wiki_anotacion_027.jpg === (7.4s)
+header: White="" Black="" Event=""  overall=0.50
+  ply  side   read -> san        legality  conf  state
+  1    white  ??                 illegal   0.00  illegal
+  2    white  ??                 illegal   0.00  illegal
+  3    white  ??                 illegal   0.00  illegal
+  4    white  ??                 illegal   0.00  illegal
+  5    white  ??                 illegal   0.00  illegal
+  6    white  ??                 illegal   0.00  illegal
+  7    white  ??                 illegal   0.00  illegal
+  8    white  ??                 illegal   0.00  illegal
+  9    white  ??                 illegal   0.00  illegal
+  10   white  ??                 illegal   0.00  illegal
+  11   white  ??                 illegal   0.00  illegal
+  12   white  ??                 illegal   0.00  illegal
+  13   white  ??                 illegal   0.00  illegal
+  14   white  ??                 illegal   0.00  illegal
+  15   white  ??                 illegal   0.00  illegal
+  16   white  ??                 illegal   0.00  illegal
+  17   white  ??                 illegal   0.00  illegal
+  18   white  ??                 illegal   0.00  illegal
+  19   white  ??                 illegal   0.00  illegal
+  20   white  ??                 illegal   0.00  illegal
+  21   white  ??                 illegal   0.00  illegal
+  22   white  ??                 illegal   0.00  illegal
+  23   white  ??                 illegal   0.00  illegal
+  24   white  ??                 illegal   0.00  illegal
+  25   white  ??                 illegal   0.00  illegal
+  26   white  ??                 illegal   0.00  illegal
+  27   white  ??                 illegal   0.00  illegal
+  28   white  ??                 illegal   0.00  illegal
+  29   white  ??                 illegal   0.00  illegal
+  30   white  ??                 illegal   0.00  illegal
+  31   white  ??                 illegal   0.00  illegal
+  32   white  ??                 illegal   0.00  illegal
+  33   white  ??                 illegal   0.00  illegal
+  34   white  ??                 illegal   0.00  illegal
+  35   white  ??                 illegal   0.00  illegal
+  36   white  ??                 illegal   0.00  illegal
+  37   white  ??                 illegal   0.00  illegal
+  38   white  ??                 illegal   0.00  illegal
+  39   white  ??                 illegal   0.00  illegal
+  40   white  ??                 illegal   0.00  illegal
+  41   white  ??                 illegal   0.00  illegal
+  42   white  ??                 illegal   0.00  illegal
+  43   white  ??                 illegal   0.00  illegal
+  44   white  ??                 illegal   0.00  illegal
+  45   white  ??                 illegal   0.00  illegal
+  46   white  ??                 illegal   0.00  illegal
+  47   white  ??                 illegal   0.00  illegal
+  48   white  ??                 illegal   0.00  illegal
+  49   white  ??                 illegal   0.00  illegal
+  50   white  ??                 illegal   0.00  illegal
+  51   white  ??                 illegal   0.00  illegal
+  52   white  ??                 illegal   0.00  illegal
+  53   white  ??                 illegal   0.00  illegal
+  54   white  ??                 illegal   0.00  illegal
+  55   white  ??                 illegal   0.00  illegal
+  56   white  ??                 illegal   0.00  illegal
+  57   white  ??                 illegal   0.00  illegal
+  58   white  ??                 illegal   0.00  illegal
+  59   white  ??                 illegal   0.00  illegal
+  60   white  ??                 illegal   0.00  illegal
+  61   white  ??                 illegal   0.00  illegal
+  62   white  ??                 illegal   0.00  illegal
+  63   white  ??                 illegal   0.00  illegal
+  64   white  ??                 illegal   0.00  illegal
+  65   white  ??                 illegal   0.00  illegal
+  66   white  ??                 illegal   0.00  illegal
+  67   white  ??                 illegal   0.00  illegal
+  68   white  ??                 illegal   0.00  illegal
+  69   white  ??                 illegal   0.00  illegal
+  70   white  ??                 illegal   0.00  illegal
+  71   white  ??                 illegal   0.00  illegal
+  72   white  ??                 illegal   0.00  illegal
+  73   white  ??                 illegal   0.00  illegal
+  74   white  ??                 illegal   0.00  illegal
+  75   white  ??                 illegal   0.00  illegal
+  76   white  ??                 illegal   0.00  illegal
+  77   white  ??                 illegal   0.00  illegal
+  78   white  ??                 illegal   0.00  illegal
+  79   white  ??                 illegal   0.00  illegal
+  80   white  ??                 illegal   0.00  illegal
+  summary: 80 plies · 0 ok · 0 verify · 80 illegal · mean conf 0.00
+
+=== wiki_carlsen.jpg === (22.3s)
+header: White="" Black="" Event=""  overall=0.30
+  ply  side   read -> san        legality  conf  state
+  1    white  e4                 legal     0.90  ok
+  2    black  e5                 legal     0.90  ok
+  summary: 2 plies · 2 ok · 0 verify · 0 illegal · mean conf 0.90
+
+=== wiki_chess_score_sheet.jpg === (3.8s)
+header: White="" Black="" Event=""  overall=0.50
+  ply  side   read -> san        legality  conf  state
+  summary: 0 plies · 0 ok · 0 verify · 0 illegal · mean conf 0.00
+
+=== wiki_eisenberg_capablanca.jpg === (13.0s)
+header: White="Eisenberg" Black="J. Capablanca" Event="Two Knights defence"  overall=0.50
+  ply  side   read -> san        legality  conf  state
+  1    white  P-K4               illegal   0.00  illegal
+  2    white  P-K4               illegal   0.00  illegal
+  3    white  S-KB3 -> N-KB3     illegal   0.00  illegal
+  4    white  S-QB3 -> N-QB3     illegal   0.00  illegal
+  5    white  B-B4               illegal   0.00  illegal
+  6    white  S-B3 -> N-B3       illegal   0.00  illegal
+  7    white  S-K5 -> N-K5       illegal   0.00  illegal
+  8    white  P-Q4               illegal   0.00  illegal
+  9    white  PxP                illegal   0.00  illegal
+  10   white  S-R4 -> N-R4       illegal   0.00  illegal
+  11   white  S-B5+ -> N-B5+     illegal   0.00  illegal
+  12   white  P-B3               illegal   0.00  illegal
+  13   white  PxP                illegal   0.00  illegal
+  14   white  PxP                illegal   0.00  illegal
+  15   white  S-K2 -> N-K2       illegal   0.00  illegal
+  16   white  P-KR3              illegal   0.00  illegal
+  17   white  S-B3 -> N-B3       illegal   0.00  illegal
+  18   white  P-K5               illegal   0.00  illegal
+  19   white  S-K5 -> N-K5       illegal   0.00  illegal
+  20   white  Q-Q5               illegal   0.00  illegal
+  21   white  P-KB4              illegal   0.00  illegal
+  22   white  B-B4               illegal   0.00  illegal
+  23   white  P-B3               illegal   0.00  illegal
+  24   white  B-B3               illegal   0.00  illegal
+  25   white  P-Q3               illegal   0.00  illegal
+  26   white  P-Q5               illegal   0.00  illegal
+  27   white  P-KR4              illegal   0.00  illegal
+  28   white  S-KR2 -> N-KR2     illegal   0.00  illegal
+  29   white  Q-R4               illegal   0.00  illegal
+  30   white  B-Q2               illegal   0.00  illegal
+  31   white  S-R5 -> N-R5       illegal   0.00  illegal
+  32   white  O-O                illegal   0.00  illegal
+  33   white  S(R5) B4 -> N(R5)… illegal   0.00  illegal
+  34   white  B-B2               illegal   0.00  illegal
+  35   white  S x B -> N x B     illegal   0.00  illegal
+  36   white  S x S -> N x S     illegal   0.00  illegal
+  37   white  Q-B2               illegal   0.00  illegal
+  38   white  K R-K              illegal   0.00  illegal
+  39   white  P-QB4              illegal   0.00  illegal
+  40   white  P-QR4              illegal   0.00  illegal
+  41   white  Q R-Q              illegal   0.00  illegal
+  42   white  Q R-Q              illegal   0.00  illegal
+  43   white  Q-B3               illegal   0.00  illegal
+  44   white  B-B2               illegal   0.00  illegal
+  45   white  P-R3               illegal   0.00  illegal
+  46   white  PxP                illegal   0.00  illegal
+  47   white  PxP                illegal   0.00  illegal
+  48   white  P-B4               illegal   0.00  illegal
+  49   white  S-K5 -> N-K5       illegal   0.00  illegal
+  50   white  R-B4               illegal   0.00  illegal
+  51   white  S x S -> N x S     illegal   0.00  illegal
+  52   white  Q x S              illegal   0.00  illegal
+  53   white  B-B2               illegal   0.00  illegal
+  54   white  Q x P              illegal   0.00  illegal
+  55   white  Q x B              illegal   0.00  illegal
+  56   white  Q x P              illegal   0.00  illegal
+  57   white  B-K5               illegal   0.00  illegal
+  58   white  Resigns            illegal   0.00  illegal
+  summary: 58 plies · 0 ok · 0 verify · 58 illegal · mean conf 0.00
+
+=== wiki_fischer_score_card.jpg === (19.8s)
+header: White="" Black="" Event=""  overall=0.30
+  ply  side   read -> san        legality  conf  state
+  1    white  P-K4               illegal   0.00  illegal
+  2    white  P-QB4              illegal   0.00  illegal
+  summary: 2 plies · 0 ok · 0 verify · 2 illegal · mean conf 0.00
+
+Total wall time: 2m1.045s across 8 fixtures

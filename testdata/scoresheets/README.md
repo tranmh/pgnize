@@ -33,8 +33,12 @@ Downloaded via `Special:FilePath/<file>`. See each file's Commons page for its e
 
 ## Output
 
-The harness writes a per-move confidence table per image to `RESULTS.txt` in this directory
-(recognized text → SAN, legality, confidence 0–1, and ok/verify/illegal state).
+The harness writes a per-move confidence table per image (recognized text → SAN, legality,
+confidence 0–1, and ok/verify/illegal state), plus per-fixture and total wall-clock timing:
+
+- `RESULTS.txt` — Ollama `minicpm-v` run (`TestRealWorldConfidence`).
+- `RESULTS_GEMINI.txt` — Gemini `gemini-2.5-flash` run (`TestRealWorldConfidenceGemini`,
+  `RUN_REAL_RECOGNITION=1 GEMINI_API_KEY=… go test ./internal/recognition/ -run RealWorldConfidenceGemini -v`).
 
 ## Interpreting the recorded `RESULTS.txt`
 
@@ -45,6 +49,36 @@ illegal moves, and two large scans truncated mid-JSON. The point this demonstrat
 (confidence `0.00`), so nothing bad reaches a saved PGN — exactly the review-loop invariant. The
 full spectrum of states (green `ok` / yellow `verify` / red `illegal`) with real confidence
 scores is exercised deterministically by the `fake` recognizer in the unit and e2e suites
-(the ambiguous `Nd2` → `Nbd2` auto-pick at confidence `0.30` → `verify`). A stronger backend
-(e.g. Gemini, which this build still supports) would yield far more legal reads and therefore
-more green/verify rows here.
+(the ambiguous `Nd2` → `Nbd2` auto-pick at confidence `0.30` → `verify`).
+
+## Ollama vs Gemini (`RESULTS_GEMINI.txt`)
+
+Same 8 fixtures, same Reconcile/confidence logic — only the backend differs. Gemini Flash is
+dramatically stronger at actually reading the moves and never crashed/truncated:
+
+| fixture | Ollama (legal/total) | Gemini (legal/total) | Gemini time |
+|---|---|---|---|
+| `cb_Bericht_ZugRaster.jpg` | 0 / 32 | **34 / 116** | 19.4s |
+| `cb_formulare-screenshot.jpg` | 0 / 38 | **14 / 14** (perfect) | 19.3s |
+| `cb_formulare2.jpg` | 2 / 42 | **11 / 56** | 16.1s |
+| `wiki_anotacion_027.jpg` | JSON-truncation error | 0 / 80 (illegible to both) | 7.4s |
+| `wiki_carlsen.jpg` | 0 / 56 | 2 / 2 | 22.3s |
+| `wiki_chess_score_sheet.jpg` | JSON-truncation error | 0 / 0 (empty) | 3.8s |
+| `wiki_eisenberg_capablanca.jpg` | 0 / 44 | 0 / 58 (descriptive notation) | 13.0s |
+| `wiki_fischer_score_card.jpg` | 0 / 38 | 0 / 2 (descriptive notation) | 19.8s |
+| **total legal reads** | **2** | **61** | **2m1s wall** |
+
+Two caveats on Gemini's remaining `illegal` rows — these are *not* misreads:
+
+1. **Descriptive notation.** `wiki_eisenberg_capablanca` / `wiki_fischer` are old English/Spanish
+   descriptive sheets (`P-K4`, `S-KB3`, `Q x P`). Gemini transcribed them faithfully, but
+   `postprocess.go` only normalizes German SAN (S→N, L→B), so descriptive moves can't be made
+   legal and are correctly surfaced as `illegal`. Supporting descriptive notation would be a
+   separate postprocess feature.
+2. **Move-order divergence.** On the long `cb_Bericht_ZugRaster` sheet the first 34 plies are a
+   spot-on Ruy Lopez, then the read diverges (two-column ordering) and every later ply fails
+   legality from that point — again surfaced, never saved.
+
+The takeaway is unchanged and reinforced: regardless of backend strength, the review loop only
+ever lets legal, reconciled moves through — Gemini just produces far more green `ok` rows to
+start from.

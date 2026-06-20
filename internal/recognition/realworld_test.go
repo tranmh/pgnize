@@ -27,10 +27,35 @@ func TestRealWorldConfidence(t *testing.T) {
 	if os.Getenv("RUN_REAL_RECOGNITION") == "" {
 		t.Skip("set RUN_REAL_RECOGNITION=1 (and run a local Ollama) to exercise real recognition")
 	}
-
 	host := envStr("OLLAMA_HOST", "http://localhost:11434")
 	model := envStr("OLLAMA_MODEL", "minicpm-v")
-	rec := NewOllama(host, model)
+	runRealWorld(t, NewOllama(host, model), "../../testdata/scoresheets/RESULTS.txt")
+}
+
+// TestRealWorldConfidenceGemini runs the same fixtures through Gemini Flash so its accuracy
+// and latency can be compared against the recorded Ollama run. Gated behind
+// RUN_REAL_RECOGNITION=1 and a GEMINI_API_KEY; writes to RESULTS_GEMINI.txt.
+//
+//	RUN_REAL_RECOGNITION=1 GEMINI_API_KEY=... go test ./internal/recognition/ -run RealWorldConfidenceGemini -v
+//
+// Overrides: GEMINI_HOST, GEMINI_MODEL (default gemini-2.5-flash).
+func TestRealWorldConfidenceGemini(t *testing.T) {
+	if os.Getenv("RUN_REAL_RECOGNITION") == "" {
+		t.Skip("set RUN_REAL_RECOGNITION=1 to exercise real recognition")
+	}
+	apiKey := os.Getenv("GEMINI_API_KEY")
+	if apiKey == "" {
+		t.Skip("set GEMINI_API_KEY to exercise the Gemini backend")
+	}
+	host := envStr("GEMINI_HOST", "https://generativelanguage.googleapis.com")
+	model := envStr("GEMINI_MODEL", "gemini-2.5-flash")
+	runRealWorld(t, NewGemini(host, model, apiKey), "../../testdata/scoresheets/RESULTS_GEMINI.txt")
+}
+
+// runRealWorld drives every committed fixture through rec, records per-fixture + total wall
+// time, asserts the confidence invariants, and writes the report to outPath.
+func runRealWorld(t *testing.T, rec Recognizer, outPath string) {
+	t.Helper()
 
 	files, err := filepath.Glob("../../testdata/scoresheets/*.jpg")
 	if err != nil {
@@ -45,6 +70,7 @@ func TestRealWorldConfidence(t *testing.T) {
 	var grand strings.Builder
 	fmt.Fprintf(&grand, "\nReal-world recognition confidence — model=%s, %d fixtures\n", rec.Name(), len(files))
 
+	wallStart := time.Now()
 	for _, f := range files {
 		img, err := os.ReadFile(f)
 		if err != nil {
@@ -52,16 +78,18 @@ func TestRealWorldConfidence(t *testing.T) {
 			continue
 		}
 		ctx, cancel := context.WithTimeout(context.Background(), 12*time.Minute)
+		t0 := time.Now()
 		res, err := rec.Recognize(ctx, ScoreSheetInput{Image: img, MimeType: "image/jpeg"})
+		elapsed := time.Since(t0)
 		cancel()
 		if err != nil {
-			fmt.Fprintf(&grand, "\n=== %s ===\n  recognition error: %v\n", filepath.Base(f), err)
-			t.Logf("%s: recognition error (non-fatal for demo): %v", filepath.Base(f), err)
+			fmt.Fprintf(&grand, "\n=== %s === (%.1fs)\n  recognition error: %v\n", filepath.Base(f), elapsed.Seconds(), err)
+			t.Logf("%s: recognition error (non-fatal for demo) after %s: %v", filepath.Base(f), elapsed.Round(time.Millisecond), err)
 			continue
 		}
 
 		moves := Reconcile(startFEN, res.MoveTokens)
-		grand.WriteString(renderTable(filepath.Base(f), res, moves))
+		grand.WriteString(renderTable(filepath.Base(f), res, moves, elapsed))
 
 		// Invariants: confidence in [0,1]; clean legal moves are confident; illegal are zero.
 		for _, m := range moves {
@@ -76,15 +104,16 @@ func TestRealWorldConfidence(t *testing.T) {
 			}
 		}
 	}
+	fmt.Fprintf(&grand, "\nTotal wall time: %s across %d fixtures\n", time.Since(wallStart).Round(time.Millisecond), len(files))
 
 	t.Log(grand.String())
 	// Also write the report to a file so the full tables survive regardless of -v truncation.
-	_ = os.WriteFile("../../testdata/scoresheets/RESULTS.txt", []byte(grand.String()), 0o644)
+	_ = os.WriteFile(outPath, []byte(grand.String()), 0o644)
 }
 
-func renderTable(name string, res RecognitionResult, moves []domain.Move) string {
+func renderTable(name string, res RecognitionResult, moves []domain.Move, elapsed time.Duration) string {
 	var b strings.Builder
-	fmt.Fprintf(&b, "\n=== %s ===\n", name)
+	fmt.Fprintf(&b, "\n=== %s === (%.1fs)\n", name, elapsed.Seconds())
 	fmt.Fprintf(&b, "header: White=%q Black=%q Event=%q  overall=%.2f\n",
 		res.Header.White, res.Header.Black, res.Header.Event, res.Confidence)
 	fmt.Fprintf(&b, "  %-4s %-6s %-18s %-9s %-5s %s\n", "ply", "side", "read -> san", "legality", "conf", "state")
