@@ -47,8 +47,12 @@ migrate: ## Apply DB migrations
 migrate-down: ## Roll back one migration
 	$(GO) run ./cmd/api -migrate-down
 
-seed: ## Seed a demo user + sample game
-	$(GO) run ./cmd/api -seed
+# Seeding is CLI-only (no server), so AUTH_SECRET is irrelevant — supply a
+# placeholder unless one is already exported (a real env value wins via ?=).
+seed: AUTH_SECRET ?= seed-placeholder-secret-not-used-by-server
+seed: ## Seed the demo user + 100 sample games across 3 players
+	AUTH_SECRET="$(AUTH_SECRET)" $(GO) run ./cmd/api -seed
+	AUTH_SECRET="$(AUTH_SECRET)" $(GO) run ./cmd/seedgames -n 100
 
 up: ## docker compose up (dev profile)
 	docker compose up -d db minio
