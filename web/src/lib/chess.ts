@@ -222,6 +222,50 @@ export function allLegal(moves: EditMove[]): boolean {
   return moves.every((m) => m.legality === "legal");
 }
 
+// Rank candidate SANs by how closely they resemble the recognized handwriting,
+// best match first. When recognition mis-reads a move, the intended move is
+// usually a near-miss of what was written (e.g. "Nf3" read as "Mf3"), so this
+// surfaces the most plausible correction at the top of the list.
+export function rankBySimilarity(options: string[], recognized: string): string[] {
+  const target = normalizeToken(recognized);
+  if (!target) return options;
+  return [...options].sort(
+    (a, b) =>
+      editDistance(normalizeToken(a), target) -
+      editDistance(normalizeToken(b), target),
+  );
+}
+
+// Lowercase and drop check/mate/capture decoration so comparison is about the
+// piece + destination, not punctuation the writer may have omitted.
+function normalizeToken(san: string): string {
+  return san.toLowerCase().replace(/[+#x=]/g, "").trim();
+}
+
+function editDistance(a: string, b: string): number {
+  const m = a.length;
+  const n = b.length;
+  if (m === 0) return n;
+  if (n === 0) return m;
+  let prev = Array.from({ length: n + 1 }, (_, j) => j);
+  let curr = new Array<number>(n + 1);
+  for (let i = 1; i <= m; i++) {
+    curr[0] = i;
+    for (let j = 1; j <= n; j++) {
+      const cost = a[i - 1] === b[j - 1] ? 0 : 1;
+      curr[j] = Math.min(prev[j] + 1, curr[j - 1] + 1, prev[j - 1] + cost);
+    }
+    [prev, curr] = [curr, prev];
+  }
+  return prev[n];
+}
+
+// Split a UCI move ("e2e4", "e7e8q") into its from/to squares for board arrows.
+export function uciToSquares(uci: string): { from: string; to: string } | null {
+  if (!uci || uci.length < 4) return null;
+  return { from: uci.slice(0, 2), to: uci.slice(2, 4) };
+}
+
 // Convert API moves into editable plies (drop computed fields; keep san/clock/text).
 export function toEditablePlies(moves: Move[]): {
   san: string;

@@ -2,7 +2,13 @@
 
 import { useState } from "react";
 import type { EditMove, Legality } from "@/lib/chess";
-import { legalMovesFrom, PLACEHOLDER } from "@/lib/chess";
+import { legalMovesFrom, PLACEHOLDER, rankBySimilarity } from "@/lib/chess";
+import {
+  formatScore,
+  QUALITY_GLYPH,
+  QUALITY_LABEL,
+  type MoveAnnotation,
+} from "@/lib/analysis";
 
 export interface MoveListProps {
   moves: EditMove[];
@@ -15,6 +21,8 @@ export interface MoveListProps {
   onPlaceholder: (index: number) => void;
   onTruncate: (index: number) => void;
   readOnly?: boolean;
+  // Per-ply engine annotations (eval + blunder/mistake/inaccuracy), if analyzed.
+  annotations?: Record<number, MoveAnnotation>;
 }
 
 function badgeClasses(legality: Legality): string {
@@ -39,6 +47,17 @@ function badgeLabel(legality: Legality): string {
   }
 }
 
+function qualityClasses(quality: Exclude<MoveAnnotation["quality"], null>): string {
+  switch (quality) {
+    case "blunder":
+      return "font-bold text-red-600";
+    case "mistake":
+      return "font-bold text-orange-500";
+    case "inaccuracy":
+      return "font-semibold text-yellow-600";
+  }
+}
+
 function moveNumber(side: EditMove["side"], index: number): string {
   // Display 1-based full-move numbers. White ply N -> move ceil((N+1)/2).
   const moveNo = Math.floor(index / 2) + 1;
@@ -55,6 +74,7 @@ export default function MoveList({
   onPlaceholder,
   onTruncate,
   readOnly = false,
+  annotations,
 }: MoveListProps) {
   return (
     <div className="flex flex-col">
@@ -88,6 +108,7 @@ export default function MoveList({
             // Downstream of an illegal/ambiguous ply: greyed + blocked.
             blocked={isBlockedDownstream(moves, i)}
             readOnly={readOnly}
+            annotation={annotations?.[i]}
             onSelect={onSelect}
             onEditSan={onEditSan}
             onInsertAfter={onInsertAfter}
@@ -115,6 +136,7 @@ interface MoveRowProps {
   active: boolean;
   blocked: boolean;
   readOnly: boolean;
+  annotation?: MoveAnnotation;
   onSelect: (index: number | null) => void;
   onEditSan: (index: number, san: string) => void;
   onInsertAfter: (index: number) => void;
@@ -129,6 +151,7 @@ function MoveRow({
   active,
   blocked,
   readOnly,
+  annotation,
   onSelect,
   onEditSan,
   onInsertAfter,
@@ -152,10 +175,17 @@ function MoveRow({
     }
   };
 
-  // Correction dropdown: legal SANs from the position before this ply.
-  const legalOptions =
-    move.legality !== "legal" ? legalMovesFrom(move.fenBefore) : [];
-  const ambiguousOptions = move.ambiguousOptions;
+  // Candidate corrections, ranked so the move most resembling the recognized
+  // handwriting comes first. Ambiguous -> the disambiguated variants; illegal
+  // -> every legal move from the prior position.
+  const rawOptions =
+    move.legality === "ambiguous" && move.ambiguousOptions.length > 1
+      ? move.ambiguousOptions
+      : move.legality === "illegal" && !blocked
+        ? legalMovesFrom(move.fenBefore)
+        : [];
+  const ranked = rankBySimilarity(rawOptions, move.recognizedText || move.san);
+  const topSuggestion = ranked[0];
 
   return (
     <li
@@ -207,6 +237,20 @@ function MoveRow({
           {badgeLabel(move.legality)}
         </span>
 
+        {annotation && (
+          <span className="flex items-center gap-1 font-mono text-[11px] tabular-nums">
+            {annotation.quality && (
+              <span
+                className={qualityClasses(annotation.quality)}
+                title={QUALITY_LABEL[annotation.quality]}
+              >
+                {QUALITY_GLYPH[annotation.quality]}
+              </span>
+            )}
+            <span className="text-gray-400">{formatScore(annotation.score)}</span>
+          </span>
+        )}
+
         {!readOnly && (
           <div className="ml-auto flex items-center gap-1 text-gray-400">
             <RowAction label="?" title="Mark as unreadable placeholder" onClick={() => onPlaceholder(index)} />
@@ -224,26 +268,26 @@ function MoveRow({
         </div>
       )}
 
-      {/* Ambiguous: offer the disambiguated candidates. */}
-      {!readOnly && move.legality === "ambiguous" && ambiguousOptions.length > 1 && (
-        <CorrectionPicker
-          label="Disambiguate"
-          options={ambiguousOptions}
-          onPick={(san) => onEditSan(index, san)}
-        />
-      )}
-
-      {/* Illegal: offer the legal moves for this position. */}
-      {!readOnly &&
-        move.legality === "illegal" &&
-        !blocked &&
-        legalOptions.length > 0 && (
+      {/* Correction help: a one-click best guess plus the full ranked list. */}
+      {!readOnly && ranked.length > 0 && (
+        <div className="flex flex-wrap items-center gap-2 pl-14">
+          {topSuggestion && (
+            <button
+              type="button"
+              onClick={() => onEditSan(index, topSuggestion)}
+              className="rounded border border-blue-300 bg-blue-50 px-2 py-0.5 text-xs text-blue-700 hover:bg-blue-100"
+            >
+              Did you mean{" "}
+              <span className="font-mono font-medium">{topSuggestion}</span>?
+            </button>
+          )}
           <CorrectionPicker
-            label="Pick a legal move"
-            options={legalOptions}
+            label={move.legality === "ambiguous" ? "Disambiguate" : "Other legal moves"}
+            options={ranked}
             onPick={(san) => onEditSan(index, san)}
           />
-        )}
+        </div>
+      )}
     </li>
   );
 }

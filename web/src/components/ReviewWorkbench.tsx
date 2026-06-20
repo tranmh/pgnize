@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { GameDraft, Header, MoveInput } from "@/lib/api-client";
 import {
   allLegal,
@@ -12,7 +12,9 @@ import {
   toEditablePlies,
   type EditMove,
 } from "@/lib/chess";
-import Board from "./Board";
+import { useGameAnalysis } from "@/hooks/useGameAnalysis";
+import EngineBoard from "./EngineBoard";
+import EngineControls from "./EngineControls";
 import MoveList from "./MoveList";
 import HeaderFields from "./HeaderFields";
 import PhotoViewer from "./PhotoViewer";
@@ -54,12 +56,24 @@ export default function ReviewWorkbench({
   const [header, setHeader] = useState<Header>(draft.header);
   const [plies, setPlies] = useState<Ply[]>(toEditablePlies(draft.moves));
   const [activeIndex, setActiveIndex] = useState<number | null>(null);
+  // Toggle a clean read-only "view" of the game vs. the editing surface.
+  const [viewMode, setViewMode] = useState(false);
+  const [engineOn, setEngineOn] = useState(true);
 
   // Recompute legality whenever the plies change.
   const moves: EditMove[] = useMemo(
     () => rebuild(startFen, plies),
     [startFen, plies],
   );
+
+  // Whole-game engine analysis (eval + blunder/mistake/inaccuracy per move).
+  const analysis = useGameAnalysis(startFen, moves);
+
+  // Any edit invalidates prior analysis (ply indices and positions shift).
+  useEffect(() => {
+    analysis.clear();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [plies]);
 
   const boardFen =
     activeIndex === null
@@ -71,7 +85,8 @@ export default function ReviewWorkbench({
   const dragFen =
     activeIndex === null ? tailFen(moves, startFen) : boardFen;
 
-  const canEdit = !readOnly && !saving;
+  const ro = readOnly || viewMode;
+  const canEdit = !ro && !saving;
 
   const handleDrag = (from: string, to: string): boolean => {
     if (!canEdit) return false;
@@ -164,22 +179,56 @@ export default function ReviewWorkbench({
 
         {/* Right: board + header + move list */}
         <section className="flex flex-col gap-4 rounded-lg border border-gray-200 bg-white p-4">
-          <div className="flex flex-col items-center gap-2">
-            <Board
-              fen={boardFen}
-              orientation={orientation}
-              allowDragging={canEdit}
-              onMove={handleDrag}
-              squareStyles={squareStyles}
-            />
-            <p className="text-xs text-gray-400">
-              {readOnly
-                ? "Read-only"
-                : "Drag a piece to add or replace the selected move. Click a move to view its position."}
-            </p>
-          </div>
+          {!readOnly && (
+            <div className="flex items-center justify-between gap-2">
+              <div className="inline-flex overflow-hidden rounded border border-gray-300 text-xs">
+                <button
+                  type="button"
+                  onClick={() => setViewMode(false)}
+                  className={`px-3 py-1 ${!viewMode ? "bg-blue-600 text-white" : "bg-white text-gray-600 hover:bg-gray-100"}`}
+                >
+                  Edit
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setViewMode(true)}
+                  className={`px-3 py-1 ${viewMode ? "bg-blue-600 text-white" : "bg-white text-gray-600 hover:bg-gray-100"}`}
+                >
+                  View
+                </button>
+              </div>
+              <EngineControls
+                engineOn={engineOn}
+                onToggleEngine={setEngineOn}
+                analyzing={analysis.analyzing}
+                progress={analysis.progress}
+                available={analysis.available}
+                hasAnnotations={Object.keys(analysis.annotations).length > 0}
+                onAnalyze={analysis.run}
+                onClear={analysis.clear}
+              />
+            </div>
+          )}
 
-          <HeaderFields header={header} onChange={setHeader} readOnly={readOnly} />
+          <EngineBoard
+            fen={boardFen}
+            orientation={orientation}
+            allowDragging={canEdit}
+            onMove={handleDrag}
+            squareStyles={squareStyles}
+            count={moves.length}
+            activeIndex={activeIndex}
+            onSelectIndex={setActiveIndex}
+            keyboard
+            engine={engineOn}
+            caption={
+              ro
+                ? "Use ◀ ▶ or arrow keys to step through the game."
+                : "Drag a piece to add or replace the selected move. Click a move to view its position."
+            }
+          />
+
+          <HeaderFields header={header} onChange={setHeader} readOnly={ro} />
 
           <MoveList
             moves={moves}
@@ -190,7 +239,8 @@ export default function ReviewWorkbench({
             onDelete={remove}
             onPlaceholder={placeholder}
             onTruncate={truncate}
-            readOnly={readOnly}
+            readOnly={ro}
+            annotations={analysis.annotations}
           />
 
           {serverFailedAt != null && (
@@ -202,7 +252,7 @@ export default function ReviewWorkbench({
 
           {footer}
 
-          {!readOnly && (
+          {!ro && (
             <div className="flex items-center gap-3">
               <button
                 type="button"

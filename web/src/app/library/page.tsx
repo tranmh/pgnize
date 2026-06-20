@@ -194,6 +194,13 @@ export default function LibraryPage() {
                     <div className="flex justify-end gap-2">
                       <button
                         type="button"
+                        onClick={() => router.push(`/games/${g.id}/view`)}
+                        className="rounded border border-gray-300 px-2 py-1 text-xs hover:bg-gray-100"
+                      >
+                        View
+                      </button>
+                      <button
+                        type="button"
                         onClick={() => router.push(`/review/${g.id}`)}
                         className="rounded border border-gray-300 px-2 py-1 text-xs hover:bg-gray-100"
                       >
