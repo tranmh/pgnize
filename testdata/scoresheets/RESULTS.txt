@@ -1,0 +1,288 @@
+
+Real-world recognition confidence — model=ollama:minicpm-v, 8 fixtures
+
+=== cb_Bericht_ZugRaster.jpg ===
+header: White="" Black="" Event="Tartessos"  overall=0.50
+  ply  side   read -> san        legality  conf  state
+  1    white  ?                  illegal   0.00  illegal
+  2    white  ?                  illegal   0.00  illegal
+  3    white  ?                  illegal   0.00  illegal
+  4    white  ?                  illegal   0.00  illegal
+  5    white  ?                  illegal   0.00  illegal
+  6    white  ?                  illegal   0.00  illegal
+  7    white  ?                  illegal   0.00  illegal
+  8    white  ?                  illegal   0.00  illegal
+  9    white  ?                  illegal   0.00  illegal
+  10   white  ?                  illegal   0.00  illegal
+  11   white  ?                  illegal   0.00  illegal
+  12   white  ?                  illegal   0.00  illegal
+  13   white  ?                  illegal   0.00  illegal
+  14   white  ?                  illegal   0.00  illegal
+  15   white  ?                  illegal   0.00  illegal
+  16   white  ?                  illegal   0.00  illegal
+  17   white  ?                  illegal   0.00  illegal
+  18   white  ?                  illegal   0.00  illegal
+  19   white  ?                  illegal   0.00  illegal
+  20   white  ?                  illegal   0.00  illegal
+  21   white  ?                  illegal   0.00  illegal
+  22   white  ?                  illegal   0.00  illegal
+  23   white  ?                  illegal   0.00  illegal
+  24   white  ?                  illegal   0.00  illegal
+  25   white  ?                  illegal   0.00  illegal
+  26   white  ?                  illegal   0.00  illegal
+  27   white  ?                  illegal   0.00  illegal
+  28   white  ?                  illegal   0.00  illegal
+  29   white  ?                  illegal   0.00  illegal
+  30   white  ?                  illegal   0.00  illegal
+  31   white  ?                  illegal   0.00  illegal
+  32   white  ?                  illegal   0.00  illegal
+  summary: 32 plies · 0 ok · 0 verify · 32 illegal · mean conf 0.00
+
+=== cb_formulare-screenshot.jpg ===
+header: White="" Black="" Event=""  overall=0.30
+  ply  side   read -> san        legality  conf  state
+  1    white  e5                 illegal   0.00  illegal
+  2    white  d6                 illegal   0.00  illegal
+  3    white  Nc3                illegal   0.00  illegal
+  4    white  Bb8                illegal   0.00  illegal
+  5    white  Qh4                illegal   0.00  illegal
+  6    white  Rg1                illegal   0.00  illegal
+  7    white  Kf2                illegal   0.00  illegal
+  8    white  d5                 illegal   0.00  illegal
+  9    white  Nc3                illegal   0.00  illegal
+  10   white  Bb8                illegal   0.00  illegal
+  11   white  Qh4                illegal   0.00  illegal
+  12   white  Rg1                illegal   0.00  illegal
+  13   white  Kf2                illegal   0.00  illegal
+  14   white  d5                 illegal   0.00  illegal
+  15   white  Nc3                illegal   0.00  illegal
+  16   white  Bb8                illegal   0.00  illegal
+  17   white  Qh4                illegal   0.00  illegal
+  18   white  Rg1                illegal   0.00  illegal
+  19   white  Kf2                illegal   0.00  illegal
+  20   white  d5                 illegal   0.00  illegal
+  21   white  Nc3                illegal   0.00  illegal
+  22   white  Bb8                illegal   0.00  illegal
+  23   white  Qh4                illegal   0.00  illegal
+  24   white  Rg1                illegal   0.00  illegal
+  25   white  Kf2                illegal   0.00  illegal
+  26   white  d5                 illegal   0.00  illegal
+  27   white  Nc3                illegal   0.00  illegal
+  28   white  Bb8                illegal   0.00  illegal
+  29   white  Qh4                illegal   0.00  illegal
+  30   white  Rg1                illegal   0.00  illegal
+  31   white  Kf2                illegal   0.00  illegal
+  32   white  d5                 illegal   0.00  illegal
+  33   white  Nc3                illegal   0.00  illegal
+  34   white  Bb8                illegal   0.00  illegal
+  35   white  Qh4                illegal   0.00  illegal
+  36   white  Rg1                illegal   0.00  illegal
+  37   white  Kf2                illegal   0.00  illegal
+  38   white  d5                 illegal   0.00  illegal
+  summary: 38 plies · 0 ok · 0 verify · 38 illegal · mean conf 0.00
+
+=== cb_formulare2.jpg ===
+header: White="" Black="" Event=""  overall=0.30
+  ply  side   read -> san        legality  conf  state
+  1    white  c4                 legal     0.90  ok
+  2    black  e5                 legal     0.90  ok
+  3    white  d5                 illegal   0.00  illegal
+  4    white  Sf6 -> Nf6         illegal   0.00  illegal
+  5    white  Qg2                illegal   0.00  illegal
+  6    white  C2                 illegal   0.00  illegal
+  7    white  c7                 illegal   0.00  illegal
+  8    white  Sx1 -> Nx1         illegal   0.00  illegal
+  9    white  d8                 illegal   0.00  illegal
+  10   white  Kb6                illegal   0.00  illegal
+  11   white  Lh3 -> Bh3         illegal   0.00  illegal
+  12   white  ?                  illegal   0.00  illegal
+  13   white  D4 -> Q4           illegal   0.00  illegal
+  14   white  ?                  illegal   0.00  illegal
+  15   white  C1                 illegal   0.00  illegal
+  16   white  Sx2 -> Nx2         illegal   0.00  illegal
+  17   white  Kb5                illegal   0.00  illegal
+  18   white  Lh6 -> Bh6         illegal   0.00  illegal
+  19   white  D3 -> Q3           illegal   0.00  illegal
+  20   white  ?                  illegal   0.00  illegal
+  21   white  C4                 illegal   0.00  illegal
+  22   white  ?                  illegal   0.00  illegal
+  23   white  Sx7 -> Nx7         illegal   0.00  illegal
+  24   white  Kd8                illegal   0.00  illegal
+  25   white  Lh5 -> Bh5         illegal   0.00  illegal
+  26   white  ?                  illegal   0.00  illegal
+  27   white  C6                 illegal   0.00  illegal
+  28   white  ?                  illegal   0.00  illegal
+  29   white  D2 -> Q2           illegal   0.00  illegal
+  30   white  ?                  illegal   0.00  illegal
+  31   white  Kb3                illegal   0.00  illegal
+  32   white  ?                  illegal   0.00  illegal
+  33   white  Lh4 -> Bh4         illegal   0.00  illegal
+  34   white  ?                  illegal   0.00  illegal
+  35   white  C5                 illegal   0.00  illegal
+  36   white  ?                  illegal   0.00  illegal
+  37   white  D2 -> Q2           illegal   0.00  illegal
+  38   white  ?                  illegal   0.00  illegal
+  39   white  Kb3                illegal   0.00  illegal
+  40   white  ?                  illegal   0.00  illegal
+  41   white  Lh4 -> Bh4         illegal   0.00  illegal
+  42   white  ?                  illegal   0.00  illegal
+  summary: 42 plies · 2 ok · 0 verify · 40 illegal · mean conf 0.04
+
+=== wiki_anotacion_027.jpg ===
+  recognition error: decode model json: unexpected end of JSON input
+
+=== wiki_carlsen.jpg ===
+header: White="" Black="" Event=""  overall=0.30
+  ply  side   read -> san        legality  conf  state
+  1    white  ?                  illegal   0.00  illegal
+  2    white  ?                  illegal   0.00  illegal
+  3    white  ?                  illegal   0.00  illegal
+  4    white  ?                  illegal   0.00  illegal
+  5    white  ?                  illegal   0.00  illegal
+  6    white  ?                  illegal   0.00  illegal
+  7    white  ?                  illegal   0.00  illegal
+  8    white  ?                  illegal   0.00  illegal
+  9    white  ?                  illegal   0.00  illegal
+  10   white  ?                  illegal   0.00  illegal
+  11   white  ?                  illegal   0.00  illegal
+  12   white  ?                  illegal   0.00  illegal
+  13   white  ?                  illegal   0.00  illegal
+  14   white  ?                  illegal   0.00  illegal
+  15   white  ?                  illegal   0.00  illegal
+  16   white  ?                  illegal   0.00  illegal
+  17   white  ?                  illegal   0.00  illegal
+  18   white  ?                  illegal   0.00  illegal
+  19   white  ?                  illegal   0.00  illegal
+  20   white  ?                  illegal   0.00  illegal
+  21   white  ?                  illegal   0.00  illegal
+  22   white  ?                  illegal   0.00  illegal
+  23   white  ?                  illegal   0.00  illegal
+  24   white  ?                  illegal   0.00  illegal
+  25   white  ?                  illegal   0.00  illegal
+  26   white  ?                  illegal   0.00  illegal
+  27   white  ?                  illegal   0.00  illegal
+  28   white  ?                  illegal   0.00  illegal
+  29   white  ?                  illegal   0.00  illegal
+  30   white  ?                  illegal   0.00  illegal
+  31   white  ?                  illegal   0.00  illegal
+  32   white  ?                  illegal   0.00  illegal
+  33   white  ?                  illegal   0.00  illegal
+  34   white  ?                  illegal   0.00  illegal
+  35   white  ?                  illegal   0.00  illegal
+  36   white  ?                  illegal   0.00  illegal
+  37   white  ?                  illegal   0.00  illegal
+  38   white  ?                  illegal   0.00  illegal
+  39   white  ?                  illegal   0.00  illegal
+  40   white  ?                  illegal   0.00  illegal
+  41   white  ?                  illegal   0.00  illegal
+  42   white  ?                  illegal   0.00  illegal
+  43   white  ?                  illegal   0.00  illegal
+  44   white  ?                  illegal   0.00  illegal
+  45   white  ?                  illegal   0.00  illegal
+  46   white  ?                  illegal   0.00  illegal
+  47   white  ?                  illegal   0.00  illegal
+  48   white  ?                  illegal   0.00  illegal
+  49   white  ?                  illegal   0.00  illegal
+  50   white  ?                  illegal   0.00  illegal
+  51   white  ?                  illegal   0.00  illegal
+  52   white  ?                  illegal   0.00  illegal
+  53   white  ?                  illegal   0.00  illegal
+  54   white  ?                  illegal   0.00  illegal
+  55   white  ?                  illegal   0.00  illegal
+  56   white  ?                  illegal   0.00  illegal
+  summary: 56 plies · 0 ok · 0 verify · 56 illegal · mean conf 0.00
+
+=== wiki_chess_score_sheet.jpg ===
+  recognition error: decode model json: unexpected end of JSON input
+
+=== wiki_eisenberg_capablanca.jpg ===
+header: White="" Black="" Event=""  overall=0.30
+  ply  side   read -> san        legality  conf  state
+  1    white  ?-?                illegal   0.00  illegal
+  2    white  ?-?                illegal   0.00  illegal
+  3    white  ?-?                illegal   0.00  illegal
+  4    white  ?-?                illegal   0.00  illegal
+  5    white  ?-?                illegal   0.00  illegal
+  6    white  ?-?                illegal   0.00  illegal
+  7    white  ?-?                illegal   0.00  illegal
+  8    white  ?-?                illegal   0.00  illegal
+  9    white  ?-?                illegal   0.00  illegal
+  10   white  ?-?                illegal   0.00  illegal
+  11   white  ?-?                illegal   0.00  illegal
+  12   white  ?-?                illegal   0.00  illegal
+  13   white  ?-?                illegal   0.00  illegal
+  14   white  ?-?                illegal   0.00  illegal
+  15   white  ?-?                illegal   0.00  illegal
+  16   white  ?-?                illegal   0.00  illegal
+  17   white  ?-?                illegal   0.00  illegal
+  18   white  ?-?                illegal   0.00  illegal
+  19   white  ?-?                illegal   0.00  illegal
+  20   white  ?-?                illegal   0.00  illegal
+  21   white  ?-?                illegal   0.00  illegal
+  22   white  ?-?                illegal   0.00  illegal
+  23   white  ?-?                illegal   0.00  illegal
+  24   white  ?-?                illegal   0.00  illegal
+  25   white  ?-?                illegal   0.00  illegal
+  26   white  ?-?                illegal   0.00  illegal
+  27   white  ?-?                illegal   0.00  illegal
+  28   white  ?-?                illegal   0.00  illegal
+  29   white  ?-?                illegal   0.00  illegal
+  30   white  ?-?                illegal   0.00  illegal
+  31   white  ?-?                illegal   0.00  illegal
+  32   white  ?-?                illegal   0.00  illegal
+  33   white  ?-?                illegal   0.00  illegal
+  34   white  ?-?                illegal   0.00  illegal
+  35   white  ?-?                illegal   0.00  illegal
+  36   white  ?-?                illegal   0.00  illegal
+  37   white  ?-?                illegal   0.00  illegal
+  38   white  ?-?                illegal   0.00  illegal
+  39   white  ?-?                illegal   0.00  illegal
+  40   white  ?-?                illegal   0.00  illegal
+  41   white  ?-?                illegal   0.00  illegal
+  42   white  ?-?                illegal   0.00  illegal
+  43   white  ?-?                illegal   0.00  illegal
+  44   white  ?-?                illegal   0.00  illegal
+  summary: 44 plies · 0 ok · 0 verify · 44 illegal · mean conf 0.00
+
+=== wiki_fischer_score_card.jpg ===
+header: White="" Black="" Event="Olympiade"  overall=0.50
+  ply  side   read -> san        legality  conf  state
+  1    white  ?                  illegal   0.00  illegal
+  2    white  ?                  illegal   0.00  illegal
+  3    white  Rd4                illegal   0.00  illegal
+  4    white  Nc5                illegal   0.00  illegal
+  5    white  Bb1                illegal   0.00  illegal
+  6    white  Qe7                illegal   0.00  illegal
+  7    white  ?                  illegal   0.00  illegal
+  8    white  ?                  illegal   0.00  illegal
+  9    white  ?                  illegal   0.00  illegal
+  10   white  ?                  illegal   0.00  illegal
+  11   white  ?                  illegal   0.00  illegal
+  12   white  ?                  illegal   0.00  illegal
+  13   white  ?                  illegal   0.00  illegal
+  14   white  ?                  illegal   0.00  illegal
+  15   white  ?                  illegal   0.00  illegal
+  16   white  ?                  illegal   0.00  illegal
+  17   white  ?                  illegal   0.00  illegal
+  18   white  ?                  illegal   0.00  illegal
+  19   white  ?                  illegal   0.00  illegal
+  20   white  ?                  illegal   0.00  illegal
+  21   white  ?                  illegal   0.00  illegal
+  22   white  ?                  illegal   0.00  illegal
+  23   white  ?                  illegal   0.00  illegal
+  24   white  ?                  illegal   0.00  illegal
+  25   white  ?                  illegal   0.00  illegal
+  26   white  ?                  illegal   0.00  illegal
+  27   white  ?                  illegal   0.00  illegal
+  28   white  ?                  illegal   0.00  illegal
+  29   white  ?                  illegal   0.00  illegal
+  30   white  ?                  illegal   0.00  illegal
+  31   white  ?                  illegal   0.00  illegal
+  32   white  ?                  illegal   0.00  illegal
+  33   white  ?                  illegal   0.00  illegal
+  34   white  ?                  illegal   0.00  illegal
+  35   white  ?                  illegal   0.00  illegal
+  36   white  ?                  illegal   0.00  illegal
+  37   white  ?                  illegal   0.00  illegal
+  38   white  ?                  illegal   0.00  illegal
+  summary: 38 plies · 0 ok · 0 verify · 38 illegal · mean conf 0.00

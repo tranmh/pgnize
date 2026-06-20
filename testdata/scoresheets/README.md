@@ -35,3 +35,16 @@ Downloaded via `Special:FilePath/<file>`. See each file's Commons page for its e
 
 The harness writes a per-move confidence table per image to `RESULTS.txt` in this directory
 (recognized text → SAN, legality, confidence 0–1, and ok/verify/illegal state).
+
+## Interpreting the recorded `RESULTS.txt`
+
+The committed run used the local **`minicpm-v`** Ollama model on CPU — a small model that reads
+real handwritten German score sheets poorly: it mostly emits `?` (illegible) or hallucinated
+illegal moves, and two large scans truncated mid-JSON. The point this demonstrates is the
+**correctness guarantee**, not model accuracy: every unreliable read is surfaced as `illegal`
+(confidence `0.00`), so nothing bad reaches a saved PGN — exactly the review-loop invariant. The
+full spectrum of states (green `ok` / yellow `verify` / red `illegal`) with real confidence
+scores is exercised deterministically by the `fake` recognizer in the unit and e2e suites
+(the ambiguous `Nd2` → `Nbd2` auto-pick at confidence `0.30` → `verify`). A stronger backend
+(e.g. Gemini, which this build still supports) would yield far more legal reads and therefore
+more green/verify rows here.
