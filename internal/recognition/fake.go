@@ -16,8 +16,12 @@ func NewFake() *Fake { return &Fake{} }
 func (f *Fake) Name() string { return "fake" }
 
 func (f *Fake) Recognize(_ context.Context, _ ScoreSheetInput) (RecognitionResult, error) {
-	// Ruy Lopez opening written in German piece letters (S=N, L=B).
-	tokens := []string{"e4", "e5", "Sf3", "Sc6", "Lb5", "a6", "La4", "Sf6", "0-0", "Le7"}
+	// An Italian-game line in German piece letters (S=N, L=B), including castling (0-0). The
+	// last half-move is a deliberately under-disambiguated "Sd2": after this line both white
+	// knights (b1 and f3) reach d2, so it is ambiguous. The pipeline auto-picks a
+	// disambiguation and flags it low-confidence ("verify"), exercising the per-move
+	// confidence path deterministically while keeping every move legal and replayable.
+	tokens := []string{"e4", "e5", "Sf3", "Sc6", "Lc4", "Lc5", "0-0", "d6", "d3", "Sf6", "Sd2"}
 	mt := make([]MoveToken, len(tokens))
 	for i, t := range tokens {
 		side := SideWhite

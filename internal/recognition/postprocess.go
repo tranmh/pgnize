@@ -215,11 +215,16 @@ func Reconcile(startFEN string, tokens []MoveToken) []domain.Move {
 	return out
 }
 
-// cleanConfidence scores a cleanly-validated legal move. The model's own per-token score is
-// used only when it is a meaningful low signal (a future per-cell uncertainty hook); the flat
-// defaults today (0.5/0.9) carry no real information, so a clean read scores confClean.
+// flatModelConf is the per-token score the current recognizers emit when they have no real
+// per-move signal (ollama/gemini default). Anything at or above it is treated as "no signal".
+const flatModelConf = 0.5
+
+// cleanConfidence scores a cleanly-validated legal move. Today's recognizers don't self-report
+// per-move confidence — they emit a flat default — so a clean read scores confClean. The score
+// is honored only when a model genuinely flags a cell as uncertain (strictly below the flat
+// default): a future per-cell uncertainty hook that downgrades a clean-but-shaky read to verify.
 func cleanConfidence(modelConf float64) float64 {
-	if modelConf > 0 && modelConf < confThreshold {
+	if modelConf > 0 && modelConf < flatModelConf {
 		return modelConf
 	}
 	return confClean

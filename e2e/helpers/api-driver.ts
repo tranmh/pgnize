@@ -12,7 +12,16 @@ export type Draft = {
   source: string;
   header: Record<string, string>;
   startFen: string;
-  moves: { ply: number; side: string; san: string; isLegal: boolean; clockSec: number | null }[];
+  moves: {
+    ply: number;
+    side: string;
+    san: string;
+    isLegal: boolean;
+    clockSec: number | null;
+    confidence: number;
+    corrected: boolean;
+    recognizedText: string;
+  }[];
   imageUrl: string;
 };
 

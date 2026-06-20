@@ -136,7 +136,9 @@ export default function ReviewWorkbench({
   const replaceSan = (index: number, san: string) => {
     setPlies((prev) => {
       const next = [...prev];
-      next[index] = { ...next[index], san };
+      // A reviewer edit takes ownership of the ply: raise confidence so it is no longer
+      // flagged for verification.
+      next[index] = { ...next[index], san, confidence: 1 };
       return next;
     });
   };

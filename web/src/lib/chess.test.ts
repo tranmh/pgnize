@@ -58,12 +58,14 @@ describe("reviewState", () => {
     expect(reviewState(moves[2], false)).toBe("unread");
   });
 
-  it("treats a reviewer-edited (diverged) move as confident", () => {
-    // recognizedText differs from san => corrected => full confidence regardless of input.
+  it("keeps a server auto-corrected (diverged, low-confidence) move flagged for verify", () => {
+    // A guessed disambiguation diverges from the recognized text but is still low-confidence;
+    // rebuild must preserve that so it shows as "verify" (reviewer edits raise it in the UI).
     const moves = rebuild(STARTING_FEN, [
-      ply({ san: "e4", recognizedText: "e5", confidence: 0.2 }),
+      ply({ san: "Nf3", recognizedText: "Sd2", confidence: 0.3 }),
     ]);
-    expect(reviewState(moves[0], false)).toBe("ok");
+    expect(moves[0].corrected).toBe(true);
+    expect(reviewState(moves[0], false)).toBe("verify");
   });
 });
 

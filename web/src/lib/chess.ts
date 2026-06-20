@@ -157,9 +157,11 @@ export function rebuild(
   plies.forEach((p, i) => {
     const side = sideForPly(i, startFen || STARTING_FEN);
     const corrected = p.san.trim() !== p.recognizedText.trim();
-    // A reviewer-edited ply (diverged from the recognized text) is, by definition, confirmed,
-    // so it carries full confidence regardless of the original recognition score.
-    const confidence = corrected ? 1 : p.confidence ?? 1;
+    // Carry the recognition confidence as-is. A server-side auto-correction (e.g. a guessed
+    // disambiguation) diverges from the recognized text but is still low-confidence and must
+    // stay flagged for verification. Reviewer edits raise confidence to 1.0 in the workbench,
+    // not here, so we don't confuse the two.
+    const confidence = p.confidence ?? 1;
     const common = {
       san: p.san,
       clockSec: p.clockSec,

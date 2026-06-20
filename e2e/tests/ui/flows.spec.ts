@@ -53,7 +53,7 @@ test.describe("authenticated UI flows", () => {
     await page.waitForURL(/\/review\/[0-9a-f-]+$/, { timeout: 30_000 });
 
     // The recognized Ruy Lopez should render with legal moves.
-    await expect(page.getByText("Moves")).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Moves" })).toBeVisible();
     await expect(page.getByText("legal").first()).toBeVisible({ timeout: 15_000 });
 
     await page.getByRole("button", { name: "Save game" }).click();
@@ -107,7 +107,7 @@ test.describe("authenticated UI flows", () => {
     ]);
 
     await page.goto(`/review/${gid}`);
-    await expect(page.getByText("Moves")).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Moves" })).toBeVisible();
     const saveBtn = page.getByRole("button", { name: "Save game" });
     await expect(saveBtn).toBeEnabled();
 
@@ -129,6 +129,33 @@ test.describe("authenticated UI flows", () => {
 });
 
 test.describe("anonymous UI flow", () => {
+  test("recognized game flags a low-confidence move to verify, and confirming clears it", async ({
+    page,
+  }) => {
+    const errors = trackPageErrors(page);
+    await useEnglish(page);
+    await page.goto("/convert");
+    await page.setInputFiles('input[type="file"]', {
+      name: "sheet.png",
+      mimeType: "image/png",
+      buffer: PIXEL_PNG,
+    });
+    await expect(page.getByRole("heading", { name: "Moves" })).toBeVisible({ timeout: 30_000 });
+
+    // The fake game has exactly one ambiguous (auto-picked) move -> "1 to verify".
+    await expect(page.getByText("1 to verify")).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByRole("button", { name: "Next to verify" })).toBeVisible();
+
+    // Confirm the flagged move via its per-move chip (stable title), and the count clears.
+    await page
+      .locator('button[title^="Recognized with low confidence"]')
+      .first()
+      .click();
+    await expect(page.getByText("1 to verify")).toHaveCount(0);
+
+    expect(errors, `uncaught page errors:\n${errors.join("\n")}`).toEqual([]);
+  });
+
   test("convert page: upload -> recognize -> review workbench appears", async ({ page }) => {
     const errors = trackPageErrors(page);
     await useEnglish(page);
@@ -139,7 +166,7 @@ test.describe("anonymous UI flow", () => {
       buffer: PIXEL_PNG,
     });
     // No submit button on /convert: the dropzone fires recognition on file select.
-    await expect(page.getByText("Moves")).toBeVisible({ timeout: 30_000 });
+    await expect(page.getByRole("heading", { name: "Moves" })).toBeVisible({ timeout: 30_000 });
     await expect(page.getByText("legal").first()).toBeVisible({ timeout: 15_000 });
     // The anonymous primary action is "Download PGN", not "Save game".
     await expect(page.getByRole("button", { name: "Download PGN" })).toBeVisible();

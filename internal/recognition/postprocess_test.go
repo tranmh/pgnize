@@ -203,6 +203,30 @@ func TestFakeRecognizerProducesLegalGame(t *testing.T) {
 	}
 }
 
+func TestFakeRecognizerFlagsAmbiguousMove(t *testing.T) {
+	res, err := NewFake().Recognize(context.Background(), ScoreSheetInput{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	moves := Reconcile(string(chesskit.StartingFEN()), res.MoveTokens)
+	var verify int
+	for _, m := range moves {
+		if !m.IsLegal {
+			t.Fatalf("fake move %d (%s) should be legal", m.Ply, m.SAN)
+		}
+		if m.IsLegal && m.Confidence < confThreshold {
+			verify++
+			if !m.Corrected || len(m.Suggestions) < 2 {
+				t.Errorf("low-confidence fake move %d should be corrected with suggestions, got corrected=%v suggestions=%v",
+					m.Ply, m.Corrected, m.Suggestions)
+			}
+		}
+	}
+	if verify != 1 {
+		t.Fatalf("expected exactly one low-confidence (verify) move in the fake game, got %d", verify)
+	}
+}
+
 func TestSelectFewShot(t *testing.T) {
 	ex := []Example{{}, {}, {}, {}}
 	if got := SelectFewShot(ex, 2); len(got) != 2 {
