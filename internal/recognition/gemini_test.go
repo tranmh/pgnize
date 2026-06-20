@@ -30,6 +30,11 @@ func TestGeminiRecognizeParsesCandidate(t *testing.T) {
 		if !strings.Contains(string(body), "responseSchema") {
 			t.Errorf("request missing responseSchema: %s", body)
 		}
+		// Thinking must be capped: 2.5 models otherwise spend the whole output-token
+		// budget on internal reasoning and truncate the JSON after a single move.
+		if !strings.Contains(string(body), `"thinkingConfig":{"thinkingBudget":0}`) {
+			t.Errorf("request missing thinkingConfig with budget 0: %s", body)
+		}
 		// Candidate text is the model's JSON answer.
 		inner := `{"header":{"white":"Doe, John","black":"Roe, Jane","result":"1-0"},` +
 			`"moves":[{"no":1,"white":"e4","black":"e5"},{"no":2,"white":"Sf3","black":"Sc6"}]}`

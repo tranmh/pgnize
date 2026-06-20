@@ -22,6 +22,11 @@ const (
 	geminiDefaultMaxTokens = 4096
 	geminiDefaultTimeout   = 2 * time.Minute
 	geminiDefaultMaxDim    = 1600 // longest image edge sent to the model
+	// Gemini 2.5 models "think" by default, and those thinking tokens are billed against
+	// maxOutputTokens — on a long score sheet the model can burn the entire budget on
+	// internal reasoning and truncate the JSON answer after a single move. Transcription
+	// needs no chain-of-thought, so we disable thinking by default (0 = off, -1 = dynamic).
+	geminiDefaultThinkingBudget = 0
 )
 
 // Gemini is a Recognizer backed by Google's Gemini API (AI Studio / generativelanguage).
@@ -34,18 +39,22 @@ type Gemini struct {
 	Client    *http.Client
 	MaxTokens int
 	MaxDim    int
+	// ThinkingBudget caps the model's internal reasoning tokens. 0 disables thinking
+	// (the right default for transcription); -1 lets the model decide dynamically.
+	ThinkingBudget int
 }
 
 // NewGemini builds a Gemini-backed recognizer. GEMINI_MAX_TOKENS and GEMINI_MAX_DIM
 // override the output-token budget and the image downscale size.
 func NewGemini(host, model, apiKey string) *Gemini {
 	return &Gemini{
-		Host:      strings.TrimRight(host, "/"),
-		Model:     model,
-		APIKey:    apiKey,
-		Client:    &http.Client{Timeout: geminiDefaultTimeout},
-		MaxTokens: envInt("GEMINI_MAX_TOKENS", geminiDefaultMaxTokens),
-		MaxDim:    envInt("GEMINI_MAX_DIM", geminiDefaultMaxDim),
+		Host:           strings.TrimRight(host, "/"),
+		Model:          model,
+		APIKey:         apiKey,
+		Client:         &http.Client{Timeout: geminiDefaultTimeout},
+		MaxTokens:      envInt("GEMINI_MAX_TOKENS", geminiDefaultMaxTokens),
+		MaxDim:         envInt("GEMINI_MAX_DIM", geminiDefaultMaxDim),
+		ThinkingBudget: envInt("GEMINI_THINKING_BUDGET", geminiDefaultThinkingBudget),
 	}
 }
 
@@ -66,11 +75,16 @@ type geminiContent struct {
 	Parts []geminiPart `json:"parts"`
 }
 
+type geminiThinkingConfig struct {
+	ThinkingBudget int `json:"thinkingBudget"`
+}
+
 type geminiGenerationConfig struct {
-	Temperature      float64        `json:"temperature"`
-	ResponseMimeType string         `json:"responseMimeType"`
-	ResponseSchema   map[string]any `json:"responseSchema,omitempty"`
-	MaxOutputTokens  int            `json:"maxOutputTokens,omitempty"`
+	Temperature      float64               `json:"temperature"`
+	ResponseMimeType string                `json:"responseMimeType"`
+	ResponseSchema   map[string]any        `json:"responseSchema,omitempty"`
+	MaxOutputTokens  int                   `json:"maxOutputTokens,omitempty"`
+	ThinkingConfig   *geminiThinkingConfig `json:"thinkingConfig,omitempty"`
 }
 
 type geminiRequest struct {
@@ -141,6 +155,8 @@ func (g *Gemini) Recognize(ctx context.Context, in ScoreSheetInput) (Recognition
 			ResponseMimeType: "application/json",
 			ResponseSchema:   geminiResponseSchema,
 			MaxOutputTokens:  g.MaxTokens,
+			// Explicitly cap thinking so reasoning tokens cannot starve the JSON answer.
+			ThinkingConfig: &geminiThinkingConfig{ThinkingBudget: g.ThinkingBudget},
 		},
 	}
 	buf, _ := json.Marshal(reqBody)
