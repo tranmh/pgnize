@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { fetchRecognizers, type RecognizerInfo } from "@/lib/api-client";
+import { useT } from "@/i18n/I18nProvider";
 
 // RecognizerSelect lets the user pick which engine reads the score sheet. It self-loads
 // the advertised backends and renders nothing when only one (or none) is available, so the
@@ -15,6 +16,7 @@ export default function RecognizerSelect({
   onChange: (key: string) => void;
   disabled?: boolean;
 }) {
+  const t = useT();
   const [options, setOptions] = useState<RecognizerInfo[]>([]);
 
   useEffect(() => {
@@ -42,7 +44,7 @@ export default function RecognizerSelect({
 
   return (
     <label className="flex flex-col gap-1 text-sm">
-      <span className="font-medium text-gray-700">Recognition engine</span>
+      <span className="font-medium text-gray-700">{t("recognizer.label")}</span>
       <select
         value={value}
         disabled={disabled}

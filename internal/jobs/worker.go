@@ -60,6 +60,13 @@ func (p *Pool) loop(ctx context.Context, id int) {
 		}
 		if err := Process(ctx, p.Deps, job); err != nil {
 			slog.Error("process job", "worker", id, "job", job.JobID, "err", err)
+			// Process only returns an error when a DB op itself failed (its
+			// graceful failures mark the job and return nil), so the job is
+			// still 'running'. Best-effort mark it failed — using a context
+			// detached from cancellation — so clients stop waiting.
+			if mErr := p.Deps.Store.MarkJobFailed(context.WithoutCancel(ctx), job.JobID, err.Error()); mErr != nil {
+				slog.Error("mark job failed after process error", "worker", id, "job", job.JobID, "err", mErr)
+			}
 		}
 	}
 }

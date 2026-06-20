@@ -8,8 +8,10 @@ import { useAuth } from "@/components/AuthProvider";
 import UploadDropzone from "@/components/UploadDropzone";
 import RecognizerSelect from "@/components/RecognizerSelect";
 import Spinner from "@/components/Spinner";
+import { useT } from "@/i18n/I18nProvider";
 
 export default function UploadPage() {
+  const t = useT();
   const router = useRouter();
   const { user, loading: authLoading } = useAuth();
 
@@ -30,10 +32,14 @@ export default function UploadPage() {
     if (poll.phase === "done" && poll.gameId) {
       router.replace(`/review/${poll.gameId}`);
     } else if (poll.phase === "failed" || poll.phase === "timeout") {
-      setError(poll.error ?? "Recognition failed.");
+      setError(
+        poll.phase === "timeout"
+          ? t("recog.timeout")
+          : (poll.error ?? t("recog.failed")),
+      );
       setJobId(null);
     }
-  }, [poll.phase, poll.gameId, poll.error, router]);
+  }, [poll.phase, poll.gameId, poll.error, router, t]);
 
   async function submit() {
     if (!file) return;
@@ -45,10 +51,10 @@ export default function UploadPage() {
     } catch (e) {
       setError(
         e instanceof ApiError && e.status === 429
-          ? "Rate limit reached. Please wait and try again."
+          ? t("upload.errRateLimit")
           : e instanceof Error
             ? e.message
-            : "Upload failed.",
+            : t("upload.errGeneric"),
       );
     } finally {
       setSubmitting(false);
@@ -58,7 +64,7 @@ export default function UploadPage() {
   if (authLoading || !user) {
     return (
       <div className="flex justify-center py-16">
-        <Spinner label="Loading…" />
+        <Spinner label={t("common.loading")} />
       </div>
     );
   }
@@ -68,11 +74,8 @@ export default function UploadPage() {
   return (
     <div className="mx-auto flex max-w-xl flex-col gap-6">
       <div>
-        <h1 className="text-2xl font-bold">New game from photo</h1>
-        <p className="mt-1 text-sm text-gray-500">
-          Upload a score-sheet photo. After recognition you&apos;ll review and
-          verify the moves before saving to your library.
-        </p>
+        <h1 className="text-2xl font-bold">{t("upload.title")}</h1>
+        <p className="mt-1 text-sm text-gray-500">{t("upload.subtitle")}</p>
       </div>
 
       {processing ? (
@@ -80,13 +83,11 @@ export default function UploadPage() {
           <Spinner
             label={
               poll.status === "running"
-                ? "Reading handwriting…"
-                : "Queued for recognition…"
+                ? t("recog.reading")
+                : t("recog.queued")
             }
           />
-          <p className="text-xs text-gray-400">
-            You&apos;ll be taken to the review screen automatically.
-          </p>
+          <p className="text-xs text-gray-400">{t("upload.autoRedirect")}</p>
         </div>
       ) : (
         <>
@@ -105,11 +106,7 @@ export default function UploadPage() {
               onChange={(e) => setConsent(e.target.checked)}
               className="mt-0.5"
             />
-            <span>
-              Allow this image to improve recognition. Your photo and corrected
-              transcription may be used to train the model. You can leave this
-              unchecked; non-consented uploads are deleted automatically.
-            </span>
+            <span>{t("upload.consent")}</span>
           </label>
 
           {error && <p className="text-sm text-red-600">{error}</p>}
@@ -120,7 +117,7 @@ export default function UploadPage() {
             onClick={submit}
             className="rounded bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:bg-gray-300"
           >
-            {submitting ? "Uploading…" : "Recognize"}
+            {submitting ? t("upload.submitting") : t("upload.submit")}
           </button>
         </>
       )}

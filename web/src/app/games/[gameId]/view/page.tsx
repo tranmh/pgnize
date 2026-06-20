@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { getGame, type GameDraft } from "@/lib/api-client";
 import { useAuth } from "@/components/AuthProvider";
+import { useT } from "@/i18n/I18nProvider";
 import GameViewer from "@/components/GameViewer";
 import Spinner from "@/components/Spinner";
 
@@ -13,6 +14,7 @@ export default function GameViewPage({
 }: {
   params: Promise<{ gameId: string }>;
 }) {
+  const t = useT();
   const { gameId } = use(params);
   const router = useRouter();
   const { user, loading: authLoading } = useAuth();
@@ -35,7 +37,7 @@ export default function GameViewPage({
       })
       .catch((e) => {
         if (!cancelled)
-          setLoadError(e instanceof Error ? e.message : "Could not load game.");
+          setLoadError(e instanceof Error ? e.message : t("reviewPage.loadError"));
       })
       .finally(() => {
         if (!cancelled) setLoading(false);
@@ -48,7 +50,7 @@ export default function GameViewPage({
   if (authLoading || (!user && !loadError) || loading) {
     return (
       <div className="flex justify-center py-16">
-        <Spinner label="Loading game…" />
+        <Spinner label={t("common.loadingGame")} />
       </div>
     );
   }
@@ -56,13 +58,13 @@ export default function GameViewPage({
   if (loadError || !draft) {
     return (
       <div className="rounded-lg border border-red-300 bg-red-50 p-6">
-        <p className="font-medium text-red-700">Could not load this game</p>
+        <p className="font-medium text-red-700">{t("reviewPage.couldNotLoad")}</p>
         <p className="mt-1 text-sm text-red-600">{loadError}</p>
         <Link
           href="/library"
           className="mt-4 inline-block rounded border border-red-300 bg-white px-3 py-1 text-sm text-red-700 hover:bg-red-100"
         >
-          Back to library
+          {t("common.backToLibrary")}
         </Link>
       </div>
     );
@@ -71,13 +73,13 @@ export default function GameViewPage({
   return (
     <div className="flex flex-col gap-4">
       <div className="flex items-center gap-3">
-        <h1 className="text-2xl font-bold">View game</h1>
+        <h1 className="text-2xl font-bold">{t("viewPage.title")}</h1>
         <div className="ml-auto flex items-center gap-3 text-sm">
           <Link href={`/review/${gameId}`} className="text-blue-600 underline">
-            Edit
+            {t("viewPage.edit")}
           </Link>
           <Link href="/library" className="text-blue-600 underline">
-            Back to library
+            {t("common.backToLibrary")}
           </Link>
         </div>
       </div>

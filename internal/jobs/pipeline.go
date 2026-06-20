@@ -5,6 +5,7 @@ package jobs
 
 import (
 	"context"
+	"encoding/json"
 	"io"
 
 	"github.com/tranmh/chesskit"
@@ -71,11 +72,18 @@ func Process(ctx context.Context, d Deps, job store.ClaimedJob) error {
 	if err != nil {
 		return d.Store.MarkJobFailed(ctx, job.JobID, "create draft: "+err.Error())
 	}
-	raw := res.RawJSON
-	if raw == "" {
-		raw = "{}"
+	return d.Store.MarkJobDone(ctx, job.JobID, gameID, res.Confidence, safeRawJSON(res.RawJSON))
+}
+
+// safeRawJSON returns raw when it is valid JSON, else "{}". result_raw_json is a
+// jsonb column, and a num_predict cap can truncate the model output mid-JSON —
+// the moves are still salvaged, but storing the invalid raw would fail the
+// ::jsonb cast with SQLSTATE 22P02.
+func safeRawJSON(raw string) string {
+	if raw != "" && json.Valid([]byte(raw)) {
+		return raw
 	}
-	return d.Store.MarkJobDone(ctx, job.JobID, gameID, res.Confidence, raw)
+	return "{}"
 }
 
 func toExamples(rows []store.ExampleRow) []recognition.Example {

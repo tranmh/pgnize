@@ -1,6 +1,7 @@
 "use client";
 
 import type { Header, Result } from "@/lib/api-client";
+import { useT } from "@/i18n/I18nProvider";
 import PlayerAutocomplete from "./PlayerAutocomplete";
 
 export interface HeaderFieldsProps {
@@ -18,52 +19,53 @@ export default function HeaderFields({
   onChange,
   readOnly = false,
 }: HeaderFieldsProps) {
+  const t = useT();
   const set = <K extends keyof Header>(key: K, val: Header[K]) =>
     onChange({ ...header, [key]: val });
 
   return (
     <div className="grid grid-cols-2 gap-x-4 gap-y-3">
-      <Field label="White" htmlFor="hdr-white">
+      <Field label={t("header.white")} htmlFor="hdr-white">
         <PlayerAutocomplete
           id="hdr-white"
-          aria-label="White player"
+          aria-label={t("header.whitePlayer")}
           value={header.white}
           onChange={(v) => set("white", v)}
-          placeholder="White player"
+          placeholder={t("header.whitePlayer")}
         />
       </Field>
-      <Field label="Black" htmlFor="hdr-black">
+      <Field label={t("header.black")} htmlFor="hdr-black">
         <PlayerAutocomplete
           id="hdr-black"
-          aria-label="Black player"
+          aria-label={t("header.blackPlayer")}
           value={header.black}
           onChange={(v) => set("black", v)}
-          placeholder="Black player"
+          placeholder={t("header.blackPlayer")}
         />
       </Field>
-      <Field label="Event" htmlFor="hdr-event">
+      <Field label={t("header.event")} htmlFor="hdr-event">
         <Text id="hdr-event" value={header.event} onChange={(v) => set("event", v)} readOnly={readOnly} />
       </Field>
-      <Field label="Site" htmlFor="hdr-site">
+      <Field label={t("header.site")} htmlFor="hdr-site">
         <Text id="hdr-site" value={header.site} onChange={(v) => set("site", v)} readOnly={readOnly} />
       </Field>
-      <Field label="Date (YYYY.MM.DD)" htmlFor="hdr-date">
+      <Field label={t("header.date")} htmlFor="hdr-date">
         <Text id="hdr-date" value={header.date} onChange={(v) => set("date", v)} readOnly={readOnly} placeholder="2026.06.19" />
       </Field>
-      <Field label="Round" htmlFor="hdr-round">
+      <Field label={t("header.round")} htmlFor="hdr-round">
         <Text id="hdr-round" value={header.round} onChange={(v) => set("round", v)} readOnly={readOnly} />
       </Field>
-      <Field label="Board" htmlFor="hdr-board">
+      <Field label={t("header.board")} htmlFor="hdr-board">
         <Text id="hdr-board" value={header.board} onChange={(v) => set("board", v)} readOnly={readOnly} />
       </Field>
-      <Field label="Result" htmlFor="hdr-result">
+      <Field label={t("header.result")} htmlFor="hdr-result">
         <select
           id="hdr-result"
           value={header.result}
           disabled={readOnly}
           onChange={(e) => set("result", e.target.value as Result)}
           className="w-full rounded border border-gray-300 px-2 py-1 text-sm focus:border-blue-400 focus:outline-none focus:ring-1 focus:ring-blue-300 disabled:bg-gray-50"
-          aria-label="Result"
+          aria-label={t("header.result")}
         >
           {RESULTS.map((r) => (
             <option key={r} value={r}>

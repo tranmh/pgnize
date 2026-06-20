@@ -5,10 +5,12 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { ApiError, login } from "@/lib/api-client";
 import { useAuth } from "@/components/AuthProvider";
+import { useT } from "@/i18n/I18nProvider";
 
 export default function LoginPage() {
   const router = useRouter();
   const { setUser } = useAuth();
+  const t = useT();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -25,10 +27,10 @@ export default function LoginPage() {
     } catch (err) {
       setError(
         err instanceof ApiError && err.status === 401
-          ? "Incorrect email or password."
+          ? t("login.errInvalid")
           : err instanceof Error
             ? err.message
-            : "Login failed.",
+            : t("login.errGeneric"),
       );
     } finally {
       setBusy(false);
@@ -37,10 +39,10 @@ export default function LoginPage() {
 
   return (
     <div className="mx-auto max-w-sm">
-      <h1 className="text-2xl font-bold">Log in</h1>
+      <h1 className="text-2xl font-bold">{t("login.title")}</h1>
       <form onSubmit={submit} className="mt-6 flex flex-col gap-4">
         <label className="flex flex-col gap-1 text-sm">
-          Email
+          {t("common.email")}
           <input
             type="email"
             required
@@ -51,7 +53,7 @@ export default function LoginPage() {
           />
         </label>
         <label className="flex flex-col gap-1 text-sm">
-          Password
+          {t("common.password")}
           <input
             type="password"
             required
@@ -67,13 +69,13 @@ export default function LoginPage() {
           disabled={busy}
           className="rounded bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:bg-gray-300"
         >
-          {busy ? "Signing in…" : "Log in"}
+          {busy ? t("login.submitting") : t("login.submit")}
         </button>
       </form>
       <p className="mt-4 text-sm text-gray-500">
-        No account?{" "}
+        {t("login.noAccount")}{" "}
         <Link href="/register" className="text-blue-600 underline">
-          Register
+          {t("nav.register")}
         </Link>
       </p>
     </div>

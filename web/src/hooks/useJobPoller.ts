@@ -4,8 +4,10 @@ import { useEffect, useRef, useState } from "react";
 import type { JobState } from "@/lib/api-client";
 
 const POLL_INTERVAL_MS = 1500;
-// ~5 minutes cap, per the contract.
-const MAX_DURATION_MS = 5 * 60 * 1000;
+// Cap a touch above the server-side Ollama timeout (default 10 min) so a real
+// server failure surfaces as a "failed" status with its error, rather than this
+// client-side timeout firing first. Local CPU VLM runs legitimately take minutes.
+const MAX_DURATION_MS = 12 * 60 * 1000;
 
 export type PollPhase = "idle" | "polling" | "done" | "failed" | "timeout";
 

@@ -1,5 +1,7 @@
 "use client";
 
+import { useT } from "@/i18n/I18nProvider";
+
 export interface EngineControlsProps {
   engineOn: boolean;
   onToggleEngine: (on: boolean) => void;
@@ -23,10 +25,11 @@ export default function EngineControls({
   onAnalyze,
   onClear,
 }: EngineControlsProps) {
+  const t = useT();
   if (!available) {
     return (
       <p className="text-xs text-gray-400">
-        Engine unavailable in this browser.
+        {t("engine.unavailable")}
       </p>
     );
   }
@@ -39,7 +42,7 @@ export default function EngineControls({
           checked={engineOn}
           onChange={(e) => onToggleEngine(e.target.checked)}
         />
-        Engine eval
+        {t("engine.eval")}
       </label>
 
       {analyzing ? (
@@ -48,7 +51,7 @@ export default function EngineControls({
           onClick={onClear}
           className="rounded border border-gray-300 px-2.5 py-1 text-xs hover:bg-gray-100"
         >
-          Analyzing… {Math.round(progress * 100)}% (stop)
+          {t("engine.analyzing", { pct: Math.round(progress * 100) })}
         </button>
       ) : hasAnnotations ? (
         <button
@@ -56,7 +59,7 @@ export default function EngineControls({
           onClick={onClear}
           className="rounded border border-gray-300 px-2.5 py-1 text-xs hover:bg-gray-100"
         >
-          Clear analysis
+          {t("engine.clear")}
         </button>
       ) : (
         <button
@@ -64,7 +67,7 @@ export default function EngineControls({
           onClick={onAnalyze}
           className="rounded border border-gray-300 px-2.5 py-1 text-xs hover:bg-gray-100"
         >
-          Analyze game
+          {t("engine.analyze")}
         </button>
       )}
     </div>

@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
+import { useT } from "@/i18n/I18nProvider";
 
 export interface PhotoViewerProps {
   src: string;
@@ -9,7 +10,9 @@ export interface PhotoViewerProps {
 
 // Lightweight pan/zoom viewer for the score-sheet photo. Wheel/buttons zoom;
 // drag pans. No external deps.
-export default function PhotoViewer({ src, alt = "Score sheet" }: PhotoViewerProps) {
+export default function PhotoViewer({ src, alt }: PhotoViewerProps) {
+  const t = useT();
+  const altText = alt || t("photo.alt");
   const [scale, setScale] = useState(1);
   const [offset, setOffset] = useState({ x: 0, y: 0 });
   const dragging = useRef<{ x: number; y: number } | null>(null);
@@ -26,15 +29,15 @@ export default function PhotoViewer({ src, alt = "Score sheet" }: PhotoViewerPro
     <div className="flex h-full flex-col">
       <div className="flex items-center gap-2 border-b border-gray-200 pb-2">
         <span className="text-sm font-semibold uppercase tracking-wide text-gray-500">
-          Photo
+          {t("photo.title")}
         </span>
         <div className="ml-auto flex items-center gap-1">
-          <ZoomButton label="−" title="Zoom out" onClick={() => zoomBy(-0.25)} />
+          <ZoomButton label="−" title={t("photo.zoomOut")} onClick={() => zoomBy(-0.25)} />
           <span className="w-12 text-center text-xs text-gray-500">
             {Math.round(scale * 100)}%
           </span>
-          <ZoomButton label="+" title="Zoom in" onClick={() => zoomBy(0.25)} />
-          <ZoomButton label="⤢" title="Reset view" onClick={reset} />
+          <ZoomButton label="+" title={t("photo.zoomIn")} onClick={() => zoomBy(0.25)} />
+          <ZoomButton label="⤢" title={t("photo.reset")} onClick={reset} />
         </div>
       </div>
 
@@ -60,7 +63,7 @@ export default function PhotoViewer({ src, alt = "Score sheet" }: PhotoViewerPro
         {/* eslint-disable-next-line @next/next/no-img-element -- presigned external URL, dynamic, no optimization wanted */}
         <img
           src={src}
-          alt={alt}
+          alt={altText}
           draggable={false}
           className="absolute left-1/2 top-1/2 max-w-none select-none"
           style={{

@@ -11,12 +11,14 @@ import {
   type ListGamesParams,
 } from "@/lib/api-client";
 import { useAuth } from "@/components/AuthProvider";
+import { useT } from "@/i18n/I18nProvider";
 import Spinner from "@/components/Spinner";
 import { downloadText, pgnFilename } from "@/lib/download";
 
 const PAGE_SIZE = 20;
 
 export default function LibraryPage() {
+  const t = useT();
   const router = useRouter();
   const { user, loading: authLoading } = useAuth();
 
@@ -42,7 +44,7 @@ export default function LibraryPage() {
       setTotal(res.total);
       setPage(res.page);
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Could not load games.");
+      setError(e instanceof Error ? e.message : t("library.errLoad"));
     } finally {
       setLoading(false);
     }
@@ -67,7 +69,7 @@ export default function LibraryPage() {
       const pgn = await getGamePgn(id);
       downloadText(pgnFilename(white, black), pgn);
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Download failed.");
+      setError(e instanceof Error ? e.message : t("library.errDownload"));
     }
   }
 
@@ -77,7 +79,7 @@ export default function LibraryPage() {
       const pgn = await exportGamesBundle([...selected]);
       downloadText(`pgnize_bundle_${selected.size}_games.pgn`, pgn);
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Bundle export failed.");
+      setError(e instanceof Error ? e.message : t("library.errBundle"));
     }
   }
 
@@ -86,14 +88,14 @@ export default function LibraryPage() {
       const { game } = await createManualGame();
       router.push(`/review/${game.id}`);
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Could not create a draft.");
+      setError(e instanceof Error ? e.message : t("library.errDraft"));
     }
   }
 
   if (authLoading || !user) {
     return (
       <div className="flex justify-center py-16">
-        <Spinner label="Loading…" />
+        <Spinner label={t("common.loading")} />
       </div>
     );
   }
@@ -101,21 +103,21 @@ export default function LibraryPage() {
   return (
     <div className="flex flex-col gap-5">
       <div className="flex flex-wrap items-center gap-3">
-        <h1 className="text-2xl font-bold">Library</h1>
+        <h1 className="text-2xl font-bold">{t("library.title")}</h1>
         <div className="ml-auto flex gap-2">
           <button
             type="button"
             onClick={() => router.push("/upload")}
             className="rounded bg-blue-600 px-3 py-2 text-sm font-medium text-white hover:bg-blue-700"
           >
-            New from photo
+            {t("library.newFromPhoto")}
           </button>
           <button
             type="button"
             onClick={newManual}
             className="rounded border border-gray-300 px-3 py-2 text-sm hover:bg-gray-100"
           >
-            Enter manually
+            {t("library.enterManually")}
           </button>
         </div>
       </div>
@@ -126,20 +128,20 @@ export default function LibraryPage() {
 
       {selected.size > 0 && (
         <div className="flex items-center gap-3 rounded border border-blue-200 bg-blue-50 px-3 py-2 text-sm">
-          <span>{selected.size} selected</span>
+          <span>{t("library.selected", { n: selected.size })}</span>
           <button
             type="button"
             onClick={downloadBundle}
             className="rounded bg-blue-600 px-3 py-1 text-white hover:bg-blue-700"
           >
-            Download bundle PGN
+            {t("library.downloadBundle")}
           </button>
           <button
             type="button"
             onClick={() => setSelected(new Set())}
             className="text-gray-500 underline"
           >
-            Clear
+            {t("library.clear")}
           </button>
         </div>
       )}
@@ -152,11 +154,11 @@ export default function LibraryPage() {
 
       {loading ? (
         <div className="flex justify-center py-16">
-          <Spinner label="Loading games…" />
+          <Spinner label={t("library.loadingGames")} />
         </div>
       ) : games.length === 0 ? (
         <div className="rounded-lg border border-dashed border-gray-300 bg-white py-16 text-center text-gray-500">
-          No saved games yet. Convert a photo or enter one manually to start.
+          {t("library.empty")}
         </div>
       ) : (
         <div className="overflow-x-auto rounded-lg border border-gray-200 bg-white">
@@ -164,13 +166,13 @@ export default function LibraryPage() {
             <thead className="border-b border-gray-200 text-left text-xs uppercase tracking-wide text-gray-500">
               <tr>
                 <th className="w-8 px-3 py-2" />
-                <th className="px-3 py-2">White</th>
-                <th className="px-3 py-2">Black</th>
-                <th className="px-3 py-2">Event</th>
-                <th className="px-3 py-2">Date</th>
-                <th className="px-3 py-2">Result</th>
-                <th className="px-3 py-2">Moves</th>
-                <th className="px-3 py-2 text-right">Actions</th>
+                <th className="px-3 py-2">{t("library.colWhite")}</th>
+                <th className="px-3 py-2">{t("library.colBlack")}</th>
+                <th className="px-3 py-2">{t("library.colEvent")}</th>
+                <th className="px-3 py-2">{t("library.colDate")}</th>
+                <th className="px-3 py-2">{t("library.colResult")}</th>
+                <th className="px-3 py-2">{t("library.colMoves")}</th>
+                <th className="px-3 py-2 text-right">{t("library.colActions")}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
@@ -181,7 +183,7 @@ export default function LibraryPage() {
                       type="checkbox"
                       checked={selected.has(g.id)}
                       onChange={() => toggleSelect(g.id)}
-                      aria-label={`Select ${g.white} vs ${g.black}`}
+                      aria-label={t("library.selectAria", { white: g.white, black: g.black })}
                     />
                   </td>
                   <td className="px-3 py-2 font-medium">{g.white || "—"}</td>
@@ -197,21 +199,21 @@ export default function LibraryPage() {
                         onClick={() => router.push(`/games/${g.id}/view`)}
                         className="rounded border border-gray-300 px-2 py-1 text-xs hover:bg-gray-100"
                       >
-                        View
+                        {t("library.view")}
                       </button>
                       <button
                         type="button"
                         onClick={() => router.push(`/review/${g.id}`)}
                         className="rounded border border-gray-300 px-2 py-1 text-xs hover:bg-gray-100"
                       >
-                        Open
+                        {t("library.open")}
                       </button>
                       <button
                         type="button"
                         onClick={() => downloadOne(g.id, g.white, g.black)}
                         className="rounded border border-gray-300 px-2 py-1 text-xs hover:bg-gray-100"
                       >
-                        PGN
+                        {t("library.pgn")}
                       </button>
                     </div>
                   </td>
@@ -230,10 +232,10 @@ export default function LibraryPage() {
             onClick={() => setFilters((f) => ({ ...f, page: page - 1 }))}
             className="rounded border border-gray-300 px-3 py-1 disabled:opacity-40"
           >
-            Previous
+            {t("library.previous")}
           </button>
           <span className="text-gray-500">
-            Page {page} of {totalPages}
+            {t("library.pageOf", { page, total: totalPages })}
           </span>
           <button
             type="button"
@@ -241,7 +243,7 @@ export default function LibraryPage() {
             onClick={() => setFilters((f) => ({ ...f, page: page + 1 }))}
             className="rounded border border-gray-300 px-3 py-1 disabled:opacity-40"
           >
-            Next
+            {t("library.next")}
           </button>
         </div>
       )}
@@ -254,6 +256,7 @@ function SearchFilters({
 }: {
   onApply: (f: ListGamesParams) => void;
 }) {
+  const t = useT();
   const [q, setQ] = useState("");
   const [player, setPlayer] = useState("");
   const [event, setEvent] = useState("");
@@ -277,43 +280,43 @@ function SearchFilters({
       <input
         value={q}
         onChange={(e) => setQ(e.target.value)}
-        placeholder="Search…"
-        aria-label="Search games"
+        placeholder={t("library.searchPlaceholder")}
+        aria-label={t("library.searchAria")}
         className="col-span-2 rounded border border-gray-300 px-2 py-1 text-sm md:col-span-2"
       />
       <input
         value={player}
         onChange={(e) => setPlayer(e.target.value)}
-        placeholder="Player"
-        aria-label="Filter by player"
+        placeholder={t("library.playerPlaceholder")}
+        aria-label={t("library.playerAria")}
         className="rounded border border-gray-300 px-2 py-1 text-sm"
       />
       <input
         value={event}
         onChange={(e) => setEvent(e.target.value)}
-        placeholder="Event"
-        aria-label="Filter by event"
+        placeholder={t("library.eventPlaceholder")}
+        aria-label={t("library.eventAria")}
         className="rounded border border-gray-300 px-2 py-1 text-sm"
       />
       <input
         value={from}
         onChange={(e) => setFrom(e.target.value)}
-        placeholder="From (YYYY.MM.DD)"
-        aria-label="From date"
+        placeholder={t("library.fromPlaceholder")}
+        aria-label={t("library.fromAria")}
         className="rounded border border-gray-300 px-2 py-1 text-sm"
       />
       <input
         value={to}
         onChange={(e) => setTo(e.target.value)}
-        placeholder="To (YYYY.MM.DD)"
-        aria-label="To date"
+        placeholder={t("library.toPlaceholder")}
+        aria-label={t("library.toAria")}
         className="rounded border border-gray-300 px-2 py-1 text-sm"
       />
       <button
         type="submit"
         className="col-span-2 rounded bg-gray-800 px-3 py-1 text-sm text-white hover:bg-gray-900 md:col-span-6 md:w-32"
       >
-        Apply
+        {t("library.apply")}
       </button>
     </form>
   );

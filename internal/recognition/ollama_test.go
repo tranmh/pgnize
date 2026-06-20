@@ -2,10 +2,47 @@ package recognition
 
 import (
 	"bytes"
+	"encoding/json"
 	"image"
 	"image/jpeg"
 	"testing"
+	"time"
 )
+
+func TestNewOllamaDefaultTimeoutAndKeepAlive(t *testing.T) {
+	o := NewOllama("h", "m")
+	if o.Client.Timeout != defaultTimeout {
+		t.Fatalf("default client timeout = %s, want %s", o.Client.Timeout, defaultTimeout)
+	}
+	if o.KeepAlive != defaultKeepAlive {
+		t.Fatalf("default keep-alive = %q, want %q", o.KeepAlive, defaultKeepAlive)
+	}
+}
+
+func TestNewOllamaTimeoutFromEnv(t *testing.T) {
+	t.Setenv("OLLAMA_TIMEOUT_SEC", "720")
+	t.Setenv("OLLAMA_KEEP_ALIVE", "1h")
+	o := NewOllama("h", "m")
+	if o.Client.Timeout != 720*time.Second {
+		t.Fatalf("client timeout = %s, want 720s", o.Client.Timeout)
+	}
+	if o.KeepAlive != "1h" {
+		t.Fatalf("keep-alive = %q, want %q", o.KeepAlive, "1h")
+	}
+}
+
+func TestOllamaRequestCarriesKeepAlive(t *testing.T) {
+	// keep_alive must be serialized so the model stays resident between sheets
+	// (a cold reload of a multi-GB VLM otherwise blows the recognition budget).
+	o := NewOllama("h", "m")
+	body, err := json.Marshal(ollamaRequest{Model: o.Model, KeepAlive: o.KeepAlive})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !bytes.Contains(body, []byte(`"keep_alive":"30m"`)) {
+		t.Fatalf("keep_alive missing from request body: %s", body)
+	}
+}
 
 func TestSalvageMovesFromTruncatedJSON(t *testing.T) {
 	// Mid-output truncation (num_predict cap): header + two complete moves, then a
