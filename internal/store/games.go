@@ -60,9 +60,9 @@ func (s *Store) CreateDraftGame(ctx context.Context, d NewDraft) (string, error)
 func insertMoves(ctx context.Context, tx pgx.Tx, gameID string, moves []domain.Move) error {
 	for _, m := range moves {
 		if _, err := tx.Exec(ctx,
-			`INSERT INTO moves (game_id, ply, side, san, fen_after, clock_sec, is_legal, recognized_text, corrected)
-			 VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)`,
-			gameID, m.Ply, m.Side, m.SAN, m.FenAfter, m.ClockSec, m.IsLegal, m.RecognizedText, m.Corrected,
+			`INSERT INTO moves (game_id, ply, side, san, fen_after, clock_sec, is_legal, recognized_text, corrected, confidence)
+			 VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)`,
+			gameID, m.Ply, m.Side, m.SAN, m.FenAfter, m.ClockSec, m.IsLegal, m.RecognizedText, m.Corrected, m.Confidence,
 		); err != nil {
 			return err
 		}
@@ -88,7 +88,7 @@ func (s *Store) GetGame(ctx context.Context, id string) (domain.GameDraft, GameM
 		return g, meta, err
 	}
 	rows, err := s.Pool.Query(ctx,
-		`SELECT ply, side, san, fen_after, clock_sec, is_legal, recognized_text, corrected
+		`SELECT ply, side, san, fen_after, clock_sec, is_legal, recognized_text, corrected, confidence
 		   FROM moves WHERE game_id = $1 ORDER BY ply`, id)
 	if err != nil {
 		return g, meta, err
@@ -98,7 +98,7 @@ func (s *Store) GetGame(ctx context.Context, id string) (domain.GameDraft, GameM
 	for rows.Next() {
 		var m domain.Move
 		if err := rows.Scan(&m.Ply, &m.Side, &m.SAN, &m.FenAfter, &m.ClockSec, &m.IsLegal,
-			&m.RecognizedText, &m.Corrected); err != nil {
+			&m.RecognizedText, &m.Corrected, &m.Confidence); err != nil {
 			return g, meta, err
 		}
 		g.Moves = append(g.Moves, m)

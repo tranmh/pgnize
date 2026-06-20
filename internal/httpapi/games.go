@@ -45,12 +45,13 @@ func buildVerifiedGame(h domain.Header, startFEN string, in []moveInput) (verifi
 	prev := chesskit.FEN(startFEN)
 	for i, m := range in {
 		moves[i] = domain.Move{
-			Ply:      i + 1,
-			Side:     sideToMove(string(prev)),
-			SAN:      string(sans[i]),
-			FenAfter: string(positions[i]),
-			ClockSec: m.ClockSec,
-			IsLegal:  true,
+			Ply:        i + 1,
+			Side:       sideToMove(string(prev)),
+			SAN:        string(sans[i]),
+			FenAfter:   string(positions[i]),
+			ClockSec:   m.ClockSec,
+			IsLegal:    true,
+			Confidence: 1.0, // human-verified on save/export
 		}
 		ckMoves[i] = chesskit.Move{SAN: sans[i], FromFEN: prev, ToFEN: positions[i], ClockSec: m.ClockSec}
 		prev = positions[i]

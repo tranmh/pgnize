@@ -28,11 +28,81 @@ func TestGermanToSAN(t *testing.T) {
 		"Lc4+":    "Bc4+",
 		"remis":   "",      // result word, not a move
 		"aufg.":   "",      // ressignation word
+		// Long algebraic notation the model was not trained on -> reduce to short SAN.
+		"Sf3-e5":  "Ne5",   // piece long move
+		"Sf3xe5":  "Nxe5",  // piece long capture
+		"Td1-d8":  "Rd8",   // rook long move
+		"e2-e4":   "e4",    // pawn long move
+		"e4:d5":   "exd5",  // pawn long capture (German colon)
+		"e4xd5":   "exd5",  // pawn long capture (x)
 	}
 	for in, want := range cases {
 		if got := GermanToSAN(in); got != want {
 			t.Errorf("GermanToSAN(%q) = %q, want %q", in, got, want)
 		}
+	}
+}
+
+func TestReconcileConfidenceForCleanGame(t *testing.T) {
+	tokens := []MoveToken{{Text: "e4"}, {Text: "e5"}, {Text: "Sf3"}}
+	moves := Reconcile("", tokens)
+	for i, m := range moves {
+		if m.Confidence < confThreshold {
+			t.Errorf("clean legal move %d (%s) confidence=%.2f, want >= %.2f", i, m.SAN, m.Confidence, confThreshold)
+		}
+	}
+}
+
+func TestReconcileConfidenceForAutoCorrected(t *testing.T) {
+	// "Nf6" after 1.e4 e5 auto-corrects to Nf3 -> legal but low confidence (verify).
+	moves := Reconcile("", []MoveToken{{Text: "e4"}, {Text: "e5"}, {Text: "Nf6"}})
+	m := moves[2]
+	if !m.IsLegal || !m.Corrected {
+		t.Fatalf("expected auto-corrected legal move, got legal=%v corrected=%v", m.IsLegal, m.Corrected)
+	}
+	if m.Confidence >= confThreshold {
+		t.Fatalf("auto-corrected move confidence=%.2f, want < %.2f (flagged for verify)", m.Confidence, confThreshold)
+	}
+}
+
+func TestReconcileAmbiguousAutoPickContinues(t *testing.T) {
+	// Reach a position where knights on b1 and f3 both reach d2, then a bare ambiguous "Nd2".
+	// The game must CONTINUE on a deterministic disambiguation, flagged low-confidence with
+	// the alternatives offered as suggestions.
+	tokens := []MoveToken{
+		{Text: "Sf3"}, {Text: "d5"}, {Text: "g3"}, {Text: "e6"}, {Text: "Lg2"},
+		{Text: "Sf6"}, {Text: "d3"}, {Text: "Le7"}, {Text: "Sd2"}, // ambiguous knight to d2
+		{Text: "0-0"}, // must still be reachable -> proves the game wasn't blocked
+	}
+	moves := Reconcile("", tokens)
+	amb := moves[8]
+	if !amb.IsLegal {
+		t.Fatalf("ambiguous Nd2 should be auto-resolved to a legal move, got illegal (san=%q)", amb.SAN)
+	}
+	if !amb.Corrected {
+		t.Fatalf("auto-picked disambiguation must be flagged corrected")
+	}
+	if amb.SAN != "Nbd2" && amb.SAN != "Nfd2" {
+		t.Fatalf("expected a disambiguated knight move, got %q", amb.SAN)
+	}
+	if amb.Confidence >= confThreshold {
+		t.Fatalf("ambiguous auto-pick confidence=%.2f, want < %.2f", amb.Confidence, confThreshold)
+	}
+	if len(amb.Suggestions) < 2 {
+		t.Fatalf("expected >=2 disambiguation suggestions, got %v", amb.Suggestions)
+	}
+	if !moves[9].IsLegal {
+		t.Fatalf("move after the ambiguous one (O-O) must be legal: the game must not be blocked")
+	}
+}
+
+func TestReconcileIllegalHasZeroConfidence(t *testing.T) {
+	moves := Reconcile("", []MoveToken{{Text: "e4"}, {Text: "e5"}, {Text: "zzz"}, {Text: "Sc6"}})
+	if moves[2].Confidence != 0 {
+		t.Errorf("illegal move confidence=%.2f, want 0", moves[2].Confidence)
+	}
+	if moves[3].Confidence != 0 {
+		t.Errorf("blocked-downstream move confidence=%.2f, want 0", moves[3].Confidence)
 	}
 }
 

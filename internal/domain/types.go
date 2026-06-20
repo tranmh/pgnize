@@ -70,6 +70,10 @@ type Move struct {
 	IsLegal        bool   `json:"isLegal"`
 	RecognizedText string `json:"recognizedText"`
 	Corrected      bool   `json:"corrected"`
+	// Confidence (0..1) is a deterministic recognition-confidence score, independent of
+	// legality: a legal move below the review threshold (auto-corrected, guessed
+	// disambiguation) is surfaced as a "verify" state. Defaults to 1.0 for human-entered moves.
+	Confidence float64 `json:"confidence"`
 	// Suggestions are legal moves in this position ranked by similarity to the
 	// recognized text — populated when the read move is illegal/ambiguous, so the
 	// review UI can offer ranked corrections instead of a raw legal-move list.

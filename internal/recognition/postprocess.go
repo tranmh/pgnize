@@ -1,6 +1,7 @@
 package recognition
 
 import (
+	"errors"
 	"regexp"
 	"sort"
 	"strings"
@@ -19,6 +20,31 @@ var germanPiece = map[byte]byte{
 }
 
 var promoSuffix = regexp.MustCompile(`^([a-h][18])[=]?([QRBNqrbnDTLS])$`)
+
+// longAlgRe matches long algebraic notation (e.g. "Sf3-e5", "e2-e4", "e4:d5") which the
+// recognition models were not trained on. Groups: piece, from-square, separator, to-square,
+// optional promotion. Reduced to short SAN in GermanToSAN; chesskit then disambiguates.
+var longAlgRe = regexp.MustCompile(`^([KQRBNDTLS]?)([a-h][1-8])([-x:])([a-h][1-8])(=?[QRBNqrbnDTLS])?$`)
+
+// transPiece translates a German piece letter to English SAN; English letters pass through.
+func transPiece(b byte) byte {
+	if eng, ok := germanPiece[upper(b)]; ok {
+		return eng
+	}
+	return upper(b)
+}
+
+// Per-ply recognition confidence. Confidence is a deterministic signal separate from legality:
+// a move can be legal yet uncertain (auto-corrected, a guessed disambiguation), which the review
+// UI surfaces as a "verify" (yellow) state. Models do not self-report reliably, so these come
+// from signals we trust. A move at/above confThreshold renders green; below it renders yellow.
+const (
+	confThreshold     = 0.6
+	confClean         = 0.90 // cleanly validated legal read
+	confAutoCorrected = 0.40 // edit-distance auto-fix of a misread
+	confAmbiguousPick = 0.30 // guessed disambiguation (the "knight problem")
+	confIllegal       = 0.0  // illegal / illegible / blocked downstream
+)
 
 // GermanToSAN converts a single handwritten move token (German or mixed notation) to
 // canonical-ish English SAN. It does NOT check legality — that is chesskit's job.
@@ -49,6 +75,34 @@ func GermanToSAN(token string) string {
 
 	s = strings.TrimSuffix(s, "e.p.")
 	s = strings.TrimSuffix(s, "ep")
+	s = strings.TrimSpace(s)
+
+	// Long algebraic ("Sf3-e5", "e2-e4", "e4:d5") -> short SAN. Done before the capture-colon
+	// strip below so the separator (which marks a capture) is still visible.
+	if m := longAlgRe.FindStringSubmatch(s); m != nil {
+		piece, from, sep, dest, promo := m[1], m[2], m[3], m[4], m[5]
+		capture := sep == "x" || sep == ":"
+		var out strings.Builder
+		if piece != "" {
+			out.WriteByte(transPiece(piece[0]))
+			if capture {
+				out.WriteByte('x')
+			}
+			out.WriteString(dest)
+		} else {
+			if capture {
+				out.WriteByte(from[0]) // pawn capture keeps the origin file: e4:d5 -> exd5
+				out.WriteByte('x')
+			}
+			out.WriteString(dest)
+			if promo != "" {
+				out.WriteString("=")
+				out.WriteByte(transPiece(promo[len(promo)-1]))
+			}
+		}
+		return out.String() + suffix
+	}
+
 	s = strings.ReplaceAll(s, ":", "") // German capture colon (e.g. "Sf3:")
 	s = strings.TrimSpace(s)
 
@@ -78,8 +132,10 @@ func upper(b byte) byte {
 }
 
 // Reconcile translates raw tokens to SAN and replays them through chesskit, producing
-// per-ply moves with legality + resulting FEN. The first illegal move and everything
-// after it are marked illegal (fenAfter empty), mirroring the review-loop semantics.
+// per-ply moves with legality, resulting FEN, and a recognition-confidence score. The first
+// unrecoverable move and everything after it are marked illegal (fenAfter empty), mirroring
+// the review-loop semantics. Confidence is independent of legality: a legal move may still be
+// flagged for verification (auto-corrected misread, or a guessed disambiguation).
 func Reconcile(startFEN string, tokens []MoveToken) []domain.Move {
 	if startFEN == "" {
 		startFEN = string(chesskit.StartingFEN())
@@ -94,6 +150,7 @@ func Reconcile(startFEN string, tokens []MoveToken) []domain.Move {
 			Side:           sideToMove(string(cur)),
 			SAN:            san,
 			RecognizedText: t.Text,
+			Confidence:     confIllegal,
 		}
 		if blocked || san == "" {
 			m.IsLegal = false
@@ -107,16 +164,37 @@ func Reconcile(startFEN string, tokens []MoveToken) []domain.Move {
 		if err == nil {
 			m.IsLegal = true
 			m.FenAfter = string(to)
+			m.Confidence = cleanConfidence(t.Confidence)
 			cur = to
 			out = append(out, m)
 			continue
+		}
+		legal := toStrings(mustLegal(cur))
+		// The "knight problem": an under-disambiguated read (e.g. bare "Nd2" when two knights
+		// reach d2) is ambiguous, not wrong. Auto-pick a deterministic disambiguation so the
+		// reviewer still sees the whole game, but flag it low-confidence with the alternatives.
+		if errors.Is(err, chesskit.ErrAmbiguousMove) {
+			choices := disambiguations(san, legal)
+			if len(choices) >= 2 {
+				sort.Strings(choices)
+				if to2, err2 := chesskit.Validate(cur, chesskit.SAN(choices[0])); err2 == nil {
+					m.SAN = choices[0]
+					m.Corrected = true
+					m.IsLegal = true
+					m.FenAfter = string(to2)
+					m.Suggestions = choices
+					m.Confidence = confAmbiguousPick
+					cur = to2
+					out = append(out, m)
+					continue
+				}
+			}
 		}
 		// Illegal read: use legality as a prior. Rank the legal moves by similarity to
 		// the recognized SAN; auto-adjust a confident single-character misread so the
 		// game can continue (flagged Corrected for review), otherwise offer ranked
 		// suggestions and stop here for the human to resolve.
-		legal, _ := chesskit.LegalMovesSAN(cur)
-		best, ranked, confident := matchLegal(san, toStrings(legal))
+		best, ranked, confident := matchLegal(san, legal)
 		m.Suggestions = ranked
 		if confident {
 			if to2, err2 := chesskit.Validate(cur, chesskit.SAN(best)); err2 == nil {
@@ -124,6 +202,7 @@ func Reconcile(startFEN string, tokens []MoveToken) []domain.Move {
 				m.Corrected = true
 				m.IsLegal = true
 				m.FenAfter = string(to2)
+				m.Confidence = confAutoCorrected
 				cur = to2
 				out = append(out, m)
 				continue
@@ -134,6 +213,58 @@ func Reconcile(startFEN string, tokens []MoveToken) []domain.Move {
 		out = append(out, m)
 	}
 	return out
+}
+
+// cleanConfidence scores a cleanly-validated legal move. The model's own per-token score is
+// used only when it is a meaningful low signal (a future per-cell uncertainty hook); the flat
+// defaults today (0.5/0.9) carry no real information, so a clean read scores confClean.
+func cleanConfidence(modelConf float64) float64 {
+	if modelConf > 0 && modelConf < confThreshold {
+		return modelConf
+	}
+	return confClean
+}
+
+func mustLegal(fen chesskit.FEN) []chesskit.SAN {
+	legal, _ := chesskit.LegalMovesSAN(fen)
+	return legal
+}
+
+// disambiguations returns the legal SANs that move the same piece to the same destination as
+// san but from a different origin — i.e. san is under-disambiguated. Only piece moves (KQRBN)
+// can be ambiguous this way; pawn captures already carry their origin file.
+func disambiguations(san string, legal []string) []string {
+	p, d, ok := sanPieceDest(san)
+	if !ok {
+		return nil
+	}
+	var out []string
+	for _, l := range legal {
+		if lp, ld, lok := sanPieceDest(l); lok && lp == p && ld == d {
+			out = append(out, l)
+		}
+	}
+	return out
+}
+
+// sanPieceDest extracts the piece letter and destination square from a piece move's SAN
+// (origin disambiguation, capture mark, and check/mate suffix ignored). Reports ok=false for
+// pawn moves, castling, and anything without a trailing square.
+func sanPieceDest(s string) (piece byte, dest string, ok bool) {
+	s = strings.TrimRight(s, "+#")
+	if len(s) < 3 {
+		return 0, "", false
+	}
+	switch s[0] {
+	case 'K', 'Q', 'R', 'B', 'N':
+	default:
+		return 0, "", false
+	}
+	dest = s[len(s)-2:]
+	if dest[0] < 'a' || dest[0] > 'h' || dest[1] < '1' || dest[1] > '8' {
+		return 0, "", false
+	}
+	return s[0], dest, true
 }
 
 func toStrings(s []chesskit.SAN) []string {
