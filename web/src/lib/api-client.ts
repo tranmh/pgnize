@@ -36,6 +36,9 @@ export interface Move {
   isLegal: boolean;
   recognizedText: string;
   corrected: boolean;
+  // Deterministic recognition confidence (0..1), independent of legality. A legal move below
+  // the review threshold is surfaced as a "verify" (yellow) state. 1.0 for human-entered moves.
+  confidence: number;
 }
 
 export interface GameDraft {

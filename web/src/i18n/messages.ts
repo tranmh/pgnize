@@ -175,6 +175,8 @@ const en: Catalog = {
   "moves.insertAfter": "Insert a move after this one",
   "moves.truncate": "Truncate game here (delete this and all later moves)",
   "moves.delete": "Delete this move",
+  "moves.verify": "verify",
+  "moves.verifyHint": "Recognized with low confidence — compare with the sheet and confirm.",
 
   // Engine controls
   "engine.unavailable": "Engine unavailable in this browser.",
@@ -201,6 +203,11 @@ const en: Catalog = {
   "review.working": "Working…",
   "review.resolveIllegal":
     "Resolve all illegal/ambiguous moves (or truncate) to continue.",
+  "review.toVerify": "{n} to verify",
+  "review.allVerified": "all checked",
+  "review.nextUncertain": "Next to verify",
+  "review.unverifiedNote":
+    "Some moves were read with low confidence — review the highlighted ones against the sheet before saving.",
 
   // Photo viewer
   "photo.title": "Photo",
@@ -390,6 +397,8 @@ const de: Catalog = {
   "moves.insertAfter": "Einen Zug danach einfügen",
   "moves.truncate": "Partie hier abschneiden (diesen und alle späteren Züge löschen)",
   "moves.delete": "Diesen Zug löschen",
+  "moves.verify": "prüfen",
+  "moves.verifyHint": "Mit geringer Sicherheit erkannt – mit dem Formular vergleichen und bestätigen.",
 
   // Engine controls
   "engine.unavailable": "Engine in diesem Browser nicht verfügbar.",
@@ -417,6 +426,11 @@ const de: Catalog = {
   "review.working": "Wird verarbeitet …",
   "review.resolveIllegal":
     "Behebe alle illegalen/mehrdeutigen Züge (oder schneide ab), um fortzufahren.",
+  "review.toVerify": "{n} zu prüfen",
+  "review.allVerified": "alle geprüft",
+  "review.nextUncertain": "Nächster zu prüfen",
+  "review.unverifiedNote":
+    "Einige Züge wurden mit geringer Sicherheit erkannt – prüfe die markierten Züge vor dem Speichern anhand des Formulars.",
 
   // Photo viewer
   "photo.title": "Foto",

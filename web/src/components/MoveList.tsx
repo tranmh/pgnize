@@ -2,8 +2,14 @@
 
 import { useState } from "react";
 import { useT } from "@/i18n/I18nProvider";
-import type { EditMove, Legality } from "@/lib/chess";
-import { legalMovesFrom, PLACEHOLDER, rankBySimilarity } from "@/lib/chess";
+import type { EditMove, Legality, ReviewState } from "@/lib/chess";
+import {
+  legalMovesFrom,
+  PLACEHOLDER,
+  rankBySimilarity,
+  reviewState,
+  siblingDisambiguations,
+} from "@/lib/chess";
 import {
   formatScore,
   QUALITY_GLYPH,
@@ -24,6 +30,10 @@ export interface MoveListProps {
   readOnly?: boolean;
   // Per-ply engine annotations (eval + blunder/mistake/inaccuracy), if analyzed.
   annotations?: Record<number, MoveAnnotation>;
+  // Ply indices the reviewer has confirmed (clears the yellow "verify" state).
+  confirmed?: Set<number>;
+  // Mark a low-confidence ply as verified.
+  onConfirm?: (index: number) => void;
 }
 
 function badgeClasses(legality: Legality): string {
@@ -76,6 +86,8 @@ export default function MoveList({
   onTruncate,
   readOnly = false,
   annotations,
+  confirmed,
+  onConfirm,
 }: MoveListProps) {
   const t = useT();
   return (
@@ -111,12 +123,14 @@ export default function MoveList({
             blocked={isBlockedDownstream(moves, i)}
             readOnly={readOnly}
             annotation={annotations?.[i]}
+            state={reviewState(m, confirmed?.has(i) ?? false)}
             onSelect={onSelect}
             onEditSan={onEditSan}
             onInsertAfter={onInsertAfter}
             onDelete={onDelete}
             onPlaceholder={onPlaceholder}
             onTruncate={onTruncate}
+            onConfirm={onConfirm}
           />
         ))}
       </ol>
@@ -139,12 +153,14 @@ interface MoveRowProps {
   blocked: boolean;
   readOnly: boolean;
   annotation?: MoveAnnotation;
+  state: ReviewState;
   onSelect: (index: number | null) => void;
   onEditSan: (index: number, san: string) => void;
   onInsertAfter: (index: number) => void;
   onDelete: (index: number) => void;
   onPlaceholder: (index: number) => void;
   onTruncate: (index: number) => void;
+  onConfirm?: (index: number) => void;
 }
 
 function MoveRow({
@@ -154,12 +170,14 @@ function MoveRow({
   blocked,
   readOnly,
   annotation,
+  state,
   onSelect,
   onEditSan,
   onInsertAfter,
   onDelete,
   onPlaceholder,
   onTruncate,
+  onConfirm,
 }: MoveRowProps) {
   const t = useT();
   const [editing, setEditing] = useState(false);
@@ -180,13 +198,16 @@ function MoveRow({
 
   // Candidate corrections, ranked so the move most resembling the recognized
   // handwriting comes first. Ambiguous -> the disambiguated variants; illegal
-  // -> every legal move from the prior position.
+  // -> every legal move from the prior position; verify (legal but uncertain) ->
+  // the sibling disambiguations (the other knight/rook to the same square).
   const rawOptions =
     move.legality === "ambiguous" && move.ambiguousOptions.length > 1
       ? move.ambiguousOptions
       : move.legality === "illegal" && !blocked
         ? legalMovesFrom(move.fenBefore)
-        : [];
+        : state === "verify"
+          ? siblingDisambiguations(move.fenBefore, move.san).filter((s) => s !== move.san)
+          : [];
   const ranked = rankBySimilarity(rawOptions, move.recognizedText || move.san);
   const topSuggestion = ranked[0];
 
@@ -195,7 +216,7 @@ function MoveRow({
       className={[
         "flex flex-col gap-1 px-1 py-2",
         blocked ? "opacity-50" : "",
-        active ? "bg-blue-50" : "",
+        active ? "bg-blue-50" : state === "verify" ? "bg-amber-50" : "",
       ].join(" ")}
     >
       <div className="flex items-center gap-2">
@@ -239,6 +260,25 @@ function MoveRow({
         >
           {t(badgeLabel(move.legality))}
         </span>
+
+        {state === "verify" &&
+          (readOnly ? (
+            <span
+              className="rounded border border-amber-400 bg-amber-100 px-1.5 py-0.5 text-[10px] font-medium uppercase text-amber-800"
+              title={t("moves.verifyHint")}
+            >
+              ⚠ {t("moves.verify")}
+            </span>
+          ) : (
+            <button
+              type="button"
+              onClick={() => onConfirm?.(index)}
+              title={t("moves.verifyHint")}
+              className="rounded border border-amber-400 bg-amber-100 px-1.5 py-0.5 text-[10px] font-medium uppercase text-amber-800 hover:bg-amber-200"
+            >
+              ⚠ {t("moves.verify")}
+            </button>
+          ))}
 
         {annotation && (
           <span className="flex items-center gap-1 font-mono text-[11px] tabular-nums">

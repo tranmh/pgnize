@@ -7,6 +7,7 @@ import {
   allLegal,
   PLACEHOLDER,
   rebuild,
+  reviewState,
   sanForDrag,
   STARTING_FEN,
   tailFen,
@@ -20,7 +21,12 @@ import MoveList from "./MoveList";
 import HeaderFields from "./HeaderFields";
 import PhotoViewer from "./PhotoViewer";
 
-type Ply = { san: string; clockSec: number | null; recognizedText: string };
+type Ply = {
+  san: string;
+  clockSec: number | null;
+  recognizedText: string;
+  confidence: number;
+};
 
 export interface ReviewWorkbenchProps {
   draft: GameDraft;
@@ -58,6 +64,8 @@ export default function ReviewWorkbench({
   const [header, setHeader] = useState<Header>(draft.header);
   const [plies, setPlies] = useState<Ply[]>(toEditablePlies(draft.moves));
   const [activeIndex, setActiveIndex] = useState<number | null>(null);
+  // Ply indices the reviewer has confirmed (clears the yellow "verify" highlight).
+  const [confirmed, setConfirmed] = useState<Set<number>>(new Set());
   // Toggle a clean read-only "view" of the game vs. the editing surface.
   const [viewMode, setViewMode] = useState(false);
   const [engineOn, setEngineOn] = useState(true);
@@ -67,6 +75,22 @@ export default function ReviewWorkbench({
     () => rebuild(startFen, plies),
     [startFen, plies],
   );
+
+  // Indices still needing verification: a legal move read with low confidence the reviewer
+  // hasn't yet confirmed. Drives the "N to verify" chip and the next-uncertain jump.
+  const verifyIndices = useMemo(
+    () => moves.flatMap((m, i) => (reviewState(m, confirmed.has(i)) === "verify" ? [i] : [])),
+    [moves, confirmed],
+  );
+
+  const confirm = (i: number) =>
+    setConfirmed((prev) => (prev.has(i) ? prev : new Set(prev).add(i)));
+
+  const jumpToNextUnverified = () => {
+    const from = activeIndex ?? -1;
+    const next = verifyIndices.find((i) => i > from) ?? verifyIndices[0];
+    if (next !== undefined) setActiveIndex(next);
+  };
 
   // Whole-game engine analysis (eval + blunder/mistake/inaccuracy per move).
   const analysis = useGameAnalysis(startFen, moves);
@@ -102,7 +126,7 @@ export default function ReviewWorkbench({
       // Append after the legal prefix.
       const insertAt = lastLegalIndex(moves);
       const next = [...plies];
-      next.splice(insertAt + 1, 0, { san, clockSec: null, recognizedText: "" });
+      next.splice(insertAt + 1, 0, { san, clockSec: null, recognizedText: "", confidence: 1 });
       setPlies(next);
       setActiveIndex(insertAt + 1);
     }
@@ -124,6 +148,7 @@ export default function ReviewWorkbench({
         san: PLACEHOLDER,
         clockSec: null,
         recognizedText: "",
+        confidence: 1,
       });
       return next;
     });
@@ -228,6 +253,23 @@ export default function ReviewWorkbench({
 
           <HeaderFields header={header} onChange={setHeader} readOnly={ro} />
 
+          {verifyIndices.length > 0 && (
+            <div className="flex items-center gap-2">
+              <span className="inline-flex items-center gap-1 rounded-full border border-amber-300 bg-amber-50 px-2.5 py-0.5 text-xs font-medium text-amber-800">
+                ⚠ {t("review.toVerify", { n: verifyIndices.length })}
+              </span>
+              {!ro && (
+                <button
+                  type="button"
+                  onClick={jumpToNextUnverified}
+                  className="rounded border border-amber-300 px-2 py-0.5 text-xs text-amber-700 hover:bg-amber-50"
+                >
+                  {t("review.nextUncertain")} →
+                </button>
+              )}
+            </div>
+          )}
+
           <MoveList
             moves={moves}
             activeIndex={activeIndex}
@@ -239,6 +281,8 @@ export default function ReviewWorkbench({
             onTruncate={truncate}
             readOnly={ro}
             annotations={analysis.annotations}
+            confirmed={confirmed}
+            onConfirm={confirm}
           />
 
           {serverFailedAt != null && (
@@ -259,10 +303,16 @@ export default function ReviewWorkbench({
               >
                 {saving ? t("review.working") : primaryLabel}
               </button>
-              {!allLegal(moves) && (
+              {!allLegal(moves) ? (
                 <span className="text-xs text-amber-600">
                   {t("review.resolveIllegal")}
                 </span>
+              ) : (
+                verifyIndices.length > 0 && (
+                  <span className="text-xs text-amber-600">
+                    {t("review.unverifiedNote")}
+                  </span>
+                )
               )}
             </div>
           )}

@@ -12,11 +12,20 @@ export const STARTING_FEN =
 
 export type Legality = "legal" | "illegal" | "ambiguous";
 
+// Confidence at/above this renders green; a legal move below it renders the yellow "verify"
+// state. Mirrors the server's confThreshold in internal/recognition/postprocess.go.
+export const CONFIDENCE_THRESHOLD = 0.6;
+
+// The visual review state of a ply, combining legality and recognition confidence.
+export type ReviewState = "ok" | "verify" | "illegal" | "unread";
+
 // A reviewer-editable ply. `san` may be a real move, the "?" placeholder, or "".
 export interface EditMove {
   san: string;
   clockSec: number | null;
   recognizedText: string;
+  // Deterministic recognition confidence (0..1) carried from the API; 1.0 for human edits.
+  confidence: number;
   // computed:
   side: Side;
   fenBefore: string;
@@ -28,7 +37,46 @@ export interface EditMove {
   ambiguousOptions: string[];
 }
 
+// An editable ply before legality is computed.
+export interface EditablePly {
+  san: string;
+  clockSec: number | null;
+  recognizedText: string;
+  confidence: number;
+}
+
 export const PLACEHOLDER = "?";
+
+// reviewState maps a computed move + whether the reviewer has confirmed it to a visual state.
+// "verify" (yellow) is a LEGAL move read with low confidence that the reviewer hasn't yet
+// confirmed — orthogonal to the legality badge.
+export function reviewState(move: EditMove, confirmed: boolean): ReviewState {
+  if (move.legality === "illegal") return "illegal";
+  if (move.san.trim() === "" || move.san.trim() === PLACEHOLDER) return "unread";
+  if (move.legality === "legal" && move.confidence < CONFIDENCE_THRESHOLD && !confirmed) {
+    return "verify";
+  }
+  return "ok";
+}
+
+// siblingDisambiguations returns legal moves from `fen` that move the same piece to the same
+// destination square as `san` from a different origin (e.g. the other knight). Used to offer a
+// one-click correction for a guessed disambiguation ("knight problem").
+export function siblingDisambiguations(fen: string, san: string): string[] {
+  const core = pieceDestCore(san);
+  if (!core) return [];
+  return legalMovesFrom(fen).filter((l) => pieceDestCore(l) === core);
+}
+
+// pieceDestCore extracts "<piece><destination>" from a piece move's SAN (ignoring origin
+// disambiguation, capture, and check marks). Returns null for pawn moves and castling.
+function pieceDestCore(san: string): string | null {
+  const s = san.replace(/[+#]/g, "");
+  if (!/^[KQRBN]/.test(s)) return null;
+  const dest = s.slice(-2);
+  if (!/^[a-h][1-8]$/.test(dest)) return null;
+  return s[0] + dest;
+}
 
 function sideForPly(index: number, startFen: string): Side {
   // Whose move it is depends on the side to move in startFen plus the ply index.
@@ -100,7 +148,7 @@ function looselyMatches(legal: string, input: string): boolean {
 // all downstream plies are marked illegal too (downstream is blocked in the UI).
 export function rebuild(
   startFen: string,
-  plies: { san: string; clockSec: number | null; recognizedText: string }[],
+  plies: EditablePly[],
 ): EditMove[] {
   const out: EditMove[] = [];
   let fen = startFen || STARTING_FEN;
@@ -109,15 +157,23 @@ export function rebuild(
   plies.forEach((p, i) => {
     const side = sideForPly(i, startFen || STARTING_FEN);
     const corrected = p.san.trim() !== p.recognizedText.trim();
+    // A reviewer-edited ply (diverged from the recognized text) is, by definition, confirmed,
+    // so it carries full confidence regardless of the original recognition score.
+    const confidence = corrected ? 1 : p.confidence ?? 1;
+    const common = {
+      san: p.san,
+      clockSec: p.clockSec,
+      recognizedText: p.recognizedText,
+      confidence,
+      side,
+    };
 
     if (isPlaceholder(p.san)) {
       // A placeholder is "ambiguous" (amber) — known to be incomplete, and it
       // blocks everything after it because we can't advance the position.
       out.push({
+        ...common,
         san: PLACEHOLDER,
-        clockSec: p.clockSec,
-        recognizedText: p.recognizedText,
-        side,
         fenBefore: fen,
         fenAfter: fen,
         legality: "ambiguous",
@@ -130,10 +186,7 @@ export function rebuild(
 
     if (blocked) {
       out.push({
-        san: p.san,
-        clockSec: p.clockSec,
-        recognizedText: p.recognizedText,
-        side,
+        ...common,
         fenBefore: fen,
         fenAfter: fen,
         legality: "illegal",
@@ -146,10 +199,7 @@ export function rebuild(
     const res = applyOne(fen, p.san);
     if (res.ok) {
       out.push({
-        san: p.san,
-        clockSec: p.clockSec,
-        recognizedText: p.recognizedText,
-        side,
+        ...common,
         fenBefore: fen,
         fenAfter: res.fenAfter,
         legality: "legal",
@@ -159,10 +209,7 @@ export function rebuild(
       fen = res.fenAfter;
     } else if (res.ambiguous.length > 1) {
       out.push({
-        san: p.san,
-        clockSec: p.clockSec,
-        recognizedText: p.recognizedText,
-        side,
+        ...common,
         fenBefore: fen,
         fenAfter: fen,
         legality: "ambiguous",
@@ -172,10 +219,7 @@ export function rebuild(
       blocked = true;
     } else {
       out.push({
-        san: p.san,
-        clockSec: p.clockSec,
-        recognizedText: p.recognizedText,
-        side,
+        ...common,
         fenBefore: fen,
         fenAfter: fen,
         legality: "illegal",
@@ -266,15 +310,12 @@ export function uciToSquares(uci: string): { from: string; to: string } | null {
   return { from: uci.slice(0, 2), to: uci.slice(2, 4) };
 }
 
-// Convert API moves into editable plies (drop computed fields; keep san/clock/text).
-export function toEditablePlies(moves: Move[]): {
-  san: string;
-  clockSec: number | null;
-  recognizedText: string;
-}[] {
+// Convert API moves into editable plies (drop computed fields; keep san/clock/text/confidence).
+export function toEditablePlies(moves: Move[]): EditablePly[] {
   return (moves ?? []).map((m) => ({
     san: m.san,
     clockSec: m.clockSec,
     recognizedText: m.recognizedText,
+    confidence: m.confidence ?? 1,
   }));
 }
