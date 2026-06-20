@@ -23,3 +23,6 @@ e2e/test-results/
 
 # OS
 .DS_Store
+
+# local dev server logs
+.local-logs/
