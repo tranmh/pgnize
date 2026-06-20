@@ -40,6 +40,25 @@ GEMINI_API_KEY=… make dev   # optional: GEMINI_MODEL (default gemini-2.5-flash
 The recognition backend is also selectable per upload/convert request when more than one is
 configured; `GET /api/recognizers` lists the available engines.
 
+## Deploy (production)
+
+Production runs the Docker Compose `prod` profile (api · web · Caddy · db-backup)
+behind Caddy, which auto-provisions TLS for `$PGNIZE_DOMAIN`. On the production
+host:
+
+```bash
+cp .env.example .env          # then set AUTH_SECRET, POSTGRES_PASSWORD,
+                              # MINIO_ROOT_PASSWORD (+ GEMINI_API_KEY if RECOGNIZER=gemini)
+scripts/deploy.sh             # builds, brings up the stack, waits for /healthz
+```
+
+`scripts/deploy.sh` pulls the latest code, rebuilds the api/web images, starts
+the stack (adding the `vlm`/Ollama profile and pulling the model when
+`RECOGNIZER=ollama`), and verifies the API is healthy. Migrations run on API
+boot. It defaults to `pgnize.openpairing.org`; override with `--domain HOST`.
+Point DNS at the host and open ports 80/443 before the first run. See
+`scripts/deploy.sh --help` for all options.
+
 ## Tests (TDD)
 
 ```bash
