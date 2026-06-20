@@ -112,12 +112,89 @@ func (h *harness) drainJob(t *testing.T) {
 }
 
 func uploadBody(t *testing.T, field string) (string, *bytes.Buffer) {
+	return uploadBodyConsent(t, field, false)
+}
+
+// uploadBodyConsent builds a multipart upload, optionally setting consentTraining=true.
+func uploadBodyConsent(t *testing.T, field string, consent bool) (string, *bytes.Buffer) {
 	var buf bytes.Buffer
 	mw := multipart.NewWriter(&buf)
 	fw, _ := mw.CreateFormFile(field, "sheet.jpg")
 	_, _ = fw.Write([]byte("fake-image-bytes"))
+	if consent {
+		_ = mw.WriteField("consentTraining", "true")
+	}
 	mw.Close()
 	return mw.FormDataContentType(), &buf
+}
+
+// recognizeAndSave runs upload -> worker -> save-correction and returns the game id.
+// The fake recognizer yields a legal Ruy Lopez; we save it back as the human-verified game.
+func (h *harness) recognizeAndSave(t *testing.T, consent bool) string {
+	t.Helper()
+	ct, buf := uploadBodyConsent(t, "image", consent)
+	resp, body := h.do(t, "POST", "/api/uploads", ct, buf)
+	if resp.StatusCode != http.StatusAccepted {
+		t.Fatalf("upload status %d: %s", resp.StatusCode, body)
+	}
+	var up struct{ JobID, UploadID string }
+	json.Unmarshal(body, &up)
+	h.drainJob(t)
+
+	resp, body = h.do(t, "GET", "/api/jobs/"+up.JobID, "", nil)
+	var js struct{ Status, GameID string }
+	json.Unmarshal(body, &js)
+	if js.Status != "done" || js.GameID == "" {
+		t.Fatalf("job not done: %s", body)
+	}
+	resp, body = h.do(t, "GET", "/api/games/"+js.GameID, "", nil)
+	var draft struct {
+		Moves []struct {
+			San string `json:"san"`
+		} `json:"moves"`
+	}
+	json.Unmarshal(body, &draft)
+	sans := []map[string]any{}
+	for i, m := range draft.Moves {
+		sans = append(sans, map[string]any{"ply": i + 1, "san": m.San})
+	}
+	resp, body = h.json(t, "PATCH", "/api/games/"+js.GameID, map[string]any{
+		"header": map[string]string{"white": "Carlsen", "black": "Nepo", "result": "1-0"},
+		"moves":  sans,
+	})
+	if resp.StatusCode != 200 {
+		t.Fatalf("save status %d: %s", resp.StatusCode, body)
+	}
+	return js.GameID
+}
+
+func (h *harness) feedbackCount(t *testing.T) int {
+	t.Helper()
+	var n int
+	if err := h.st.Pool.QueryRow(context.Background(),
+		`SELECT count(*) FROM feedback_corrections`).Scan(&n); err != nil {
+		t.Fatalf("count feedback: %v", err)
+	}
+	return n
+}
+
+// TestFeedbackRequiresConsent guards the privacy promise made in the upload UI: a corrected
+// transcription is training data, so it must only be recorded when the uploader opted in via
+// consentTraining. Without consent, no feedback row may be written.
+func TestFeedbackRequiresConsent(t *testing.T) {
+	h := setup(t)
+	h.json(t, "POST", "/api/auth/register",
+		map[string]string{"name": "NoConsent", "email": "nc@example.com", "password": "password12"})
+
+	h.recognizeAndSave(t, false /* no consent */)
+	if n := h.feedbackCount(t); n != 0 {
+		t.Fatalf("non-consented correction must not be recorded for training, got %d feedback rows", n)
+	}
+
+	h.recognizeAndSave(t, true /* consent */)
+	if n := h.feedbackCount(t); n != 1 {
+		t.Fatalf("consented correction should be recorded, got %d feedback rows", n)
+	}
 }
 
 func TestAccountJourney(t *testing.T) {
@@ -130,8 +207,8 @@ func TestAccountJourney(t *testing.T) {
 		t.Fatalf("register status %d: %s", resp.StatusCode, body)
 	}
 
-	// Upload a sheet
-	ct, buf := uploadBody(t, "image")
+	// Upload a sheet (with training consent, so the feedback assertion below is exercised)
+	ct, buf := uploadBodyConsent(t, "image", true)
 	resp, body = h.do(t, "POST", "/api/uploads", ct, buf)
 	if resp.StatusCode != http.StatusAccepted {
 		t.Fatalf("upload status %d: %s", resp.StatusCode, body)

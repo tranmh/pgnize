@@ -129,10 +129,18 @@ func (s *Server) handleDeleteGame(w http.ResponseWriter, r *http.Request) {
 }
 
 // recordFeedback best-effort captures the model-before vs human-after pair for training.
+// The correction is training data, so it is only kept when the uploader opted in via
+// consentTraining — the upload UI promises non-consented transcriptions are never used.
 func (s *Server) recordFeedback(r *http.Request, gameID, userID string, req saveRequest) {
 	recognizer, beforeJSON, uploadID, err := s.Store.JobRawByGame(r.Context(), gameID)
 	if err != nil || beforeJSON == "" {
 		return // manual entry or no recognition job: nothing to learn from
+	}
+	if uploadID == nil {
+		return // no upload to verify consent against: don't retain
+	}
+	if up, err := s.Store.GetUpload(r.Context(), *uploadID); err != nil || !up.ConsentTraining {
+		return // uploader did not consent to their correction being used for training
 	}
 	sans := make([]string, len(req.Moves))
 	for i, m := range req.Moves {
