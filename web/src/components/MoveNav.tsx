@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
+import { useT } from "@/i18n/I18nProvider";
 
 export interface MoveNavProps {
   // Currently shown ply index, or null for the starting position.
@@ -21,6 +22,7 @@ export default function MoveNav({
   onChange,
   keyboard = false,
 }: MoveNavProps) {
+  const t = useT();
   const cur = index ?? -1;
   const atStart = cur <= -1;
   const atEnd = cur >= count - 1;
@@ -56,10 +58,10 @@ export default function MoveNav({
 
   return (
     <div className="flex items-center gap-1">
-      <NavButton label="⏮" title="Start position" disabled={atStart} onClick={() => onChange(null)} />
-      <NavButton label="◀" title="Previous move" disabled={atStart} onClick={() => go(cur - 1)} />
-      <NavButton label="▶" title="Next move" disabled={atEnd} onClick={() => go(cur + 1)} />
-      <NavButton label="⏭" title="Last move" disabled={atEnd} onClick={() => go(count - 1)} />
+      <NavButton label="⏮" title={t("movenav.start")} disabled={atStart} onClick={() => onChange(null)} />
+      <NavButton label="◀" title={t("movenav.prev")} disabled={atStart} onClick={() => go(cur - 1)} />
+      <NavButton label="▶" title={t("movenav.next")} disabled={atEnd} onClick={() => go(cur + 1)} />
+      <NavButton label="⏭" title={t("movenav.last")} disabled={atEnd} onClick={() => go(count - 1)} />
     </div>
   );
 }

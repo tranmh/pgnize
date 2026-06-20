@@ -28,8 +28,13 @@ const (
 	// 512 tokens (~30 move pairs of JSON) returns in ~2-3 min and the model usually
 	// stops earlier on its own; 1024 overran a 4-min timeout.
 	defaultNumPredict = 512
-	defaultTimeout    = 5 * time.Minute
-	defaultMaxDim     = 1600 // longest image edge sent to the model
+	// A warm 512-token run is ~3 min on a 4-core CPU; a cold load of the multi-GB
+	// model on a memory-constrained host adds minutes more. 5 min was too tight and
+	// surfaced as "timed out waiting for recognition". Override via OLLAMA_TIMEOUT_SEC.
+	defaultTimeout = 10 * time.Minute
+	// Keep the model resident between sheets so the next request skips the cold load.
+	defaultKeepAlive = "30m"
+	defaultMaxDim    = 1600 // longest image edge sent to the model
 )
 
 // Ollama is a Recognizer backed by a local Ollama server running a vision model.
@@ -39,18 +44,29 @@ type Ollama struct {
 	Client     *http.Client
 	NumPredict int
 	MaxDim     int
+	KeepAlive  string
 }
 
 // NewOllama builds an Ollama-backed recognizer with CPU-friendly defaults.
-// OLLAMA_NUM_PREDICT and OLLAMA_MAX_DIM override the token cap and downscale size.
+// OLLAMA_NUM_PREDICT and OLLAMA_MAX_DIM override the token cap and downscale size;
+// OLLAMA_TIMEOUT_SEC and OLLAMA_KEEP_ALIVE override the HTTP timeout and model TTL.
 func NewOllama(host, model string) *Ollama {
+	timeout := time.Duration(envInt("OLLAMA_TIMEOUT_SEC", int(defaultTimeout.Seconds()))) * time.Second
 	return &Ollama{
 		Host:       host,
 		Model:      model,
-		Client:     &http.Client{Timeout: defaultTimeout},
+		Client:     &http.Client{Timeout: timeout},
 		NumPredict: envInt("OLLAMA_NUM_PREDICT", defaultNumPredict),
 		MaxDim:     envInt("OLLAMA_MAX_DIM", defaultMaxDim),
+		KeepAlive:  envStr("OLLAMA_KEEP_ALIVE", defaultKeepAlive),
 	}
+}
+
+func envStr(key, def string) string {
+	if v := os.Getenv(key); v != "" {
+		return v
+	}
+	return def
 }
 
 func envInt(key string, def int) int {
@@ -65,12 +81,13 @@ func envInt(key string, def int) int {
 func (o *Ollama) Name() string { return "ollama:" + o.Model }
 
 type ollamaRequest struct {
-	Model   string         `json:"model"`
-	Prompt  string         `json:"prompt"`
-	Images  []string       `json:"images,omitempty"`
-	Format  string         `json:"format,omitempty"` // "json": fast + stops naturally (see const block)
-	Stream  bool           `json:"stream"`
-	Options map[string]any `json:"options,omitempty"`
+	Model     string         `json:"model"`
+	Prompt    string         `json:"prompt"`
+	Images    []string       `json:"images,omitempty"`
+	Format    string         `json:"format,omitempty"` // "json": fast + stops naturally (see const block)
+	Stream    bool           `json:"stream"`
+	KeepAlive string         `json:"keep_alive,omitempty"` // how long to keep the model resident
+	Options   map[string]any `json:"options,omitempty"`
 }
 
 type ollamaResponse struct {
@@ -92,12 +109,13 @@ type modelOutput struct {
 func (o *Ollama) Recognize(ctx context.Context, in ScoreSheetInput) (RecognitionResult, error) {
 	img := o.downscale(in.Image)
 	reqBody := ollamaRequest{
-		Model:   o.Model,
-		Prompt:  buildPrompt(in),
-		Images:  []string{base64.StdEncoding.EncodeToString(img)},
-		Format:  "json",
-		Stream:  false,
-		Options: map[string]any{"temperature": 0.1, "num_predict": o.NumPredict},
+		Model:     o.Model,
+		Prompt:    buildPrompt(in),
+		Images:    []string{base64.StdEncoding.EncodeToString(img)},
+		Format:    "json",
+		Stream:    false,
+		KeepAlive: o.KeepAlive,
+		Options:   map[string]any{"temperature": 0.1, "num_predict": o.NumPredict},
 	}
 	buf, _ := json.Marshal(reqBody)
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, o.Host+"/api/generate", bytes.NewReader(buf))

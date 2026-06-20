@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useT } from "@/i18n/I18nProvider";
 import type { EditMove, Legality } from "@/lib/chess";
 import { legalMovesFrom, PLACEHOLDER, rankBySimilarity } from "@/lib/chess";
 import {
@@ -39,11 +40,11 @@ function badgeClasses(legality: Legality): string {
 function badgeLabel(legality: Legality): string {
   switch (legality) {
     case "legal":
-      return "legal";
+      return "moves.legal";
     case "illegal":
-      return "illegal";
+      return "moves.illegal";
     case "ambiguous":
-      return "ambiguous";
+      return "moves.ambiguous";
   }
 }
 
@@ -76,27 +77,28 @@ export default function MoveList({
   readOnly = false,
   annotations,
 }: MoveListProps) {
+  const t = useT();
   return (
     <div className="flex flex-col">
       <div className="flex items-center justify-between border-b border-gray-200 pb-2">
         <h2 className="text-sm font-semibold uppercase tracking-wide text-gray-500">
-          Moves
+          {t("moves.title")}
         </h2>
         <button
           type="button"
           className="rounded px-2 py-1 text-xs text-gray-600 hover:bg-gray-100 disabled:opacity-40"
           onClick={() => onSelect(null)}
-          aria-label="Jump to starting position"
+          aria-label={t("moves.jumpStartAria")}
         >
-          ⏮ start
+          ⏮ {t("moves.start")}
         </button>
       </div>
 
       <ol className="divide-y divide-gray-100">
         {moves.length === 0 && (
           <li className="py-6 text-center text-sm text-gray-400">
-            No moves yet.
-            {!readOnly && " Add a move by dragging a piece on the board."}
+            {t("moves.none")}
+            {!readOnly && ` ${t("moves.addByDragging")}`}
           </li>
         )}
         {moves.map((m, i) => (
@@ -159,6 +161,7 @@ function MoveRow({
   onPlaceholder,
   onTruncate,
 }: MoveRowProps) {
+  const t = useT();
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(move.san);
 
@@ -200,7 +203,7 @@ function MoveRow({
           type="button"
           className="w-12 shrink-0 text-right font-mono text-xs text-gray-500 hover:text-gray-800"
           onClick={() => onSelect(index)}
-          aria-label={`Show position after ${moveNumber(move.side, index)} ${move.san}`}
+          aria-label={t("moves.showPositionAria", { label: moveNumber(move.side, index), san: move.san })}
         >
           {moveNumber(move.side, index)}
         </button>
@@ -215,9 +218,9 @@ function MoveRow({
               if (e.key === "Enter") commit();
               if (e.key === "Escape") setEditing(false);
             }}
-            placeholder="SAN, e.g. Nf3"
+            placeholder={t("moves.sanPlaceholder")}
             className="w-24 rounded border border-blue-400 px-2 py-1 font-mono text-sm focus:outline-none focus:ring-2 focus:ring-blue-300"
-            aria-label="Edit move SAN"
+            aria-label={t("moves.editAria")}
           />
         ) : (
           <button
@@ -225,7 +228,7 @@ function MoveRow({
             onClick={() => (active ? startEdit() : onSelect(index))}
             onDoubleClick={startEdit}
             className="min-w-[3.5rem] rounded px-2 py-1 text-left font-mono text-sm hover:bg-gray-100"
-            title={readOnly ? undefined : "Click to view, again to edit"}
+            title={readOnly ? undefined : t("moves.clickToView")}
           >
             {move.san || PLACEHOLDER}
           </button>
@@ -234,7 +237,7 @@ function MoveRow({
         <span
           className={`rounded border px-1.5 py-0.5 text-[10px] font-medium uppercase ${badgeClasses(move.legality)}`}
         >
-          {badgeLabel(move.legality)}
+          {t(badgeLabel(move.legality))}
         </span>
 
         {annotation && (
@@ -253,18 +256,18 @@ function MoveRow({
 
         {!readOnly && (
           <div className="ml-auto flex items-center gap-1 text-gray-400">
-            <RowAction label="?" title="Mark as unreadable placeholder" onClick={() => onPlaceholder(index)} />
-            <RowAction label="+" title="Insert a move after this one" onClick={() => onInsertAfter(index)} />
-            <RowAction label="✂" title="Truncate game here (delete this and all later moves)" onClick={() => onTruncate(index)} />
-            <RowAction label="🗑" title="Delete this move" onClick={() => onDelete(index)} />
+            <RowAction label="?" title={t("moves.markUnreadable")} onClick={() => onPlaceholder(index)} />
+            <RowAction label="+" title={t("moves.insertAfter")} onClick={() => onInsertAfter(index)} />
+            <RowAction label="✂" title={t("moves.truncate")} onClick={() => onTruncate(index)} />
+            <RowAction label="🗑" title={t("moves.delete")} onClick={() => onDelete(index)} />
           </div>
         )}
       </div>
 
       {move.recognizedText && move.recognizedText !== move.san && (
         <div className="pl-14 text-[11px] text-gray-400">
-          read as “{move.recognizedText}”
-          {move.corrected && <span className="ml-1 text-blue-500">(corrected)</span>}
+          {t("moves.readAs", { text: move.recognizedText })}
+          {move.corrected && <span className="ml-1 text-blue-500">{t("moves.corrected")}</span>}
         </div>
       )}
 
@@ -277,12 +280,12 @@ function MoveRow({
               onClick={() => onEditSan(index, topSuggestion)}
               className="rounded border border-blue-300 bg-blue-50 px-2 py-0.5 text-xs text-blue-700 hover:bg-blue-100"
             >
-              Did you mean{" "}
+              {t("moves.didYouMean")}{" "}
               <span className="font-mono font-medium">{topSuggestion}</span>?
             </button>
           )}
           <CorrectionPicker
-            label={move.legality === "ambiguous" ? "Disambiguate" : "Other legal moves"}
+            label={move.legality === "ambiguous" ? t("moves.disambiguate") : t("moves.otherLegal")}
             options={ranked}
             onPick={(san) => onEditSan(index, san)}
           />
@@ -323,6 +326,7 @@ function CorrectionPicker({
   options: string[];
   onPick: (san: string) => void;
 }) {
+  const t = useT();
   return (
     <div className="pl-14">
       <label className="flex items-center gap-2 text-[11px] text-gray-500">
@@ -336,7 +340,7 @@ function CorrectionPicker({
           aria-label={label}
         >
           <option value="" disabled>
-            choose…
+            {t("moves.choose")}
           </option>
           {options.map((o) => (
             <option key={o} value={o}>

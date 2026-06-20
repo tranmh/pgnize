@@ -5,10 +5,12 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { ApiError, register } from "@/lib/api-client";
 import { useAuth } from "@/components/AuthProvider";
+import { useT } from "@/i18n/I18nProvider";
 
 export default function RegisterPage() {
   const router = useRouter();
   const { setUser } = useAuth();
+  const t = useT();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -26,10 +28,10 @@ export default function RegisterPage() {
     } catch (err) {
       setError(
         err instanceof ApiError && err.status === 409
-          ? "That email is already registered."
+          ? t("register.errConflict")
           : err instanceof Error
             ? err.message
-            : "Registration failed.",
+            : t("register.errGeneric"),
       );
     } finally {
       setBusy(false);
@@ -38,10 +40,10 @@ export default function RegisterPage() {
 
   return (
     <div className="mx-auto max-w-sm">
-      <h1 className="text-2xl font-bold">Create an account</h1>
+      <h1 className="text-2xl font-bold">{t("register.title")}</h1>
       <form onSubmit={submit} className="mt-6 flex flex-col gap-4">
         <label className="flex flex-col gap-1 text-sm">
-          Name
+          {t("common.name")}
           <input
             type="text"
             required
@@ -52,7 +54,7 @@ export default function RegisterPage() {
           />
         </label>
         <label className="flex flex-col gap-1 text-sm">
-          Email
+          {t("common.email")}
           <input
             type="email"
             required
@@ -63,7 +65,7 @@ export default function RegisterPage() {
           />
         </label>
         <label className="flex flex-col gap-1 text-sm">
-          Password
+          {t("common.password")}
           <input
             type="password"
             required
@@ -80,13 +82,13 @@ export default function RegisterPage() {
           disabled={busy}
           className="rounded bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:bg-gray-300"
         >
-          {busy ? "Creating…" : "Register"}
+          {busy ? t("register.submitting") : t("register.submit")}
         </button>
       </form>
       <p className="mt-4 text-sm text-gray-500">
-        Already have an account?{" "}
+        {t("register.haveAccount")}{" "}
         <Link href="/login" className="text-blue-600 underline">
-          Log in
+          {t("nav.login")}
         </Link>
       </p>
     </div>

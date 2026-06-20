@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
+import { useT } from "@/i18n/I18nProvider";
 
 export interface UploadDropzoneProps {
   // Called with the chosen image file.
@@ -10,6 +11,7 @@ export interface UploadDropzoneProps {
 
 // Drag-and-drop / click-to-pick image dropzone with a thumbnail preview.
 export default function UploadDropzone({ onFile, disabled }: UploadDropzoneProps) {
+  const t = useT();
   const inputRef = useRef<HTMLInputElement>(null);
   const [over, setOver] = useState(false);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
@@ -47,23 +49,23 @@ export default function UploadDropzone({ onFile, disabled }: UploadDropzoneProps
           over ? "border-blue-400 bg-blue-50" : "border-gray-300 bg-gray-50",
           disabled ? "cursor-not-allowed opacity-50" : "hover:border-blue-400 hover:bg-blue-50",
         ].join(" ")}
-        aria-label="Upload a score-sheet photo"
+        aria-label={t("dropzone.aria")}
       >
         {previewUrl ? (
           // eslint-disable-next-line @next/next/no-img-element -- local object URL preview
-          <img src={previewUrl} alt="Selected score sheet" className="max-h-56 rounded shadow" />
+          <img src={previewUrl} alt={t("dropzone.selectedAlt")} className="max-h-56 rounded shadow" />
         ) : (
           <span className="text-4xl">📷</span>
         )}
         <span className="text-sm text-gray-600">
           {name ? (
             <>
-              <strong>{name}</strong> — click to choose a different photo
+              <strong>{name}</strong> — {t("dropzone.changePhoto")}
             </>
           ) : (
             <>
-              Drag a photo of the score sheet here, or{" "}
-              <span className="font-medium text-blue-600">browse</span>
+              {t("dropzone.dragHere")}{" "}
+              <span className="font-medium text-blue-600">{t("dropzone.browse")}</span>
             </>
           )}
         </span>

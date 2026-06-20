@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { useT } from "@/i18n/I18nProvider";
 import type { GameDraft } from "@/lib/api-client";
 import {
   rebuild,
@@ -18,6 +19,7 @@ const noop = () => {};
 // A dead-simple, read-only board to watch a game: step through the moves, flip
 // the board, and optionally run the engine. No editing, no photo, no save.
 export default function GameViewer({ draft }: { draft: GameDraft }) {
+  const t = useT();
   const startFen = draft.startFen || STARTING_FEN;
   const plies = useMemo(() => toEditablePlies(draft.moves), [draft.moves]);
   const moves: EditMove[] = useMemo(
@@ -41,8 +43,8 @@ export default function GameViewer({ draft }: { draft: GameDraft }) {
   const h = draft.header;
   const subtitle = [
     h.event,
-    h.round && `Round ${h.round}`,
-    h.board && `Board ${h.board}`,
+    h.round && t("viewer.round", { n: h.round }),
+    h.board && t("viewer.board", { n: h.board }),
     h.date,
   ]
     .filter(Boolean)
@@ -52,7 +54,7 @@ export default function GameViewer({ draft }: { draft: GameDraft }) {
     <div className="flex flex-col gap-4">
       <div className="rounded-lg border border-gray-200 bg-white px-4 py-3">
         <div className="text-lg font-medium">
-          {h.white || "?"} <span className="text-gray-400">vs</span>{" "}
+          {h.white || "?"} <span className="text-gray-400">{t("viewer.vs")}</span>{" "}
           {h.black || "?"}{" "}
           <span className="ml-2 font-mono text-sm text-gray-500">{h.result}</span>
         </div>
@@ -66,7 +68,7 @@ export default function GameViewer({ draft }: { draft: GameDraft }) {
             onClick={() => setFlip((f) => !f)}
             className="rounded border border-gray-300 px-2.5 py-1 text-xs hover:bg-gray-100"
           >
-            Flip board
+            {t("viewer.flip")}
           </button>
           <EngineControls
             engineOn={engineOn}
@@ -88,7 +90,7 @@ export default function GameViewer({ draft }: { draft: GameDraft }) {
           onSelectIndex={setActiveIndex}
           keyboard
           engine={engineOn}
-          caption="Use ◀ ▶ or the arrow keys to step through the game."
+          caption={t("viewer.stepCaption")}
         />
 
         <MoveList

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { useT } from "@/i18n/I18nProvider";
 import type { GameDraft, Header, MoveInput } from "@/lib/api-client";
 import {
   allLegal,
@@ -52,6 +53,7 @@ export default function ReviewWorkbench({
   footer,
   readOnly = false,
 }: ReviewWorkbenchProps) {
+  const t = useT();
   const startFen = draft.startFen || STARTING_FEN;
   const [header, setHeader] = useState<Header>(draft.header);
   const [plies, setPlies] = useState<Ply[]>(toEditablePlies(draft.moves));
@@ -173,7 +175,7 @@ export default function ReviewWorkbench({
           </section>
         ) : (
           <section className="flex min-h-[420px] items-center justify-center rounded-lg border border-dashed border-gray-200 bg-gray-50 p-3 text-sm text-gray-400">
-            Manual entry — no photo.
+            {t("review.manualNoPhoto")}
           </section>
         )}
 
@@ -187,14 +189,14 @@ export default function ReviewWorkbench({
                   onClick={() => setViewMode(false)}
                   className={`px-3 py-1 ${!viewMode ? "bg-blue-600 text-white" : "bg-white text-gray-600 hover:bg-gray-100"}`}
                 >
-                  Edit
+                  {t("review.edit")}
                 </button>
                 <button
                   type="button"
                   onClick={() => setViewMode(true)}
                   className={`px-3 py-1 ${viewMode ? "bg-blue-600 text-white" : "bg-white text-gray-600 hover:bg-gray-100"}`}
                 >
-                  View
+                  {t("review.view")}
                 </button>
               </div>
               <EngineControls
@@ -221,11 +223,7 @@ export default function ReviewWorkbench({
             onSelectIndex={setActiveIndex}
             keyboard
             engine={engineOn}
-            caption={
-              ro
-                ? "Use ◀ ▶ or arrow keys to step through the game."
-                : "Drag a piece to add or replace the selected move. Click a move to view its position."
-            }
+            caption={ro ? t("review.captionView") : t("review.captionEdit")}
           />
 
           <HeaderFields header={header} onChange={setHeader} readOnly={ro} />
@@ -245,8 +243,7 @@ export default function ReviewWorkbench({
 
           {serverFailedAt != null && (
             <p className="rounded border border-red-300 bg-red-50 px-3 py-2 text-sm text-red-700">
-              Server rejected move #{serverFailedAt + 1} as illegal. Fix it and
-              try again.
+              {t("review.serverRejected", { n: serverFailedAt + 1 })}
             </p>
           )}
 
@@ -260,11 +257,11 @@ export default function ReviewWorkbench({
                 onClick={() => onPrimary(buildPayload())}
                 className="rounded bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-gray-300"
               >
-                {saving ? "Working…" : primaryLabel}
+                {saving ? t("review.working") : primaryLabel}
               </button>
               {!allLegal(moves) && (
                 <span className="text-xs text-amber-600">
-                  Resolve all illegal/ambiguous moves (or truncate) to continue.
+                  {t("review.resolveIllegal")}
                 </span>
               )}
             </div>

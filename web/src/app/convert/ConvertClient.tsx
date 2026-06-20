@@ -16,10 +16,12 @@ import RecognizerSelect from "@/components/RecognizerSelect";
 import Spinner from "@/components/Spinner";
 import ReviewWorkbench from "@/components/ReviewWorkbench";
 import { downloadText, pgnFilename } from "@/lib/download";
+import { useT } from "@/i18n/I18nProvider";
 
 type Stage = "upload" | "processing" | "review" | "error";
 
 export default function ConvertClient() {
+  const t = useT();
   const [stage, setStage] = useState<Stage>("upload");
   const [jobId, setJobId] = useState<string | null>(null);
   const [draft, setDraft] = useState<GameDraft | null>(null);
@@ -39,13 +41,17 @@ export default function ConvertClient() {
         .then(setDraft)
         .catch((e) => {
           setStage("error");
-          setError(e instanceof Error ? e.message : "Could not load the game.");
+          setError(e instanceof Error ? e.message : t("convert.errLoadGame"));
         });
     } else if (poll.phase === "failed" || poll.phase === "timeout") {
       setStage("error");
-      setError(poll.error ?? "Recognition failed.");
+      setError(
+        poll.phase === "timeout"
+          ? t("recog.timeout")
+          : (poll.error ?? t("recog.failed")),
+      );
     }
-  }, [poll.phase, poll.error, jobId, stage]);
+  }, [poll.phase, poll.error, jobId, stage, t]);
 
   async function start(file: File) {
     setError(null);
@@ -58,10 +64,10 @@ export default function ConvertClient() {
       setStage("error");
       setError(
         e instanceof ApiError && e.status === 429
-          ? "Rate limit reached. Please wait a moment and try again."
+          ? t("convert.errRateLimit")
           : e instanceof Error
             ? e.message
-            : "Upload failed.",
+            : t("convert.errUpload"),
       );
     }
   }
@@ -86,7 +92,7 @@ export default function ConvertClient() {
       if (e instanceof ApiError && e.code === "illegal_move") {
         setFailedAt(e.failedAt ?? null);
       } else {
-        setError(e instanceof Error ? e.message : "Export failed.");
+        setError(e instanceof Error ? e.message : t("convert.errExport"));
       }
     } finally {
       setExporting(false);
@@ -104,11 +110,8 @@ export default function ConvertClient() {
   return (
     <div className="flex flex-col gap-6">
       <div>
-        <h1 className="text-2xl font-bold">Convert a score sheet</h1>
-        <p className="mt-1 text-sm text-gray-500">
-          Upload a photo of a handwritten chess score sheet. We&apos;ll read it,
-          and you verify the moves before downloading the PGN.
-        </p>
+        <h1 className="text-2xl font-bold">{t("convert.title")}</h1>
+        <p className="mt-1 text-sm text-gray-500">{t("convert.subtitle")}</p>
       </div>
 
       <AnonymousBanner />
@@ -125,17 +128,17 @@ export default function ConvertClient() {
           <Spinner
             label={
               poll.status === "running"
-                ? "Reading handwriting…"
-                : "Queued for recognition…"
+                ? t("recog.reading")
+                : t("recog.queued")
             }
           />
-          <p className="text-xs text-gray-400">This can take up to a few minutes.</p>
+          <p className="text-xs text-gray-400">{t("convert.takesMinutes")}</p>
         </div>
       )}
 
       {stage === "review" && !draft && (
         <div className="flex justify-center py-16">
-          <Spinner label="Loading recognized game…" />
+          <Spinner label={t("convert.loadingRecognized")} />
         </div>
       )}
 
@@ -143,13 +146,14 @@ export default function ConvertClient() {
         <ReviewWorkbench
           draft={draft}
           onPrimary={handleExport}
-          primaryLabel="Download PGN"
+          primaryLabel={t("convert.downloadPgn")}
           serverFailedAt={failedAt}
           saving={exporting}
           footer={
             <p className="text-xs text-gray-400">
-              Recognition confidence:{" "}
-              {Math.round((draft.confidence ?? 0) * 100)}%
+              {t("convert.confidence", {
+                pct: Math.round((draft.confidence ?? 0) * 100),
+              })}
             </p>
           }
         />
@@ -157,14 +161,14 @@ export default function ConvertClient() {
 
       {stage === "error" && (
         <div className="rounded-lg border border-red-300 bg-red-50 p-6">
-          <p className="font-medium text-red-700">Something went wrong</p>
+          <p className="font-medium text-red-700">{t("convert.errTitle")}</p>
           <p className="mt-1 text-sm text-red-600">{error}</p>
           <button
             type="button"
             onClick={reset}
             className="mt-4 rounded border border-red-300 bg-white px-3 py-1 text-sm text-red-700 hover:bg-red-100"
           >
-            Try again
+            {t("convert.tryAgain")}
           </button>
         </div>
       )}
@@ -173,17 +177,19 @@ export default function ConvertClient() {
 }
 
 function AnonymousBanner() {
+  const t = useT();
   return (
     <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
-      Anonymous conversions are <strong>not saved</strong> to a library.{" "}
+      {t("anon.prefix")} <strong>{t("anon.notSaved")}</strong>{" "}
+      {t("anon.middle")}{" "}
       <Link href="/register" className="font-medium underline">
-        Create an account
+        {t("anon.createAccount")}
       </Link>{" "}
-      or{" "}
+      {t("anon.or")}{" "}
       <Link href="/login" className="font-medium underline">
-        log in
-      </Link>{" "}
-      to keep a searchable history of your games.
+        {t("anon.login")}
+      </Link>
+      {t("anon.suffix")}
     </div>
   );
 }
