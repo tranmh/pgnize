@@ -29,7 +29,9 @@ test-go: ## Run Go unit tests
 	$(GO) test ./internal/... ./cmd/...
 
 test-int: ## Run Go integration tests (needs Postgres at TEST_DATABASE_URL)
-	TEST_DATABASE_URL="$(TEST_DATABASE_URL)" RUN_INTEGRATION=1 $(GO) test -tags=integration ./internal/... -count=1
+	# -p 1: all integration packages share the single TEST_DATABASE_URL and TRUNCATE it
+	# between tests, so they must run serially — parallel packages race on the shared DB.
+	TEST_DATABASE_URL="$(TEST_DATABASE_URL)" RUN_INTEGRATION=1 $(GO) test -tags=integration -p 1 ./internal/... -count=1
 
 e2e-api: ## Playwright API project (no browser)
 	cd e2e && npm run test:api

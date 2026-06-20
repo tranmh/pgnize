@@ -81,6 +81,84 @@ func TestClaimNextJobNoDoubleClaim(t *testing.T) {
 	}
 }
 
+func TestMoveConfidenceRoundTrip(t *testing.T) {
+	st := newStore(t)
+	ctx := context.Background()
+
+	// A draft with a mix of confidences: a clean legal move, a flagged (verify) move, and an
+	// illegal move — exactly what the recognition pipeline produces.
+	id, err := st.CreateDraftGame(ctx, store.NewDraft{
+		Source:     domain.SourceRecognized,
+		Header:     domain.Header{White: "A", Black: "B"},
+		Confidence: 0.5,
+		Moves: []domain.Move{
+			{Ply: 1, Side: "white", SAN: "e4", FenAfter: "x", IsLegal: true, Confidence: 0.9},
+			{Ply: 2, Side: "black", SAN: "Nbd2", IsLegal: true, Corrected: true, Confidence: 0.3},
+			{Ply: 3, Side: "white", SAN: "zzz", IsLegal: false, Confidence: 0.0},
+		},
+	})
+	if err != nil {
+		t.Fatalf("create draft: %v", err)
+	}
+
+	g, _, err := st.GetGame(ctx, id)
+	if err != nil {
+		t.Fatalf("get game: %v", err)
+	}
+	want := []float64{0.9, 0.3, 0.0}
+	if len(g.Moves) != len(want) {
+		t.Fatalf("got %d moves, want %d", len(g.Moves), len(want))
+	}
+	for i, w := range want {
+		if diff := g.Moves[i].Confidence - w; diff > 0.001 || diff < -0.001 {
+			t.Errorf("move %d confidence=%.3f, want %.3f", i+1, g.Moves[i].Confidence, w)
+		}
+	}
+
+	// Saving replaces the moves with human-verified ones (confidence 1.0).
+	saved := []domain.Move{
+		{Ply: 1, Side: "white", SAN: "e4", FenAfter: "x", IsLegal: true, Confidence: 1.0},
+		{Ply: 2, Side: "black", SAN: "e5", FenAfter: "y", IsLegal: true, Confidence: 1.0},
+	}
+	if err := st.SaveGame(ctx, id, g.Header, g.StartFEN, saved, "1. e4 e5 *", nil, nil); err != nil {
+		t.Fatalf("save game: %v", err)
+	}
+	g2, _, err := st.GetGame(ctx, id)
+	if err != nil {
+		t.Fatalf("get saved game: %v", err)
+	}
+	if g2.Status != domain.StatusSaved {
+		t.Fatalf("status=%q, want saved", g2.Status)
+	}
+	for _, m := range g2.Moves {
+		if m.Confidence != 1.0 {
+			t.Errorf("saved move %d confidence=%.3f, want 1.0 (human-verified)", m.Ply, m.Confidence)
+		}
+	}
+}
+
+// TestDirectInsertDefaultsConfidence proves the column default (1.0) applies to any INSERT that
+// omits confidence — manual entries and raw seed inserts stay confident by default.
+func TestDirectInsertDefaultsConfidence(t *testing.T) {
+	st := newStore(t)
+	ctx := context.Background()
+	var conf float64
+	err := st.Pool.QueryRow(ctx, `
+		WITH g AS (
+			INSERT INTO games (source, status, result, start_fen)
+			VALUES ('manual','draft','*','startfen') RETURNING id
+		), m AS (
+			INSERT INTO moves (game_id, ply, side, san) SELECT id, 1, 'white', 'e4' FROM g
+			RETURNING confidence
+		) SELECT confidence FROM m`).Scan(&conf)
+	if err != nil {
+		t.Fatalf("insert: %v", err)
+	}
+	if conf != 1.0 {
+		t.Fatalf("default confidence=%.2f, want 1.0", conf)
+	}
+}
+
 func TestRateLimitWindow(t *testing.T) {
 	st := newStore(t)
 	ctx := context.Background()
