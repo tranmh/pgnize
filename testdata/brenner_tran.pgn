@@ -1,0 +1,25 @@
+[Event "BL B NF: SF Goeppingen II - SF Denkingen III"]
+[Site "?"]
+[Date "2026.03.15"]
+[Round "8"]
+[Board "1"]
+[White "Brenner, Markus"]
+[Black "Tran, Minh Cuong"]
+[Result "1/2-1/2"]
+
+; Human-verified reading of testdata/brenner_tran.jpg (a handwritten German
+; Partieformular). Transcribed from the image by Claude Code and replayed through
+; a chess engine, so every move below is legal. The sheet records 60 moves and ends
+; in a draw (the "(=)" mark); moves 49-60 are a drawn queen-and-bishop endgame whose
+; handwriting could not be transcribed with confidence, so only the verified first
+; 48 moves are given here. This file is the ground truth for the recognition harness
+; in internal/recognition/brenner_tran_test.go (expectedBrennerSAN).
+
+1. e4 c6 2. c4 d5 3. cxd5 cxd5 4. exd5 Nf6 5. Qa4+ Bd7 6. Qb3 Qc7 7. Nc3 Na6
+8. d4 Rc8 9. Nf3 e6 10. dxe6 Bxe6 11. Bb5+ Nfd7 12. Qd1 Bb4 13. Bd2 O-O
+14. O-O Nf6 15. a3 Be7 16. Rfe1 Rfd8 17. Qe2 Nb8 18. h3 a6 19. Bd3 Nc6
+20. Be3 b5 21. Rac1 Qd6 22. Red1 Bb3 23. Rde1 Bf8 24. Ne4 Nxe4 25. Bxe4 Bd5
+26. Bxd5 Qxd5 27. Red1 Be7 28. Rc2 Na5 29. Rdc1 Rxc2 30. Rxc2 Bf6 31. a4 Nb3
+32. axb5 axb5 33. Qd1 Ra8 34. Kh2 g6 35. Rc3 Qd6+ 36. g3 Na5 37. Ra3 Qd5
+38. Qa1 Qxf3 39. Rxa5 Rd8 40. Qh1 Qe2 41. Ra8 Kg7 42. Rxd8 Bxd8 43. Qd5 Bf6
+44. b3 h5 45. h4 Qd3 46. Qf3 Qc2 47. Kg2 Be7 48. Qb7 Bf6 1/2-1/2

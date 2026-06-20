@@ -1,0 +1,102 @@
+
+brenner_tran.jpg — model=gemini:gemini-2.5-flash (11.3s)
+header: White="Markus Brenner" Black="Minh Cuong Tran"  overall=0.50
+reference: 96 plies verified (game is a draw; moves 49-60 not transcribed)
+  ply  side   read -> san      expected conf  ok  state
+  1    white  e4               e4       0.90  ✓   ok
+  2    black  c6               c6       0.90  ✓   ok
+  3    white  c4               c4       0.90  ✓   ok
+  4    black  d5               d5       0.90  ✓   ok
+  5    white  cd5              cxd5     0.00  ✗   illegal
+  6    white  cd5              cxd5     0.00  ✗   illegal
+  7    white  Ld4 ed5 -> Bd4 … exd5     0.00  ✗   illegal
+  8    white  Ld9 Sf6 -> Bd9 … Nf6      0.00  ✗   illegal
+  9    white  Da4+ Ld7 -> Qa4… Qa4+     0.00  ✗   illegal
+  10   white  Db3 Dc7 -> Qb3 … Bd7      0.00  ✗   illegal
+  11   white  Sc3 Sa6 -> Nc3 … Qb3      0.00  ✗   illegal
+  12   white  Ld4 -> Bd4       Qc7      0.00  ✗   illegal
+  13   white  Tac8 -> Rac8     Nc3      0.00  ✗   illegal
+  14   white  Ld6 Sf3 -> Bd6 … Na6      0.00  ✗   illegal
+  15   white  Ld6 eb -> Bd6 eb d4       0.00  ✗   illegal
+  16   white  Ld6 ed6 -> Bd6 … Rc8      0.00  ✗   illegal
+  17   white  Ld5 Lb6 -> Bd5 … Nf3      0.00  ✗   illegal
+  18   white  Ld0 Ld5+ -> Bd0… e6       0.00  ✗   illegal
+  19   white  Sd7 -> Nd7       dxe6     0.00  ✗   illegal
+  20   white  Sd3 Dd1 -> Nd3 … Bxe6     0.00  ✗   illegal
+  21   white  Dd8 Lb4 -> Qd8 … Bb5+     0.00  ✗   illegal
+  22   white  Sd2 Ld2 -> Nd2 … Nfd7     0.00  ✗   illegal
+  23   white  0-0 -> O-O       Qd1      0.00  ✗   illegal
+  24   white  0-0 -> O-O       Bb4      0.00  ✗   illegal
+  25   white  Sf6 -> Nf6       Bd2      0.00  ✗   illegal
+  26   white  a3 Ld7           O-O      0.00  ✗   illegal
+  27   white  Sf1 Td1 -> Nf1 … O-O      0.00  ✗   illegal
+  28   white  Td8 -> Rd8       Nf6      0.00  ✗   illegal
+  29   white  Sd2 Dd2 -> Nd2 … a3       0.00  ✗   illegal
+  30   white  Sg8 -> Ng8       Be7      0.00  ✗   illegal
+  31   white  h3               Rfe1     0.00  ✗   illegal
+  32   white  h6               Rfd8     0.00  ✗   illegal
+  33   white  Ld3 -> Bd3       Qe2      0.00  ✗   illegal
+  34   white  Sc6 -> Nc6       Nb8      0.00  ✗   illegal
+  35   white  Le3 -> Be3       h3       0.00  ✗   illegal
+  36   white  b5               a6       0.00  ✗   illegal
+  37   white  Td1 Dd6 -> Rd1 … Bd3      0.00  ✗   illegal
+  38   white  Ted1 Lb3 -> Red… Nc6      0.00  ✗   illegal
+  39   white  Td1 Lf8 -> Rd1 … Be3      0.00  ✗   illegal
+  40   white  Se4 Se4 -> Ne4 … b5       0.00  ✗   illegal
+  41   white  Le4 -> Be4       Rac1     0.00  ✗   illegal
+  42   white  Ld5 -> Bd5       Qd6      0.00  ✗   illegal
+  43   white  Ld5 -> Bd5       Red1     0.00  ✗   illegal
+  44   white  Dd5 -> Qd5       Bb3      0.00  ✗   illegal
+  45   white  Ted1 Le7 -> Red… Rde1     0.00  ✗   illegal
+  46   white  Tc2 Sa5 -> Rc2 … Bf8      0.00  ✗   illegal
+  47   white  Td1 Tc2 -> Rd1 … Ne4      0.00  ✗   illegal
+  48   white  Tc2 Lf6 -> Rc2 … Nxe4     0.00  ✗   illegal
+  49   white  a4 Sf3           Bxe4     0.00  ✗   illegal
+  50   white  ab5              Bd5      0.00  ✗   illegal
+  51   white  ab5              Bxd5     0.00  ✗   illegal
+  52   white  Dd1 -> Qd1       Qxd5     0.00  ✗   illegal
+  53   white  Ta8 -> Ra8       Red1     0.00  ✗   illegal
+  54   white  Kb2              Be7      0.00  ✗   illegal
+  55   white  Db6 -> Qb6       Rc2      0.00  ✗   illegal
+  56   white  Kb3              Na5      0.00  ✗   illegal
+  57   white  Dd8 -> Qd8       Rdc1     0.00  ✗   illegal
+  58   white  a3               Rxc2     0.00  ✗   illegal
+  59   white  Sa5 -> Na5       Rxc2     0.00  ✗   illegal
+  60   white  Ta3 Dd5 -> Ra3 … Bf6      0.00  ✗   illegal
+  61   white  Dd1 Df5 -> Qd1 … a4       0.00  ✗   illegal
+  62   white  Ta5 -> Ra5       Nb3      0.00  ✗   illegal
+  63   white  Td8 -> Rd8       axb5     0.00  ✗   illegal
+  64   white  Dh1 De4 -> Qh1 … axb5     0.00  ✗   illegal
+  65   white  Ta1 Kg7 -> Ra1 … Qd1      0.00  ✗   illegal
+  66   white  Td8 Ld8 -> Rd8 … Ra8      0.00  ✗   illegal
+  67   white  Dd5 Lf6 -> Qd5 … Kh2      0.00  ✗   illegal
+  68   white  b3 h5            g6       0.00  ✗   illegal
+  69   white  h4               Rc3      0.00  ✗   illegal
+  70   white  Dd3 -> Qd3       Qd6+     0.00  ✗   illegal
+  71   white  Df3 De7 -> Qf3 … g3       0.00  ✗   illegal
+  72   white  Kg2 Le2          Na5      0.00  ✗   illegal
+  73   white  Dl7 Lf6 -> Ql7 … Ra3      0.00  ✗   illegal
+  74   white  Dd5 Lb5+ -> Qd5… Qd5      0.00  ✗   illegal
+  75   white  Kb2 Lh4          Qa1      0.00  ✗   illegal
+  76   white  Db5 -> Qb5       Qxf3     0.00  ✗   illegal
+  77   white  Db5 -> Qb5       Rxa5     0.00  ✗   illegal
+  78   white  Db5 -> Qb5       Rd8      0.00  ✗   illegal
+  79   white  Le7 -> Be7       Qh1      0.00  ✗   illegal
+  80   white  h4               Qe2      0.00  ✗   illegal
+  81   white  f6               Ra8      0.00  ✗   illegal
+  82   white  Ld4 -> Bd4       Kg7      0.00  ✗   illegal
+  83   white  g5               Rxd8     0.00  ✗   illegal
+  84   white  Le5+ -> Be5+     Bxd8     0.00  ✗   illegal
+  85   white  Kg7              Qd5      0.00  ✗   illegal
+  86   white  Kg2              Bf6      0.00  ✗   illegal
+  87   white  Ke6              b3       0.00  ✗   illegal
+  88   white  Kg3 Kf5          h5       0.00  ✗   illegal
+  89   white  Kf3              h4       0.00  ✗   illegal
+  90   white  g5               Qd3      0.00  ✗   illegal
+  91   white  f5               Qf3      0.00  ✗   illegal
+  92   white  Kxg5             Qc2      0.00  ✗   illegal
+  93   white  Kg2              Kg2      0.00  ✓   illegal
+  94   white  Kf5              Be7      0.00  ✗   illegal
+  95   white  —                Qb7      0.00      —
+  96   black  —                Bf6      0.00      —
+  accuracy: 5/96 plies match reference (5% over 94 compared) · model emitted 94 plies
