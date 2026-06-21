@@ -118,13 +118,13 @@ type Upload struct {
 
 // Job is a recognition job row.
 type Job struct {
-	ID            string
-	UploadID      string
-	UserID        *string
-	Status        string
+	ID             string
+	UploadID       string
+	UserID         *string
+	Status         string
 	RecognizerName string
-	Attempts      int
-	Error         string
-	GameID        *string
-	Confidence    *float64
+	Attempts       int
+	Error          string
+	GameID         *string
+	Confidence     *float64
 }

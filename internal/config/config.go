@@ -33,8 +33,8 @@ type Config struct {
 	RecognitionWorker int
 	FewShotMax        int
 
-	UploadMaxBytes  int64
-	AnonUploadTTLd  int
+	UploadMaxBytes int64
+	AnonUploadTTLd int
 
 	// RateLimitDisabled turns off all per-IP/per-user rate limiting. Intended for
 	// local automated testing only — defaults to false and must never be set in prod.

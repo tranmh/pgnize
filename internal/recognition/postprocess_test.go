@@ -9,32 +9,32 @@ import (
 
 func TestGermanToSAN(t *testing.T) {
 	cases := map[string]string{
-		"e4":      "e4",
-		"Sf3":     "Nf3",   // Springer -> Knight
-		"Lb5":     "Bb5",   // Läufer -> Bishop
-		"Dh5":     "Qh5",   // Dame -> Queen
-		"Td1":     "Rd1",   // Turm -> Rook
-		"Kf1":     "Kf1",   // König -> King (same letter)
-		"0-0":     "O-O",
-		"0-0-0":   "O-O-O",
-		"O-O":     "O-O",
-		"Sxf3":    "Nxf3",
-		"Sf3:":    "Nf3",   // German capture colon
+		"e4":       "e4",
+		"Sf3":      "Nf3", // Springer -> Knight
+		"Lb5":      "Bb5", // Läufer -> Bishop
+		"Dh5":      "Qh5", // Dame -> Queen
+		"Td1":      "Rd1", // Turm -> Rook
+		"Kf1":      "Kf1", // König -> King (same letter)
+		"0-0":      "O-O",
+		"0-0-0":    "O-O-O",
+		"O-O":      "O-O",
+		"Sxf3":     "Nxf3",
+		"Sf3:":     "Nf3", // German capture colon
 		"exd6e.p.": "exd6",
-		"e8D":     "e8=Q",  // promotion, German queen
-		"e8=D":    "e8=Q",
-		"e8Q":     "e8=Q",
-		"Dxf7#":   "Qxf7#",
-		"Lc4+":    "Bc4+",
-		"remis":   "",      // result word, not a move
-		"aufg.":   "",      // ressignation word
+		"e8D":      "e8=Q", // promotion, German queen
+		"e8=D":     "e8=Q",
+		"e8Q":      "e8=Q",
+		"Dxf7#":    "Qxf7#",
+		"Lc4+":     "Bc4+",
+		"remis":    "", // result word, not a move
+		"aufg.":    "", // ressignation word
 		// Long algebraic notation the model was not trained on -> reduce to short SAN.
-		"Sf3-e5":  "Ne5",   // piece long move
-		"Sf3xe5":  "Nxe5",  // piece long capture
-		"Td1-d8":  "Rd8",   // rook long move
-		"e2-e4":   "e4",    // pawn long move
-		"e4:d5":   "exd5",  // pawn long capture (German colon)
-		"e4xd5":   "exd5",  // pawn long capture (x)
+		"Sf3-e5": "Ne5",  // piece long move
+		"Sf3xe5": "Nxe5", // piece long capture
+		"Td1-d8": "Rd8",  // rook long move
+		"e2-e4":  "e4",   // pawn long move
+		"e4:d5":  "exd5", // pawn long capture (German colon)
+		"e4xd5":  "exd5", // pawn long capture (x)
 	}
 	for in, want := range cases {
 		if got := GermanToSAN(in); got != want {

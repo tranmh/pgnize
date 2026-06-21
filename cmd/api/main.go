@@ -79,7 +79,7 @@ func main() {
 
 	// In-process recognition worker pool.
 	pool := &jobs.Pool{
-		Deps: jobs.Deps{Store: st, Storage: blob, Registry: reg, FewShotMax: cfg.FewShotMax},
+		Deps:    jobs.Deps{Store: st, Storage: blob, Registry: reg, FewShotMax: cfg.FewShotMax},
 		Workers: cfg.RecognitionWorker,
 	}
 	go pool.Run(ctx)
