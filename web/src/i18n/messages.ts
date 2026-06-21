@@ -188,6 +188,15 @@ const en: Catalog = {
   "dropzone.browse": "browse",
   "dropzone.aria": "Upload a score-sheet photo",
   "dropzone.selectedAlt": "Selected score sheet",
+  "dropzone.takePhoto": "Tap to take a photo",
+  "dropzone.capture": "Take photo",
+  "dropzone.cancel": "Cancel",
+  "dropzone.retake": "tap to retake",
+  "dropzone.switchCamera": "Flip",
+  "dropzone.cameraStarting": "Starting camera…",
+  "dropzone.cameraError":
+    "Could not access the camera. Please allow camera access or upload a file instead.",
+  "dropzone.orUpload": "or upload a file instead",
 
   // Library
   "library.title": "Library",
@@ -498,6 +507,15 @@ const de: Catalog = {
   "dropzone.browse": "durchsuchen",
   "dropzone.aria": "Foto eines Partieformulars hochladen",
   "dropzone.selectedAlt": "Ausgewähltes Partieformular",
+  "dropzone.takePhoto": "Tippen, um ein Foto aufzunehmen",
+  "dropzone.capture": "Foto aufnehmen",
+  "dropzone.cancel": "Abbrechen",
+  "dropzone.retake": "tippen, um neu aufzunehmen",
+  "dropzone.switchCamera": "Wechseln",
+  "dropzone.cameraStarting": "Kamera wird gestartet…",
+  "dropzone.cameraError":
+    "Kein Zugriff auf die Kamera. Bitte erlaube den Kamerazugriff oder lade stattdessen eine Datei hoch.",
+  "dropzone.orUpload": "oder stattdessen eine Datei hochladen",
 
   // Library
   "library.title": "Bibliothek",
