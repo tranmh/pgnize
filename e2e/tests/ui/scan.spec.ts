@@ -9,12 +9,13 @@ test.describe("anonymous scan flow", () => {
     await useEnglish(page);
     await page.goto("/scan");
 
-    // No submit button on /scan: the dropzone fires recognition on file select.
     await page.setInputFiles('input[type="file"]', {
       name: "board.png",
       mimeType: "image/png",
       buffer: PIXEL_PNG,
     });
+    // The multi-image picker collects the file; recognition fires on submit.
+    await page.getByRole("button", { name: "Scan" }).click();
 
     // The position editor must mount: palette, board, castling checkboxes, and
     // the side-to-move radios are all visible.
