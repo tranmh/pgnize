@@ -478,6 +478,12 @@ step_1_push() {
 step_2_capture_state() {
   step 2 "Capture pre-deploy state on prod"
 
+  # Ensure git trusts the prod repo before any git call. A prior deploy's tar
+  # extraction can leave the tree owned by the local build uid (e.g. 1000) while
+  # git here runs as root, which aborts every git command with "dubious
+  # ownership". Mark it safe up front (idempotent), not just after extraction.
+  ssh_remote "git config --global --get-all safe.directory 2>/dev/null | grep -qxF '$REMOTE_PATH' || git config --global --add safe.directory '$REMOTE_PATH'"
+
   PREV_REMOTE_SHA=$(ssh_remote "cd '$REMOTE_PATH' && git rev-parse HEAD")
   PREV_REMOTE_SHA="${PREV_REMOTE_SHA//$'\r'/}"
   [[ -n "$PREV_REMOTE_SHA" ]] || abort "Empty git HEAD on prod — repo may be detached or broken"
@@ -681,6 +687,13 @@ step_4_transfer() {
 
   log "Extracting on prod (.env preserved by tarball excludes)..."
   ssh_remote "tar xzf '/tmp/$(basename "$TARBALL")' -C '$REMOTE_PATH'"
+
+  # The tarball is built locally (uid 1000) and tar restores that uid on prod, so
+  # after extraction the repo (and .git) is owned by 1000 while git here runs as
+  # root -> "dubious ownership", which aborts every later git call. Mark the path
+  # safe (idempotent: only add when missing, so repeated deploys don't duplicate).
+  log "Marking prod repo as a git safe.directory ..."
+  ssh_remote "git config --global --get-all safe.directory 2>/dev/null | grep -qxF '$REMOTE_PATH' || git config --global --add safe.directory '$REMOTE_PATH'"
 
   # `git reset --hard HEAD` repairs anything tar missed by re-checking out from
   # the just-extracted objects. `git clean -fd` then removes untracked files
