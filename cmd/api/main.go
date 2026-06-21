@@ -42,7 +42,7 @@ func main() {
 		os.Exit(probeHealth(cfg.APIAddr))
 	}
 
-	// Migrations run on every boot (mirrors swiss-manager migrate-on-start).
+	// Migrations run on every boot (mirrors OpenPairing.org migrate-on-start).
 	if err := store.Migrate(cfg.DatabaseURL, migrations.FS, *migrateDown); err != nil {
 		fatal("migrate", err)
 	}

@@ -6,7 +6,7 @@ import (
 )
 
 // ConsumeRateLimit increments the counter for key within a rolling window and reports
-// whether the action is allowed (count <= limit). Mirrors swiss-manager's consumeRateLimit:
+// whether the action is allowed (count <= limit). Mirrors OpenPairing.org's consumeRateLimit:
 // the window resets once `window` has elapsed since window_start.
 func (s *Store) ConsumeRateLimit(ctx context.Context, key string, limit int, window time.Duration) (allowed bool, err error) {
 	var count int
