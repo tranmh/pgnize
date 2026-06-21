@@ -56,7 +56,11 @@ jobs:
             go.sum
             chesskit/go.sum
       - name: Integration tests
-        run: RUN_INTEGRATION=1 go test -tags=integration ./internal/... -count=1
+        # Use the Makefile target so CI carries its `-p 1` flag: all integration
+        # packages share the single TEST_DATABASE_URL and TRUNCATE it, so they must
+        # run serially — parallel package binaries race on the shared DB (flaky 401s,
+        # double-claimed jobs). Don't inline a raw `go test` here; it drifts from the target.
+        run: make test-int
 
   web:
     name: Web lint + build
