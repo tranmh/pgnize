@@ -682,6 +682,13 @@ step_4_transfer() {
   log "Extracting on prod (.env preserved by tarball excludes)..."
   ssh_remote "tar xzf '/tmp/$(basename "$TARBALL")' -C '$REMOTE_PATH'"
 
+  # The tarball is built locally (uid 1000) and tar restores that uid on prod, so
+  # after extraction the repo (and .git) is owned by 1000 while git here runs as
+  # root -> "dubious ownership", which aborts every later git call. Mark the path
+  # safe (idempotent: only add when missing, so repeated deploys don't duplicate).
+  log "Marking prod repo as a git safe.directory ..."
+  ssh_remote "git config --global --get-all safe.directory 2>/dev/null | grep -qxF '$REMOTE_PATH' || git config --global --add safe.directory '$REMOTE_PATH'"
+
   # `git reset --hard HEAD` repairs anything tar missed by re-checking out from
   # the just-extracted objects. `git clean -fd` then removes untracked files
   # that lingered from the previous commit. CRUCIAL: exclude ./backups — the DB
