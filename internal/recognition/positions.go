@@ -19,21 +19,23 @@ type modelPosition struct {
 // as an empty square.
 const fenPieces = "KQRBNPkqrbnp"
 
-// AssembleFEN turns a model-read grid into a validated FEN. It repairs the grid (expanding
-// any run-length digits, stripping spaces, mapping unknown characters to empty), flips a
-// black-bottom orientation back to the canonical white-bottom view, builds the board field
-// with run-length encoding, and validates the result via chesskit.
+// AssembleFEN turns a model-read grid into a FEN for the editable review board. It repairs
+// the grid best-effort (taking the first 8 rows, padding missing ones; per row: expanding
+// run-length digits, stripping spaces, mapping unknown glyphs to empty, truncating long and
+// padding short rows to 8 cells), flips a black-bottom orientation back to the canonical
+// white-bottom view, and run-length-encodes the board field.
+//
+// Return contract:
+//   - legal position → (normalized FEN, nil)
+//   - readable but chess-illegal position (e.g. the model misread a king or a back-rank
+//     pawn) → (best-effort FEN, error). The FEN is still usable: we return the recognized
+//     board so the editor shows what was read instead of discarding every correct square.
+//     Falling back to the starting position here is exactly the bug this avoids.
+//   - nothing usable read (empty grid) → ("", error)
 func AssembleFEN(res PositionResult) (string, error) {
-	if len(res.Grid) != 8 {
-		return "", fmt.Errorf("grid must have 8 rows, got %d", len(res.Grid))
-	}
-	rows := make([]string, 8)
-	for i, raw := range res.Grid {
-		row, err := normalizeRow(raw)
-		if err != nil {
-			return "", fmt.Errorf("row %d: %w", i, err)
-		}
-		rows[i] = row
+	rows := repairGrid(res.Grid)
+	if rows == nil {
+		return "", fmt.Errorf("empty grid: no rows to assemble")
 	}
 
 	// A black-bottom photo is the board seen rotated 180°; reverse rank order and each
@@ -61,34 +63,57 @@ func AssembleFEN(res PositionResult) (string, error) {
 
 	norm, err := chesskit.NormalizeFEN(chesskit.FEN(assembled))
 	if err != nil {
-		return "", err
+		// Readable grid, illegal position: keep the recognized board for the editor.
+		return assembled, fmt.Errorf("recognized position is not legal: %w", err)
 	}
 	return string(norm), nil
 }
 
-// normalizeRow expands FEN run-length digits, strips spaces, maps unknown characters to
-// empty squares, and returns an 8-character row (or an error if it cannot be made length 8).
-func normalizeRow(raw string) (string, error) {
-	var b strings.Builder
+// repairGrid coerces a raw recognizer grid into exactly 8 rows of 8 cells: it keeps the
+// first 8 rows (padding any missing trailing rows with empties) and normalizes each row.
+// It returns nil only when the grid carries no rows at all.
+func repairGrid(grid []string) []string {
+	if len(grid) == 0 {
+		return nil
+	}
+	rows := make([]string, 8)
+	for i := 0; i < 8; i++ {
+		if i < len(grid) {
+			rows[i] = normalizeRow(grid[i])
+		} else {
+			rows[i] = "........"
+		}
+	}
+	return rows
+}
+
+// normalizeRow coerces one raw grid row into exactly 8 cells. It expands FEN run-length
+// digits, strips spaces, maps every unknown glyph to an empty square, truncates an
+// over-long row and pads a short one. It never fails: the editable board is the correction
+// path, so a best-effort row always beats discarding the whole read.
+func normalizeRow(raw string) string {
+	cells := make([]byte, 0, 8)
 	for _, r := range raw {
+		if len(cells) >= 8 {
+			break
+		}
 		switch {
 		case r == ' ':
 			continue
 		case r >= '1' && r <= '8':
-			for n := 0; n < int(r-'0'); n++ {
-				b.WriteByte('.')
+			for n := 0; n < int(r-'0') && len(cells) < 8; n++ {
+				cells = append(cells, '.')
 			}
 		case strings.ContainsRune(fenPieces, r):
-			b.WriteRune(r)
+			cells = append(cells, byte(r))
 		default:
-			b.WriteByte('.') // unknown glyph → empty square
+			cells = append(cells, '.') // unknown glyph → empty square
 		}
 	}
-	row := b.String()
-	if len(row) != 8 {
-		return "", fmt.Errorf("row has length %d, want 8", len(row))
+	for len(cells) < 8 {
+		cells = append(cells, '.')
 	}
-	return row, nil
+	return string(cells)
 }
 
 // encodeRank collapses consecutive empties ('.') in an 8-char row into FEN count digits.

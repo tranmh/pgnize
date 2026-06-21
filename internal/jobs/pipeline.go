@@ -112,14 +112,7 @@ func processPosition(ctx context.Context, d Deps, job store.ClaimedJob) error {
 		return d.Store.MarkJobFailed(ctx, job.JobID, "recognize position: "+err.Error())
 	}
 
-	fen, err := recognition.AssembleFEN(res)
-	conf := res.Confidence
-	if err != nil {
-		slog.Warn("position FEN assembly failed; falling back to starting position",
-			"jobID", job.JobID, "err", err)
-		fen = string(chesskit.StartingFEN())
-		conf = 0
-	}
+	fen, conf := positionDraftFEN(res, job.JobID)
 
 	gameID, err := d.Store.CreateDraftGame(ctx, store.NewDraft{
 		UserID:     job.UserID,
@@ -134,6 +127,30 @@ func processPosition(ctx context.Context, d Deps, job store.ClaimedJob) error {
 		return d.Store.MarkJobFailed(ctx, job.JobID, "create draft: "+err.Error())
 	}
 	return d.Store.MarkJobDone(ctx, job.JobID, gameID, conf, safeRawJSON(res.RawJSON))
+}
+
+// positionDraftFEN turns a recognizer position result into the FEN stored on the draft,
+// plus a confidence. AssembleFEN repairs a malformed grid best-effort: a clean, legal read
+// comes back normalized; a readable-but-illegal read (the model misread a king or a
+// back-rank pawn) comes back as the recognized board with a non-nil error. We KEEP the
+// recognized board in both cases so the editable review board shows what was read — only a
+// truly empty read (no grid at all) falls back to the standard starting position. Resetting
+// a partially-wrong read to the start would discard every square the model got right.
+func positionDraftFEN(res recognition.PositionResult, jobID string) (string, float64) {
+	fen, err := recognition.AssembleFEN(res)
+	if fen == "" {
+		slog.Warn("position recognition returned no usable grid; falling back to starting position",
+			"jobID", jobID, "err", err)
+		return string(chesskit.StartingFEN()), 0
+	}
+	if err != nil {
+		// Recognized but chess-illegal: keep the read for editing, but do not advertise
+		// confidence in an illegal position.
+		slog.Warn("recognized position is not legal; keeping best-effort read for editing",
+			"jobID", jobID, "err", err, "fen", fen)
+		return fen, 0
+	}
+	return fen, res.Confidence
 }
 
 // safeRawJSON returns raw when it is valid JSON, else "{}". result_raw_json is a
