@@ -517,8 +517,11 @@ step_2_capture_state() {
   record_state RECOGNIZER "$RECOGNIZER"
 
   # Warn if prod has uncommitted local edits — tar extract would overwrite them.
+  # Filter the deploy's OWN defensive copy (.env.deploy-backup, written in step 4):
+  # it is untracked and would otherwise make every subsequent deploy trip its own
+  # artifact at this dirty-tree gate.
   local remote_dirty
-  remote_dirty=$(ssh_remote "cd '$REMOTE_PATH' && git status --porcelain")
+  remote_dirty=$(ssh_remote "cd '$REMOTE_PATH' && git status --porcelain" | grep -vE '\.env\.deploy-backup$' || true)
   if [[ -n "$remote_dirty" ]]; then
     log "WARNING: prod working tree has local modifications:"
     echo "$remote_dirty" | sed 's/^/    /' >&2

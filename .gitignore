@@ -17,6 +17,7 @@ e2e/test-results/
 .env
 .env.local
 .env.prod
+.env.deploy-backup
 !.env.example
 
 # Local storage driver target
