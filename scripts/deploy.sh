@@ -362,7 +362,9 @@ step_0a_docker_preflight() {
 
   log "Building '$APP_SERVICE' + '$WEB_SERVICE' images via 'docker compose --profile $COMPOSE_PROFILE build'..."
   log "  Cold build (no cache): several minutes. Warm build: under a minute."
-  if ! docker compose $COMPOSE_BASE --profile "$COMPOSE_PROFILE" build "$APP_SERVICE" "$WEB_SERVICE"; then
+  # NB: literal -f here (not $COMPOSE_BASE) — IFS=$'\n\t' above strips the space
+  # as a word separator, so an unquoted "$COMPOSE_BASE" reaches docker as one arg.
+  if ! docker compose -f docker-compose.yml --profile "$COMPOSE_PROFILE" build "$APP_SERVICE" "$WEB_SERVICE"; then
     log "Local docker build FAILED. The same recipe runs on prod in step 6."
     log "  Fix the Dockerfile or build context, then re-run preflight."
     abort "Local docker build failed — prod would have failed the same way at step 6"
