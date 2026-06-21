@@ -16,6 +16,7 @@ e2e/test-results/
 # Env / secrets
 .env
 .env.local
+.env.prod
 !.env.example
 
 # Local storage driver target
