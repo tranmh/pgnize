@@ -1,16 +1,29 @@
 # PGNize
 
-Convert photos of handwritten chess score sheets (German *Partieformular*) into
-human-verified PGN, and build a browsable, searchable library of your games.
+Turn photos of chess into data you can use:
+
+- **Score sheet → PGN.** Photograph a handwritten German score sheet (*Partieformular*) and get a
+  move-by-move game back. Recognition is paired with a mandatory review loop, so every saved PGN is
+  human-verified.
+- **Board photo → position (FEN).** Photograph a physical board or a digital diagram and get the
+  position back as an editable FEN, then export it as PGN. A position is modeled as a draft game
+  whose start FEN is the recognized position, reusing the same upload/job/review/export machinery.
+
+Both flows are available anonymously (no account) or signed in. Signed-in games land in a browsable,
+searchable per-user library with an in-browser Stockfish analysis viewer.
 
 ## Stack
 
 - **Backend**: Go (REST) — chi router, pgx, goose migrations.
 - **Reusable core**: [`chesskit`](./chesskit) — a standalone Go chess library (SAN/FEN/PGN/legality)
   wrapping `notnil/chess`, designed for reuse by other projects (e.g. swiss-manager).
-- **Frontend**: Next.js + TypeScript + React.
-- **Recognition**: local open-source vision model via Ollama, behind a swappable `Recognizer` interface.
-  A mandatory move-by-move review loop guarantees every saved PGN is human-verified.
+- **Frontend**: Next.js + TypeScript + React — review workbench, editable position editor, and a
+  Stockfish (WASM) analysis viewer. German (default) and English i18n.
+- **Recognition**: a swappable `Recognizer` interface with `fake` (deterministic, CI default),
+  local Ollama VLM, and Google Gemini Flash backends. Recognizers return moves with a per-move
+  confidence and an 8×8 grid for positions; FEN is assembled deterministically in Go. A mandatory
+  move-by-move review loop — server-authoritative, re-validated via `chesskit.ApplyMoves` on save —
+  guarantees every saved PGN is human-verified.
 - **Infra**: Docker Compose, PostgreSQL 16, MinIO (image storage), Caddy (prod reverse proxy).
 
 ## Quick start (dev)
@@ -67,6 +80,14 @@ make test-int    # Go integration, needs Postgres
 make e2e-api     # Playwright API project (no browser)
 make e2e-ui      # Playwright UI project (chromium)
 ```
+
+### Recognition quality (developer harness)
+
+`make poseval` scores board photo → FEN accuracy (Ollama and/or Gemini) over the
+`testdata/positions` corpus (physical photos + digital diagrams), reporting per-square accuracy and
+exact-match rate. See [`poseval-report.md`](./poseval-report.md) for a recorded run: exact
+recognition is near-0% for both backends and Gemini is strong on digital diagrams but weak on
+physical photos — which is why the manual correction UI is essential, not optional.
 
 ## Layout
 
