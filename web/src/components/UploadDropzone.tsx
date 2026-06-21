@@ -29,8 +29,15 @@ export default function UploadDropzone({ onFile, disabled }: UploadDropzoneProps
   const [starting, setStarting] = useState(false);
 
   // getUserMedia needs a secure context; gate the in-app camera UI on availability.
-  const cameraSupported =
-    typeof navigator !== "undefined" && !!navigator.mediaDevices?.getUserMedia;
+  // Detect support only after mount: the server has no `navigator`, so reading it
+  // during render would make the first client render diverge from the SSR HTML and
+  // trip a hydration mismatch. Start false (matching the server), then upgrade.
+  const [cameraSupported, setCameraSupported] = useState(false);
+  useEffect(() => {
+    setCameraSupported(
+      typeof navigator !== "undefined" && !!navigator.mediaDevices?.getUserMedia,
+    );
+  }, []);
 
   const stopStream = useCallback(() => {
     if (streamRef.current) {
