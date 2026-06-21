@@ -62,24 +62,66 @@ func TestAssembleFENBlackToMove(t *testing.T) {
 	}
 }
 
-func TestAssembleFENBlackBottomFlip(t *testing.T) {
-	// A black-bottom photo of the K+R vs k endgame: the same physical board seen rotated
-	// 180°. Flipping must recover the canonical white-bottom FEN.
+func TestAssembleFENFlipsWhiteOnTop(t *testing.T) {
+	// The observed model failure: White's army is reported at the TOP of the grid with
+	// files already in a→h order. Orientation is inferred from the piece distribution and
+	// corrected with a vertical rank flip only (files are NOT mirrored, as that would
+	// corrupt the already-correct file order). White King+Rook on top must end on rank 1.
 	grid := []string{
-		"R..K....",
+		"....K..R", // white K+R at top, correct file order
 		"........",
 		"........",
 		"........",
 		"........",
 		"........",
 		"........",
-		"...k....",
+		"....k...", // black king at bottom
 	}
-	got, err := AssembleFEN(PositionResult{Grid: grid, SideToMove: SideWhite, Orientation: "black_bottom"})
+	got, err := AssembleFEN(PositionResult{Grid: grid, SideToMove: SideWhite, Orientation: "white_bottom"})
 	if err != nil {
 		t.Fatalf("AssembleFEN: %v", err)
 	}
 	want := "4k3/8/8/8/8/8/8/4K2R w - - 0 1"
+	if got != want {
+		t.Fatalf("got %q, want %q", got, want)
+	}
+}
+
+// The model's self-reported orientation is unreliable, so it must be ignored: even when
+// the model claims black_bottom, a grid with White clearly on the bottom must NOT flip.
+func TestAssembleFENIgnoresWrongModelOrientationFlag(t *testing.T) {
+	got, err := AssembleFEN(PositionResult{
+		Grid:        startGrid(), // White on bottom (canonical)
+		SideToMove:  SideWhite,
+		Orientation: "black_bottom", // wrong flag — must be overridden by inference
+	})
+	if err != nil {
+		t.Fatalf("AssembleFEN: %v", err)
+	}
+	want := "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w - - 0 1"
+	if got != want {
+		t.Fatalf("got %q, want %q", got, want)
+	}
+}
+
+// And the converse: a start position reported upside-down (White on top) is corrected to
+// the canonical view by inference, regardless of the (here absent) model flag.
+func TestAssembleFENCorrectsUpsideDownStart(t *testing.T) {
+	grid := []string{
+		"RNBQKBNR", // white back rank at top, files a→h
+		"PPPPPPPP",
+		"........",
+		"........",
+		"........",
+		"........",
+		"pppppppp",
+		"rnbqkbnr", // black back rank at bottom
+	}
+	got, err := AssembleFEN(PositionResult{Grid: grid, SideToMove: SideWhite, Orientation: ""})
+	if err != nil {
+		t.Fatalf("AssembleFEN: %v", err)
+	}
+	want := "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w - - 0 1"
 	if got != want {
 		t.Fatalf("got %q, want %q", got, want)
 	}

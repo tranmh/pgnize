@@ -38,14 +38,16 @@ func AssembleFEN(res PositionResult) (string, error) {
 		return "", fmt.Errorf("empty grid: no rows to assemble")
 	}
 
-	// A black-bottom photo is the board seen rotated 180°; reverse rank order and each
-	// rank's file order to recover the canonical white-bottom view.
-	if res.Orientation == "black_bottom" {
+	// Recover the canonical white-bottom view. The model's self-reported orientation is
+	// unreliable (it mislabels white_bottom boards as black_bottom and vice versa), so we
+	// ignore it and infer orientation from where the armies sit. In practice this model
+	// also emits files in the correct a→h order even when it inverts the ranks, so the
+	// correction is a vertical rank flip only — mirroring files (a full 180°) would corrupt
+	// the already-correct file order. Measured over the eval corpus this beats both
+	// trusting the flag and the full-180° flip.
+	if whiteOnTop(rows) {
 		for i, j := 0, len(rows)-1; i < j; i, j = i+1, j-1 {
 			rows[i], rows[j] = rows[j], rows[i]
-		}
-		for i := range rows {
-			rows[i] = reverseString(rows[i])
 		}
 	}
 
@@ -137,10 +139,33 @@ func encodeRank(row string) string {
 	return b.String()
 }
 
-func reverseString(s string) string {
-	b := []byte(s)
-	for i, j := 0, len(b)-1; i < j; i, j = i+1, j-1 {
-		b[i], b[j] = b[j], b[i]
+// whiteOnTop reports whether the grid is vertically inverted — White's army sitting in
+// the top half and Black's in the bottom half — which means it must be flipped to recover
+// the canonical white-bottom view. It scores the four quadrant masses; a positive score
+// means White is (correctly) on the bottom, negative means it is on top. A tie (sparse or
+// symmetric material with no vertical signal) defaults to no flip, since white_bottom is by
+// far the most common real orientation and the editable board is the final correction path.
+func whiteOnTop(rows []string) bool {
+	var whiteTop, whiteBottom, blackTop, blackBottom int
+	for i, row := range rows {
+		top := i < len(rows)/2
+		for _, c := range row {
+			switch {
+			case c >= 'A' && c <= 'Z': // white piece
+				if top {
+					whiteTop++
+				} else {
+					whiteBottom++
+				}
+			case c >= 'a' && c <= 'z': // black piece
+				if top {
+					blackTop++
+				} else {
+					blackBottom++
+				}
+			}
+		}
 	}
-	return string(b)
+	score := (whiteBottom - whiteTop) + (blackTop - blackBottom)
+	return score < 0
 }
