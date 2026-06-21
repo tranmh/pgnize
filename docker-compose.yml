@@ -93,6 +93,11 @@ services:
   caddy:
     image: caddy:2-alpine
     profiles: ["prod"]
+    # Caddy reads {$PGNIZE_DOMAIN} from its own process env to pick the site
+    # address (and thus which domain to provision TLS for). Compose substitutes
+    # the host value exported by scripts/deploy.sh; falls back to localhost.
+    environment:
+      PGNIZE_DOMAIN: ${PGNIZE_DOMAIN:-localhost}
     ports:
       - "80:80"
       - "443:443"
