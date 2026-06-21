@@ -140,6 +140,8 @@ test.describe("anonymous UI flow", () => {
       mimeType: "image/png",
       buffer: PIXEL_PNG,
     });
+    // The multi-image picker collects the file; recognition fires on submit.
+    await page.getByRole("button", { name: "Convert" }).click();
     await expect(page.getByRole("heading", { name: "Moves" })).toBeVisible({ timeout: 30_000 });
 
     // The fake game has exactly one ambiguous (auto-picked) move -> "1 to verify".
@@ -165,7 +167,8 @@ test.describe("anonymous UI flow", () => {
       mimeType: "image/png",
       buffer: PIXEL_PNG,
     });
-    // No submit button on /convert: the dropzone fires recognition on file select.
+    // The multi-image picker collects the file; recognition fires on submit.
+    await page.getByRole("button", { name: "Convert" }).click();
     await expect(page.getByRole("heading", { name: "Moves" })).toBeVisible({ timeout: 30_000 });
     await expect(page.getByText("legal").first()).toBeVisible({ timeout: 15_000 });
     // The anonymous primary action is "Download PGN", not "Save game".
