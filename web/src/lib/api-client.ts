@@ -229,11 +229,13 @@ export function me(): Promise<{ user: User }> {
 // ---------------------------------------------------------------------------
 
 export function convert(
-  image: File,
+  images: File[],
   backend?: string,
 ): Promise<{ jobId: string }> {
   const fd = new FormData();
-  fd.append("image", image);
+  for (const img of images) {
+    fd.append("image", img);
+  }
   if (backend) {
     fd.append("backend", backend);
   }
@@ -269,11 +271,13 @@ export function exportConvertPgn(
 // scan uploads a board photo for position recognition. Mirrors `convert`, but
 // the produced draft carries the recognized position in `startFen` (no moves).
 export function scan(
-  image: File,
+  images: File[],
   backend?: string,
 ): Promise<{ jobId: string }> {
   const fd = new FormData();
-  fd.append("image", image);
+  for (const img of images) {
+    fd.append("image", img);
+  }
   if (backend) {
     fd.append("backend", backend);
   }
@@ -312,13 +316,13 @@ export function exportScanPgn(
 export type UploadKind = "scoresheet" | "position";
 
 export function upload(
-  image: File,
+  images: File[],
   consentTraining: boolean,
   backend?: string,
   kind?: UploadKind,
 ): Promise<{ uploadId: string; jobId: string }> {
   const fd = new FormData();
-  fd.append("image", image);
+  for (const img of images) fd.append("image", img);
   if (consentTraining) {
     fd.append("consentTraining", "true");
   }

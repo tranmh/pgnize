@@ -33,7 +33,7 @@ func Process(ctx context.Context, d Deps, job store.ClaimedJob) error {
 		return processPosition(ctx, d, job)
 	}
 
-	img, mime, err := loadImage(ctx, d, job)
+	img, mime, extra, err := loadImages(ctx, d, job)
 	if err != nil {
 		return err
 	}
@@ -43,7 +43,7 @@ func Process(ctx context.Context, d Deps, job store.ClaimedJob) error {
 		return d.Store.MarkJobFailed(ctx, job.JobID, "unknown recognition backend: "+job.Backend)
 	}
 
-	in := recognition.ScoreSheetInput{Image: img, MimeType: mime}
+	in := recognition.ScoreSheetInput{Image: img, MimeType: mime, Extra: extra}
 	if job.UserID != nil {
 		if rows, err := d.Store.RecentExamples(ctx, *job.UserID, d.FewShotMax); err == nil {
 			in.FewShot = toExamples(rows)
@@ -76,18 +76,41 @@ func Process(ctx context.Context, d Deps, job store.ClaimedJob) error {
 	return d.Store.MarkJobDone(ctx, job.JobID, gameID, res.Confidence, safeRawJSON(res.RawJSON))
 }
 
-// loadImage fetches the upload bytes and MIME type. On a storage/read error it marks the
-// job failed (preserving the graceful behavior) and returns a non-nil error so the caller
-// stops; the returned MarkJobFailed error, if any, is what Process surfaces.
-func loadImage(ctx context.Context, d Deps, job store.ClaimedJob) ([]byte, string, error) {
-	rc, mime, err := d.Storage.Get(ctx, job.StorageKey)
+// loadImages fetches the primary upload (job.StorageKey) plus any extra images of the same
+// submission (from job_images). On a storage/read error it marks the job failed (preserving
+// the graceful behavior) and returns a non-nil error so the caller stops; the returned
+// MarkJobFailed error, if any, is what Process surfaces.
+func loadImages(ctx context.Context, d Deps, job store.ClaimedJob) ([]byte, string, []recognition.ImageBlob, error) {
+	img, mime, err := loadOne(ctx, d, job.StorageKey)
 	if err != nil {
-		return nil, "", d.Store.MarkJobFailed(ctx, job.JobID, "load image: "+err.Error())
+		return nil, "", nil, d.Store.MarkJobFailed(ctx, job.JobID, "load image: "+err.Error())
+	}
+
+	keys, err := d.Store.JobExtraStorageKeys(ctx, job.JobID)
+	if err != nil {
+		return nil, "", nil, d.Store.MarkJobFailed(ctx, job.JobID, "load extra images: "+err.Error())
+	}
+	var extra []recognition.ImageBlob
+	for _, key := range keys {
+		eimg, emime, err := loadOne(ctx, d, key)
+		if err != nil {
+			return nil, "", nil, d.Store.MarkJobFailed(ctx, job.JobID, "load extra image: "+err.Error())
+		}
+		extra = append(extra, recognition.ImageBlob{Data: eimg, MimeType: emime})
+	}
+	return img, mime, extra, nil
+}
+
+// loadOne fetches a single upload's bytes and MIME type from storage.
+func loadOne(ctx context.Context, d Deps, key string) ([]byte, string, error) {
+	rc, mime, err := d.Storage.Get(ctx, key)
+	if err != nil {
+		return nil, "", err
 	}
 	img, err := io.ReadAll(rc)
 	rc.Close()
 	if err != nil {
-		return nil, "", d.Store.MarkJobFailed(ctx, job.JobID, "read image: "+err.Error())
+		return nil, "", err
 	}
 	return img, mime, nil
 }
@@ -97,7 +120,7 @@ func loadImage(ctx context.Context, d Deps, job store.ClaimedJob) ([]byte, strin
 // falls back to the standard start (the editable board is the correction path), so the job
 // never fails on assembly alone.
 func processPosition(ctx context.Context, d Deps, job store.ClaimedJob) error {
-	img, mime, err := loadImage(ctx, d, job)
+	img, mime, extra, err := loadImages(ctx, d, job)
 	if err != nil {
 		return err
 	}
@@ -107,7 +130,7 @@ func processPosition(ctx context.Context, d Deps, job store.ClaimedJob) error {
 		return d.Store.MarkJobFailed(ctx, job.JobID, "unknown recognition backend: "+job.Backend)
 	}
 
-	res, err := rec.RecognizePosition(ctx, recognition.PositionInput{Image: img, MimeType: mime})
+	res, err := rec.RecognizePosition(ctx, recognition.PositionInput{Image: img, MimeType: mime, Extra: extra})
 	if err != nil {
 		return d.Store.MarkJobFailed(ctx, job.JobID, "recognize position: "+err.Error())
 	}

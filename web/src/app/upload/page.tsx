@@ -3,11 +3,14 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ApiError, getJob, upload, type UploadKind } from "@/lib/api-client";
+import { submitImages, type UploadMode } from "@/lib/multi-image";
 import { useJobPoller } from "@/hooks/useJobPoller";
 import { useAuth } from "@/components/AuthProvider";
-import UploadDropzone from "@/components/UploadDropzone";
+import MultiImagePicker from "@/components/MultiImagePicker";
+import UploadModeToggle from "@/components/UploadModeToggle";
 import RecognizerSelect from "@/components/RecognizerSelect";
 import Spinner from "@/components/Spinner";
+import UploadJobRow from "./UploadJobRow";
 import { useT } from "@/i18n/I18nProvider";
 
 export default function UploadPage() {
@@ -15,11 +18,16 @@ export default function UploadPage() {
   const router = useRouter();
   const { user, loading: authLoading } = useAuth();
 
-  const [file, setFile] = useState<File | null>(null);
+  const [files, setFiles] = useState<File[]>([]);
   const [consent, setConsent] = useState(false);
   const [backend, setBackend] = useState("");
   const [kind, setKind] = useState<UploadKind>("scoresheet");
+  const [mode, setMode] = useState<UploadMode>("combine");
+  // A single recognized item auto-redirects to its review screen (jobId); a
+  // "separate" submission of several pictures lists them instead (jobIds).
   const [jobId, setJobId] = useState<string | null>(null);
+  const [jobIds, setJobIds] = useState<string[] | null>(null);
+  const [rejected, setRejected] = useState(0);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -48,17 +56,25 @@ export default function UploadPage() {
   }, [poll.phase, poll.gameId, poll.error, router, t, kind]);
 
   async function submit() {
-    if (!file) return;
+    if (files.length === 0) return;
     setSubmitting(true);
     setError(null);
     try {
-      const { jobId } = await upload(
-        file,
-        consent,
-        backend || undefined,
-        kind === "position" ? "position" : undefined,
+      const res = await submitImages(files, mode, (images) =>
+        upload(
+          images,
+          consent,
+          backend || undefined,
+          kind === "position" ? "position" : undefined,
+        ),
       );
-      setJobId(jobId);
+      // One job → auto-redirect; several → show a review list.
+      if (res.jobIds.length === 1) {
+        setJobId(res.jobIds[0]);
+      } else {
+        setRejected(res.rejected);
+        setJobIds(res.jobIds);
+      }
     } catch (e) {
       setError(
         e instanceof ApiError && e.status === 429
@@ -80,7 +96,8 @@ export default function UploadPage() {
     );
   }
 
-  const processing = !!jobId;
+  const redirecting = !!jobId;
+  const listing = !!jobIds;
 
   return (
     <div className="mx-auto flex max-w-xl flex-col gap-6">
@@ -89,7 +106,7 @@ export default function UploadPage() {
         <p className="mt-1 text-sm text-gray-500">{t("upload.subtitle")}</p>
       </div>
 
-      {processing ? (
+      {redirecting ? (
         <div className="flex flex-col items-center gap-3 rounded-lg border border-gray-200 bg-white py-16">
           <Spinner
             label={
@@ -99,6 +116,35 @@ export default function UploadPage() {
             }
           />
           <p className="text-xs text-gray-400">{t("upload.autoRedirect")}</p>
+        </div>
+      ) : listing ? (
+        <div className="flex flex-col gap-4">
+          {rejected > 0 && (
+            <p className="text-sm text-amber-700">
+              {t("multiupload.someRejected", { n: rejected })}
+            </p>
+          )}
+          <p className="text-sm text-gray-600">
+            {t("upload.recognized", { n: jobIds!.length })}
+          </p>
+          <ul className="flex flex-col gap-3">
+            {jobIds!.map((id, i) => (
+              <li
+                key={id}
+                className="flex items-center justify-between gap-3 rounded-lg border border-gray-200 bg-white px-4 py-3"
+              >
+                <span className="text-sm font-semibold text-gray-500">
+                  {t(
+                    kind === "position"
+                      ? "scan.resultLabel"
+                      : "convert.resultLabel",
+                    { n: i + 1 },
+                  )}
+                </span>
+                <UploadJobRow jobId={id} kind={kind} />
+              </li>
+            ))}
+          </ul>
         </div>
       ) : (
         <>
@@ -126,7 +172,23 @@ export default function UploadPage() {
             </div>
           </fieldset>
 
-          <UploadDropzone onFile={setFile} disabled={submitting} />
+          <MultiImagePicker files={files} onChange={setFiles} disabled={submitting} />
+
+          {files.length > 1 && (
+            <UploadModeToggle
+              mode={mode}
+              onChange={setMode}
+              combineLabel={t(
+                kind === "position" ? "scan.modeCombine" : "convert.modeCombine",
+              )}
+              separateLabel={t(
+                kind === "position"
+                  ? "scan.modeSeparate"
+                  : "convert.modeSeparate",
+              )}
+              disabled={submitting}
+            />
+          )}
 
           <RecognizerSelect
             value={backend}
@@ -148,7 +210,7 @@ export default function UploadPage() {
 
           <button
             type="button"
-            disabled={!file || submitting}
+            disabled={files.length === 0 || submitting}
             onClick={submit}
             className="rounded bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:bg-gray-300"
           >

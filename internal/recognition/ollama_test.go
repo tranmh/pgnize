@@ -3,6 +3,7 @@ package recognition
 import (
 	"bytes"
 	"context"
+	"encoding/base64"
 	"encoding/json"
 	"image"
 	"image/jpeg"
@@ -113,6 +114,77 @@ func TestOllamaRecognizePositionParsesGrid(t *testing.T) {
 	fen, err := AssembleFEN(res)
 	if err != nil || fen != "4k3/8/8/8/8/8/8/4K2R b - - 0 1" {
 		t.Fatalf("AssembleFEN = %q (%v)", fen, err)
+	}
+}
+
+// TestOllamaRecognizeSendsExtraImages proves a multi-image submission reaches Ollama as a
+// multi-element images[] array: primary + each Extra blob, in order.
+func TestOllamaRecognizeSendsExtraImages(t *testing.T) {
+	var gotImages []string
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		var req ollamaRequest
+		_ = json.NewDecoder(r.Body).Decode(&req)
+		gotImages = req.Images
+		resp := map[string]any{"response": `{"header":{},"moves":[]}`}
+		w.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(w).Encode(resp)
+	}))
+	defer srv.Close()
+
+	o := NewOllama(srv.URL, "minicpm-v")
+	o.MaxDim = 0 // skip downscale; bytes pass through verbatim
+	_, err := o.Recognize(context.Background(), ScoreSheetInput{
+		Image:    []byte("primary"),
+		MimeType: "image/png",
+		Extra: []ImageBlob{
+			{Data: []byte("extra-1"), MimeType: "image/png"},
+			{Data: []byte("extra-2"), MimeType: "image/jpeg"},
+		},
+	})
+	if err != nil {
+		t.Fatalf("Recognize: %v", err)
+	}
+	if len(gotImages) != 3 { // primary + 2 extras
+		t.Fatalf("images = %d, want 3: %v", len(gotImages), gotImages)
+	}
+	// Order must be preserved: primary first, then extras as submitted.
+	want := []string{
+		base64.StdEncoding.EncodeToString([]byte("primary")),
+		base64.StdEncoding.EncodeToString([]byte("extra-1")),
+		base64.StdEncoding.EncodeToString([]byte("extra-2")),
+	}
+	for i, w := range want {
+		if gotImages[i] != w {
+			t.Errorf("image[%d] mismatch", i)
+		}
+	}
+}
+
+// TestOllamaRecognizePositionSendsExtraImages is the position-pipeline counterpart.
+func TestOllamaRecognizePositionSendsExtraImages(t *testing.T) {
+	var gotImages []string
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		var req ollamaRequest
+		_ = json.NewDecoder(r.Body).Decode(&req)
+		gotImages = req.Images
+		resp := map[string]any{"response": `{"grid":[],"sideToMove":"white","orientation":"white_bottom"}`}
+		w.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(w).Encode(resp)
+	}))
+	defer srv.Close()
+
+	o := NewOllama(srv.URL, "minicpm-v")
+	o.MaxDim = 0
+	_, err := o.RecognizePosition(context.Background(), PositionInput{
+		Image:    []byte("primary"),
+		MimeType: "image/png",
+		Extra:    []ImageBlob{{Data: []byte("extra-1"), MimeType: "image/png"}},
+	})
+	if err != nil {
+		t.Fatalf("RecognizePosition: %v", err)
+	}
+	if len(gotImages) != 2 { // primary + 1 extra
+		t.Fatalf("images = %d, want 2: %v", len(gotImages), gotImages)
 	}
 }
 

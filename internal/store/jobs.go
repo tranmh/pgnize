@@ -12,15 +12,58 @@ import (
 // recognizer key ("" = server default) the worker resolves at claim time; recognizerName
 // is the resolved Recognizer.Name() recorded for provenance. kind selects the recognition
 // pipeline ("scoresheet" → move list, "position" → single FEN); "" defaults to "scoresheet".
-func (s *Store) CreateJob(ctx context.Context, uploadID string, userID *string, recognizerName, backend, kind string) (string, error) {
+// uploadID is the PRIMARY image; extraUploadIDs are the additional images of the same
+// submission (idx 1..N in job_images). One submission = one job. Pass nil for single-image.
+func (s *Store) CreateJob(ctx context.Context, uploadID string, userID *string, recognizerName, backend, kind string, extraUploadIDs []string) (string, error) {
 	if kind == "" {
 		kind = "scoresheet"
 	}
+	// Job row and its extra-image rows must be inserted atomically: a half-written job would
+	// feed the worker fewer images than the user submitted.
+	tx, err := s.Pool.Begin(ctx)
+	if err != nil {
+		return "", err
+	}
+	defer tx.Rollback(ctx)
+
 	var id string
-	err := s.Pool.QueryRow(ctx,
+	if err := tx.QueryRow(ctx,
 		`INSERT INTO recognition_jobs (upload_id, user_id, recognizer_name, backend, kind) VALUES ($1, $2, $3, $4, $5) RETURNING id`,
-		uploadID, userID, recognizerName, backend, kind).Scan(&id)
-	return id, err
+		uploadID, userID, recognizerName, backend, kind).Scan(&id); err != nil {
+		return "", err
+	}
+	for i, extraID := range extraUploadIDs {
+		if _, err := tx.Exec(ctx,
+			`INSERT INTO job_images (job_id, upload_id, idx) VALUES ($1, $2, $3)`,
+			id, extraID, i+1); err != nil { // idx 0 is the primary on recognition_jobs; extras start at 1
+			return "", err
+		}
+	}
+	return id, tx.Commit(ctx)
+}
+
+// JobExtraStorageKeys returns the storage keys of a job's extra images, ordered by idx, so
+// the worker can load them as additional inputs alongside the primary upload.
+func (s *Store) JobExtraStorageKeys(ctx context.Context, jobID string) ([]string, error) {
+	rows, err := s.Pool.Query(ctx,
+		`SELECT u.storage_key
+		   FROM job_images ji
+		   JOIN uploads u ON u.id = ji.upload_id
+		  WHERE ji.job_id = $1
+		  ORDER BY ji.idx`, jobID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var keys []string
+	for rows.Next() {
+		var key string
+		if err := rows.Scan(&key); err != nil {
+			return nil, err
+		}
+		keys = append(keys, key)
+	}
+	return keys, rows.Err()
 }
 
 // ClaimedJob is a job atomically claimed by a worker, with its image location.

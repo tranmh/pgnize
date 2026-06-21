@@ -25,9 +25,9 @@ const (
 
 // Example is a prior corrected sheet used as few-shot context.
 type Example struct {
-	Header     domain.Header `json:"header"`
-	SANs       []string      `json:"sans"`
-	ImageBase64 string       `json:"-"` // optional thumbnail; omitted from prompt text
+	Header      domain.Header `json:"header"`
+	SANs        []string      `json:"sans"`
+	ImageBase64 string        `json:"-"` // optional thumbnail; omitted from prompt text
 }
 
 // Hint carries optional context to steer recognition.
@@ -36,10 +36,19 @@ type Hint struct {
 	KnownPlayers []string
 }
 
-// ScoreSheetInput is one recognition request.
+// ImageBlob is one additional input image for a multi-image recognition request.
+type ImageBlob struct {
+	Data     []byte
+	MimeType string
+}
+
+// ScoreSheetInput is one recognition request. Extra carries additional images beyond the
+// primary (Image): one submission of several photos is sent to the model as a single
+// multi-image request producing one combined result.
 type ScoreSheetInput struct {
 	Image    []byte
 	MimeType string
+	Extra    []ImageBlob
 	FewShot  []Example
 	Hint     *Hint
 }
@@ -60,10 +69,12 @@ type RecognitionResult struct {
 	RawJSON    string        `json:"-"`
 }
 
-// PositionInput is one board-position recognition request.
+// PositionInput is one board-position recognition request. Extra carries additional images
+// beyond the primary (Image), sent to the model as a single multi-image request.
 type PositionInput struct {
 	Image    []byte
 	MimeType string
+	Extra    []ImageBlob
 }
 
 // PositionResult is the model's raw read of a single board position.

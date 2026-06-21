@@ -108,10 +108,15 @@ type modelOutput struct {
 
 func (o *Ollama) Recognize(ctx context.Context, in ScoreSheetInput) (RecognitionResult, error) {
 	img := o.downscale(in.Image)
+	images := []string{base64.StdEncoding.EncodeToString(img)}
+	// Additional images of the same submission are read as one continuous score sheet.
+	for _, blob := range in.Extra {
+		images = append(images, base64.StdEncoding.EncodeToString(o.downscale(blob.Data)))
+	}
 	reqBody := ollamaRequest{
 		Model:     o.Model,
 		Prompt:    buildPrompt(in),
-		Images:    []string{base64.StdEncoding.EncodeToString(img)},
+		Images:    images,
 		Format:    "json",
 		Stream:    false,
 		KeepAlive: o.KeepAlive,
@@ -154,10 +159,15 @@ func (o *Ollama) Recognize(ctx context.Context, in ScoreSheetInput) (Recognition
 
 func (o *Ollama) RecognizePosition(ctx context.Context, in PositionInput) (PositionResult, error) {
 	img := o.downscale(in.Image)
+	images := []string{base64.StdEncoding.EncodeToString(img)}
+	// Additional views of the same position, sent alongside the primary.
+	for _, blob := range in.Extra {
+		images = append(images, base64.StdEncoding.EncodeToString(o.downscale(blob.Data)))
+	}
 	reqBody := ollamaRequest{
 		Model:     o.Model,
 		Prompt:    buildPositionPrompt(in),
-		Images:    []string{base64.StdEncoding.EncodeToString(img)},
+		Images:    images,
 		Format:    "json",
 		Stream:    false,
 		KeepAlive: o.KeepAlive,

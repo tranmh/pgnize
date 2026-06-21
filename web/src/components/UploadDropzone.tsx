@@ -7,6 +7,9 @@ export interface UploadDropzoneProps {
   // Called with the chosen image file.
   onFile: (file: File) => void;
   disabled?: boolean;
+  // When true, reset back to idle after a successful pick/capture instead of
+  // showing the preview, so the same control can be reused to add more images.
+  resetAfterPick?: boolean;
 }
 
 type Mode = "idle" | "camera" | "preview";
@@ -14,7 +17,11 @@ type Facing = "environment" | "user";
 
 // Camera-first image picker: opens the device camera in-app (PWA-friendly) with a
 // live preview + capture, and keeps drag-and-drop / file picking as a fallback.
-export default function UploadDropzone({ onFile, disabled }: UploadDropzoneProps) {
+export default function UploadDropzone({
+  onFile,
+  disabled,
+  resetAfterPick,
+}: UploadDropzoneProps) {
   const t = useT();
   const inputRef = useRef<HTMLInputElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -51,15 +58,25 @@ export default function UploadDropzone({ onFile, disabled }: UploadDropzoneProps
     (file: File | undefined | null) => {
       if (!file) return;
       if (!file.type.startsWith("image/")) return;
+      onFile(file);
+      if (resetAfterPick) {
+        // Reuse mode: clear the preview so the next image can be added.
+        setName(null);
+        setPreviewUrl((prev) => {
+          if (prev) URL.revokeObjectURL(prev);
+          return null;
+        });
+        setMode("idle");
+        return;
+      }
       setName(file.name);
       setPreviewUrl((prev) => {
         if (prev) URL.revokeObjectURL(prev);
         return URL.createObjectURL(file);
       });
       setMode("preview");
-      onFile(file);
     },
-    [onFile],
+    [onFile, resetAfterPick],
   );
 
   const startCamera = useCallback(

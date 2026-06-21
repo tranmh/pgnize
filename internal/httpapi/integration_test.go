@@ -243,8 +243,8 @@ func TestAccountJourney(t *testing.T) {
 			San     string `json:"san"`
 			IsLegal bool   `json:"isLegal"`
 		} `json:"moves"`
-		Header map[string]string `json:"header"`
-		ImageURL string `json:"imageUrl"`
+		Header   map[string]string `json:"header"`
+		ImageURL string            `json:"imageUrl"`
 	}
 	json.Unmarshal(body, &draft)
 	if len(draft.Moves) == 0 || !draft.Moves[0].IsLegal {
@@ -270,7 +270,7 @@ func TestAccountJourney(t *testing.T) {
 	// Library shows it
 	resp, body = h.do(t, "GET", "/api/games?q=Carlsen", "", nil)
 	var lib struct {
-		Total int `json:"total"`
+		Total int                          `json:"total"`
 		Games []struct{ ID, White string } `json:"games"`
 	}
 	json.Unmarshal(body, &lib)
@@ -439,6 +439,109 @@ func TestAnonymousScan(t *testing.T) {
 	pgn := string(body)
 	if !strings.Contains(pgn, `[SetUp "1"]`) || !strings.Contains(pgn, `[FEN "4k3/`) {
 		t.Fatalf("scan export missing SetUp/FEN tags: %s", pgn)
+	}
+}
+
+// multiImageBody builds a multipart upload with n repeated "image" fields (same field name).
+func multiImageBody(t *testing.T, n int) (string, *bytes.Buffer) {
+	t.Helper()
+	var buf bytes.Buffer
+	mw := multipart.NewWriter(&buf)
+	for i := 0; i < n; i++ {
+		fw, _ := mw.CreateFormFile("image", "sheet.jpg")
+		_, _ = fw.Write([]byte("fake-image-bytes"))
+	}
+	mw.Close()
+	return mw.FormDataContentType(), &buf
+}
+
+// jobExtraCount returns how many extra-image rows a job recorded in job_images.
+func (h *harness) jobExtraCount(t *testing.T, jobID string) int {
+	t.Helper()
+	var n int
+	if err := h.st.Pool.QueryRow(context.Background(),
+		`SELECT count(*) FROM job_images WHERE job_id = $1`, jobID).Scan(&n); err != nil {
+		t.Fatalf("count job_images: %v", err)
+	}
+	return n
+}
+
+// TestConvertMultiImage proves a two-image anonymous /convert submission creates ONE job
+// with exactly one extra image recorded (the second photo of the same submission).
+func TestConvertMultiImage(t *testing.T) {
+	h := setup(t)
+	ct, buf := multiImageBody(t, 2)
+	resp, body := h.do(t, "POST", "/api/convert", ct, buf)
+	if resp.StatusCode != http.StatusAccepted {
+		t.Fatalf("convert %d: %s", resp.StatusCode, body)
+	}
+	var c struct{ JobID string }
+	json.Unmarshal(body, &c)
+	if c.JobID == "" {
+		t.Fatalf("no jobId: %s", body)
+	}
+	if got := h.jobExtraCount(t, c.JobID); got != 1 {
+		t.Fatalf("job_images rows = %d, want 1", got)
+	}
+}
+
+// TestScanMultiImage is the position-pipeline counterpart of TestConvertMultiImage.
+func TestScanMultiImage(t *testing.T) {
+	h := setup(t)
+	ct, buf := multiImageBody(t, 2)
+	resp, body := h.do(t, "POST", "/api/scan", ct, buf)
+	if resp.StatusCode != http.StatusAccepted {
+		t.Fatalf("scan %d: %s", resp.StatusCode, body)
+	}
+	var c struct{ JobID string }
+	json.Unmarshal(body, &c)
+	if got := h.jobExtraCount(t, c.JobID); got != 1 {
+		t.Fatalf("job_images rows = %d, want 1", got)
+	}
+}
+
+// TestAccountUploadMultiImage proves the account /uploads endpoint also accepts a multi-image
+// submission as ONE job with the extras recorded — the registered-user counterpart of
+// TestConvertMultiImage.
+func TestAccountUploadMultiImage(t *testing.T) {
+	h := setup(t)
+	h.json(t, "POST", "/api/auth/register",
+		map[string]string{"name": "Multi", "email": "multi@example.com", "password": "password12"})
+
+	ct, buf := multiImageBody(t, 3)
+	resp, body := h.do(t, "POST", "/api/uploads", ct, buf)
+	if resp.StatusCode != http.StatusAccepted {
+		t.Fatalf("upload %d: %s", resp.StatusCode, body)
+	}
+	var up struct{ JobID, UploadID string }
+	json.Unmarshal(body, &up)
+	if up.JobID == "" || up.UploadID == "" {
+		t.Fatalf("missing ids: %s", body)
+	}
+	if got := h.jobExtraCount(t, up.JobID); got != 2 {
+		t.Fatalf("job_images rows = %d, want 2", got)
+	}
+}
+
+// TestConvertImageCountBounds covers the min (0 files → error) and max (>5 → error) cases.
+func TestConvertImageCountBounds(t *testing.T) {
+	h := setup(t)
+
+	// Zero images: a multipart body with no "image" field is rejected.
+	var buf bytes.Buffer
+	mw := multipart.NewWriter(&buf)
+	_ = mw.WriteField("backend", "fake")
+	mw.Close()
+	resp, body := h.do(t, "POST", "/api/convert", mw.FormDataContentType(), &buf)
+	if resp.StatusCode != http.StatusBadRequest {
+		t.Fatalf("zero images: status %d, want 400: %s", resp.StatusCode, body)
+	}
+
+	// Too many images: six exceeds maxImagesPerJob (5).
+	ct, big := multiImageBody(t, 6)
+	resp, body = h.do(t, "POST", "/api/convert", ct, big)
+	if resp.StatusCode != http.StatusBadRequest {
+		t.Fatalf("six images: status %d, want 400: %s", resp.StatusCode, body)
 	}
 }
 

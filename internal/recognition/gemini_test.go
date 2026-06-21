@@ -71,6 +71,71 @@ func TestGeminiRecognizeParsesCandidate(t *testing.T) {
 	}
 }
 
+// TestGeminiRecognizeSendsExtraImages proves a multi-image submission reaches the model as
+// multiple inline_data parts: primary + each Extra blob (one combined request, one result).
+func TestGeminiRecognizeSendsExtraImages(t *testing.T) {
+	var inlineCount int
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		body, _ := io.ReadAll(r.Body)
+		inlineCount = strings.Count(string(body), "inline_data")
+		inner := `{"header":{"white":"A","black":"B"},"moves":[{"no":1,"white":"e4","black":"e5"}]}`
+		resp := map[string]any{"candidates": []map[string]any{{
+			"content": map[string]any{"parts": []map[string]any{{"text": inner}}},
+		}}}
+		w.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(w).Encode(resp)
+	}))
+	defer srv.Close()
+
+	g := NewGemini(srv.URL, "gemini-2.5-flash", "key")
+	g.MaxDim = 0 // skip image decode/resize; send bytes as-is
+	_, err := g.Recognize(context.Background(), ScoreSheetInput{
+		Image:    []byte("primary"),
+		MimeType: "image/png",
+		Extra: []ImageBlob{
+			{Data: []byte("extra-1"), MimeType: "image/png"},
+			{Data: []byte("extra-2"), MimeType: "image/jpeg"},
+		},
+	})
+	if err != nil {
+		t.Fatalf("Recognize: %v", err)
+	}
+	if inlineCount != 3 { // primary + 2 extras
+		t.Fatalf("inline_data parts = %d, want 3", inlineCount)
+	}
+}
+
+// TestGeminiRecognizePositionSendsExtraImages is the position-pipeline counterpart.
+func TestGeminiRecognizePositionSendsExtraImages(t *testing.T) {
+	var inlineCount int
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		body, _ := io.ReadAll(r.Body)
+		inlineCount = strings.Count(string(body), "inline_data")
+		inner := `{"grid":["....k...","........","........","........","........","........","........","....K..R"],` +
+			`"sideToMove":"white","orientation":"white_bottom"}`
+		resp := map[string]any{"candidates": []map[string]any{{
+			"content": map[string]any{"parts": []map[string]any{{"text": inner}}},
+		}}}
+		w.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(w).Encode(resp)
+	}))
+	defer srv.Close()
+
+	g := NewGemini(srv.URL, "gemini-2.5-flash", "key")
+	g.MaxDim = 0
+	_, err := g.RecognizePosition(context.Background(), PositionInput{
+		Image:    []byte("primary"),
+		MimeType: "image/png",
+		Extra:    []ImageBlob{{Data: []byte("extra-1"), MimeType: "image/png"}},
+	})
+	if err != nil {
+		t.Fatalf("RecognizePosition: %v", err)
+	}
+	if inlineCount != 2 { // primary + 1 extra
+		t.Fatalf("inline_data parts = %d, want 2", inlineCount)
+	}
+}
+
 func TestGeminiRecognizePositionParsesGrid(t *testing.T) {
 	var gotBody string
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

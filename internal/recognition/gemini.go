@@ -147,6 +147,12 @@ func (g *Gemini) Recognize(ctx context.Context, in ScoreSheetInput) (Recognition
 		}
 	}
 	parts = append(parts, geminiPart{InlineData: &geminiInlineData{MimeType: mime, Data: base64.StdEncoding.EncodeToString(img)}})
+	// Additional images of the same submission, sent inline so the model reads them as one
+	// continuous score sheet.
+	for _, blob := range in.Extra {
+		eimg, emime := g.prepImage(blob.Data, blob.MimeType)
+		parts = append(parts, geminiPart{InlineData: &geminiInlineData{MimeType: emime, Data: base64.StdEncoding.EncodeToString(eimg)}})
+	}
 
 	reqBody := geminiRequest{
 		Contents: []geminiContent{{Role: "user", Parts: parts}},
@@ -218,6 +224,11 @@ func (g *Gemini) RecognizePosition(ctx context.Context, in PositionInput) (Posit
 	parts := []geminiPart{
 		{Text: buildPositionPrompt(in)},
 		{InlineData: &geminiInlineData{MimeType: mime, Data: base64.StdEncoding.EncodeToString(img)}},
+	}
+	// Additional views of the same position (e.g. a second angle), sent inline.
+	for _, blob := range in.Extra {
+		eimg, emime := g.prepImage(blob.Data, blob.MimeType)
+		parts = append(parts, geminiPart{InlineData: &geminiInlineData{MimeType: emime, Data: base64.StdEncoding.EncodeToString(eimg)}})
 	}
 
 	reqBody := geminiRequest{

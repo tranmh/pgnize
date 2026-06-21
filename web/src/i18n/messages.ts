@@ -110,8 +110,14 @@ const en: Catalog = {
   "upload.kind.label": "What's in the photo?",
   "upload.kind.scoresheet": "Scoresheet (moves)",
   "upload.kind.scan": "Board position",
+  "upload.recognized": "Recognized {n} item(s). Open each to review and save.",
+  "upload.reviewLink": "Review →",
 
   // Convert (anonymous) flow
+  "convert.submit": "Convert",
+  "convert.modeCombine": "One game (extra pages)",
+  "convert.modeSeparate": "Separate games",
+  "convert.resultLabel": "Game {n}",
   "convert.title": "Convert a score sheet",
   "convert.subtitle":
     "Upload a photo of a handwritten chess score sheet. We'll read it, and you verify the moves before downloading the PGN.",
@@ -127,6 +133,10 @@ const en: Catalog = {
   "convert.errUpload": "Upload failed.",
 
   // Scan (anonymous board photo -> position) flow
+  "scan.submit": "Scan",
+  "scan.modeCombine": "One position (extra angles)",
+  "scan.modeSeparate": "Separate positions",
+  "scan.resultLabel": "Position {n}",
   "scan.title": "Scan a board position",
   "scan.subtitle":
     "Upload a photo of a chess board. We'll recognize the position; you correct it on the editable board before downloading the PGN.",
@@ -197,6 +207,16 @@ const en: Catalog = {
   "dropzone.cameraError":
     "Could not access the camera. Please allow camera access or upload a file instead.",
   "dropzone.orUpload": "or upload a file instead",
+
+  // Multi-image picker
+  "multiupload.add": "Add another picture",
+  "multiupload.remove": "Remove",
+  "multiupload.imageLabel": "Image {n}",
+  "multiupload.hint": "Add more pages or angles — optional.",
+  "multiupload.modePrompt": "These pictures are:",
+  "multiupload.startOver": "Start over",
+  "multiupload.someRejected":
+    "{n} picture(s) were not accepted (rate limit). Showing the rest.",
 
   // Library
   "library.title": "Library",
@@ -427,8 +447,15 @@ const de: Catalog = {
   "upload.kind.label": "Was ist auf dem Foto?",
   "upload.kind.scoresheet": "Partieformular (Züge)",
   "upload.kind.scan": "Brettstellung",
+  "upload.recognized":
+    "{n} Element(e) erkannt. Öffne jedes zum Prüfen und Speichern.",
+  "upload.reviewLink": "Prüfen →",
 
   // Convert (anonymous) flow
+  "convert.submit": "Umwandeln",
+  "convert.modeCombine": "Eine Partie (weitere Seiten)",
+  "convert.modeSeparate": "Separate Partien",
+  "convert.resultLabel": "Partie {n}",
   "convert.title": "Partieformular umwandeln",
   "convert.subtitle":
     "Lade ein Foto eines handgeschriebenen Partieformulars hoch. Wir lesen es aus, und du prüfst die Züge, bevor du das PGN herunterlädst.",
@@ -445,6 +472,10 @@ const de: Catalog = {
   "convert.errUpload": "Upload fehlgeschlagen.",
 
   // Scan (anonymes Brettfoto -> Stellung) Ablauf
+  "scan.submit": "Scannen",
+  "scan.modeCombine": "Eine Stellung (weitere Perspektiven)",
+  "scan.modeSeparate": "Separate Stellungen",
+  "scan.resultLabel": "Stellung {n}",
   "scan.title": "Brettstellung scannen",
   "scan.subtitle":
     "Lade ein Foto eines Schachbretts hoch. Wir erkennen die Stellung; du korrigierst sie auf dem bearbeitbaren Brett, bevor du das PGN herunterlädst.",
@@ -516,6 +547,16 @@ const de: Catalog = {
   "dropzone.cameraError":
     "Kein Zugriff auf die Kamera. Bitte erlaube den Kamerazugriff oder lade stattdessen eine Datei hoch.",
   "dropzone.orUpload": "oder stattdessen eine Datei hochladen",
+
+  // Multi-image picker
+  "multiupload.add": "Weiteres Bild hinzufügen",
+  "multiupload.remove": "Entfernen",
+  "multiupload.imageLabel": "Bild {n}",
+  "multiupload.hint": "Weitere Seiten oder Perspektiven hinzufügen — optional.",
+  "multiupload.modePrompt": "Diese Bilder sind:",
+  "multiupload.startOver": "Von vorne beginnen",
+  "multiupload.someRejected":
+    "{n} Bild(er) wurden nicht angenommen (Ratenlimit). Der Rest wird angezeigt.",
 
   // Library
   "library.title": "Bibliothek",

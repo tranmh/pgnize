@@ -13,7 +13,7 @@ func (s *Server) handleConvert(w http.ResponseWriter, r *http.Request) {
 	if !s.rateLimit(w, r, "convert:"+clientIP(r), 10, time.Hour) {
 		return
 	}
-	uploadID, ok := s.storeImage(w, r, nil)
+	ids, ok := s.storeImages(w, r, nil)
 	if !ok {
 		return
 	}
@@ -21,7 +21,7 @@ func (s *Server) handleConvert(w http.ResponseWriter, r *http.Request) {
 	if !ok {
 		return
 	}
-	jobID, err := s.Store.CreateJob(r.Context(), uploadID, nil, recName, backend, "scoresheet")
+	jobID, err := s.Store.CreateJob(r.Context(), ids[0], nil, recName, backend, "scoresheet", ids[1:])
 	if err != nil {
 		s.writeErr(w, http.StatusInternalServerError, "internal", "could not enqueue job")
 		return

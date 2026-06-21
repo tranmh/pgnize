@@ -43,7 +43,7 @@ func TestClaimNextJobNoDoubleClaim(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		if _, err := st.CreateJob(ctx, up.ID, nil, "fake", "fake", "scoresheet"); err != nil {
+		if _, err := st.CreateJob(ctx, up.ID, nil, "fake", "fake", "scoresheet", nil); err != nil {
 			t.Fatal(err)
 		}
 	}
@@ -78,6 +78,56 @@ func TestClaimNextJobNoDoubleClaim(t *testing.T) {
 		if n != 1 {
 			t.Fatalf("job %s claimed %d times (double-claim)", id, n)
 		}
+	}
+}
+
+// TestCreateJobExtraImages proves a multi-image job records its extra uploads in job_images
+// (idx 1..N) and that JobExtraStorageKeys returns their storage keys ordered by idx.
+func TestCreateJobExtraImages(t *testing.T) {
+	st := newStore(t)
+	ctx := context.Background()
+
+	mkUpload := func(key string) string {
+		up, err := st.CreateUpload(ctx, domain.Upload{StorageKey: key, MimeType: "image/jpeg"})
+		if err != nil {
+			t.Fatal(err)
+		}
+		return up.ID
+	}
+	primary := mkUpload("primary-key")
+	extra1 := mkUpload("extra1-key")
+	extra2 := mkUpload("extra2-key")
+
+	jobID, err := st.CreateJob(ctx, primary, nil, "fake", "fake", "scoresheet", []string{extra1, extra2})
+	if err != nil {
+		t.Fatalf("create job: %v", err)
+	}
+
+	keys, err := st.JobExtraStorageKeys(ctx, jobID)
+	if err != nil {
+		t.Fatalf("extra keys: %v", err)
+	}
+	want := []string{"extra1-key", "extra2-key"}
+	if len(keys) != len(want) {
+		t.Fatalf("got %d extra keys, want %d: %v", len(keys), len(want), keys)
+	}
+	for i, w := range want {
+		if keys[i] != w {
+			t.Errorf("extra key[%d] = %q, want %q (idx ordering)", i, keys[i], w)
+		}
+	}
+
+	// Single-image (nil extras) records no job_images rows.
+	soloID, err := st.CreateJob(ctx, primary, nil, "fake", "fake", "scoresheet", nil)
+	if err != nil {
+		t.Fatalf("create solo job: %v", err)
+	}
+	solo, err := st.JobExtraStorageKeys(ctx, soloID)
+	if err != nil {
+		t.Fatalf("solo extra keys: %v", err)
+	}
+	if len(solo) != 0 {
+		t.Fatalf("single-image job should have no extras, got %d", len(solo))
 	}
 }
 
