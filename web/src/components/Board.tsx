@@ -18,6 +18,10 @@ export interface BoardProps {
   // Called when the user clicks a square (used by the position editor to stamp
   // or erase the selected palette piece). Additive; unused outside edit mode.
   onSquareClick?: (square: string) => void;
+  // Drag-and-drop context id. Defaults to the review board; override when more
+  // than one board can be mounted at once (e.g. a static example on the landing
+  // page alongside the live review board).
+  id?: string;
 }
 
 // Thin wrapper over react-chessboard v5's options-based API so the rest of the
@@ -30,12 +34,13 @@ export default function Board({
   squareStyles,
   arrows,
   onSquareClick,
+  id = "review-board",
 }: BoardProps) {
   return (
     <div className="w-full max-w-[480px]">
       <Chessboard
         options={{
-          id: "review-board",
+          id,
           position: fen,
           boardOrientation: orientation,
           allowDragging: allowDragging && !!onMove,

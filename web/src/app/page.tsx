@@ -1,6 +1,7 @@
-import ConvertClient from "./convert/ConvertClient";
+import HomeLanding from "./HomeLanding";
 
-// The landing page IS the anonymous convert flow.
+// The landing page advertises both flows (score sheet → PGN and board photo →
+// position) with real examples, then embeds the live convert + scan tools.
 export default function Home() {
-  return <ConvertClient />;
+  return <HomeLanding />;
 }

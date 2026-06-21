@@ -7,9 +7,9 @@ import ServiceWorkerRegister from "@/components/ServiceWorkerRegister";
 
 export const metadata: Metadata = {
   applicationName: "PGNize",
-  title: "PGNize — score sheet to PGN",
+  title: "PGNize — score sheet & board to PGN",
   description:
-    "Convert photos of handwritten chess score sheets into human-verified PGN.",
+    "Turn photos of handwritten chess score sheets into human-verified PGN, and photos of a board into an editable position — no typing.",
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",

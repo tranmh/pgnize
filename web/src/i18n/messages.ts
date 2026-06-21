@@ -34,6 +34,52 @@ const en: Catalog = {
   "nav.login": "Log in",
   "nav.register": "Register",
 
+  // Landing page (marketing)
+  "landing.hero.eyebrow": "Score sheet & board → digital chess",
+  "landing.hero.title": "Turn a photo of your game into PGN",
+  "landing.hero.subtitle":
+    "Snap a handwritten score sheet or a board position. PGNize reads it, you verify every move, and you download clean, engine-checked PGN. No typing.",
+  "landing.hero.ctaConvert": "Convert a score sheet",
+  "landing.hero.ctaScan": "Scan a position",
+  "landing.hero.free": "Free to try — no account needed.",
+
+  // Landing: feature 1 (score sheet → PGN)
+  "landing.f1.tag": "Handwritten score sheet → PGN",
+  "landing.f1.title": "Read a whole game from one photo",
+  "landing.f1.body":
+    "Upload a photo of a German Partieformular (or any score sheet). PGNize transcribes the moves and replays them through a real chess engine, so what you download is guaranteed legal.",
+  "landing.f1.inputCaption": "Photo of a handwritten score sheet",
+  "landing.f1.outputCaption": "Verified, downloadable PGN",
+  "landing.f1.cta": "Try it with your own sheet →",
+
+  // Landing: feature 2 (board photo → position)
+  "landing.f2.tag": "Board photo → editable position",
+  "landing.f2.title": "Capture any position in seconds",
+  "landing.f2.body":
+    "Point your camera at a physical board or a screen. PGNize recognizes the position as FEN and hands you an editable board to fix anything before exporting.",
+  "landing.f2.inputCaption": "Photo of a real board",
+  "landing.f2.outputCaption": "Recognized position (FEN)",
+  "landing.f2.cta": "Try it with your own board →",
+
+  // Landing: how it works
+  "landing.how.title": "How it works",
+  "landing.how.step1.title": "1 · Snap a photo",
+  "landing.how.step1.body":
+    "A score sheet for a full game, or a board for a single position. Phone photos are fine.",
+  "landing.how.step2.title": "2 · We recognize it",
+  "landing.how.step2.body":
+    "Moves and pieces are read automatically and checked against the rules of chess.",
+  "landing.how.step3.title": "3 · You verify & download",
+  "landing.how.step3.body":
+    "Review highlighted uncertain moves, correct anything, and export clean PGN.",
+
+  // Landing: example/credit labels
+  "landing.exampleBadge": "Real example",
+  "landing.input": "Input",
+  "landing.output": "Output",
+  "landing.boardCredit":
+    "Board photo: Chess Recognition Dataset (ChessReD), CC BY-NC-SA 4.0.",
+
   // Login
   "login.title": "Log in",
   "login.submit": "Log in",
@@ -295,6 +341,52 @@ const de: Catalog = {
   "nav.signOut": "Abmelden",
   "nav.login": "Anmelden",
   "nav.register": "Registrieren",
+
+  // Landing page (Marketing)
+  "landing.hero.eyebrow": "Partieformular & Brett → digitales Schach",
+  "landing.hero.title": "Mach aus einem Foto deiner Partie ein PGN",
+  "landing.hero.subtitle":
+    "Fotografiere ein handgeschriebenes Partieformular oder eine Brettstellung. PGNize liest es aus, du prüfst jeden Zug und lädst sauberes, engine-geprüftes PGN herunter. Kein Abtippen.",
+  "landing.hero.ctaConvert": "Partieformular umwandeln",
+  "landing.hero.ctaScan": "Stellung scannen",
+  "landing.hero.free": "Kostenlos ausprobieren – kein Konto nötig.",
+
+  // Landing: Funktion 1 (Partieformular → PGN)
+  "landing.f1.tag": "Handgeschriebenes Partieformular → PGN",
+  "landing.f1.title": "Eine ganze Partie aus einem Foto",
+  "landing.f1.body":
+    "Lade ein Foto eines Partieformulars hoch. PGNize überträgt die Züge und spielt sie durch eine echte Schach-Engine, sodass dein Download garantiert legal ist.",
+  "landing.f1.inputCaption": "Foto eines handgeschriebenen Partieformulars",
+  "landing.f1.outputCaption": "Geprüftes PGN zum Herunterladen",
+  "landing.f1.cta": "Mit eigenem Formular ausprobieren →",
+
+  // Landing: Funktion 2 (Brettfoto → Stellung)
+  "landing.f2.tag": "Brettfoto → bearbeitbare Stellung",
+  "landing.f2.title": "Jede Stellung in Sekunden erfassen",
+  "landing.f2.body":
+    "Richte deine Kamera auf ein echtes Brett oder einen Bildschirm. PGNize erkennt die Stellung als FEN und gibt dir ein bearbeitbares Brett, um vor dem Export alles zu korrigieren.",
+  "landing.f2.inputCaption": "Foto eines echten Bretts",
+  "landing.f2.outputCaption": "Erkannte Stellung (FEN)",
+  "landing.f2.cta": "Mit eigenem Brett ausprobieren →",
+
+  // Landing: So funktioniert's
+  "landing.how.title": "So funktioniert's",
+  "landing.how.step1.title": "1 · Foto machen",
+  "landing.how.step1.body":
+    "Ein Partieformular für eine ganze Partie oder ein Brett für eine einzelne Stellung. Handyfotos genügen.",
+  "landing.how.step2.title": "2 · Wir erkennen es",
+  "landing.how.step2.body":
+    "Züge und Figuren werden automatisch gelesen und gegen die Schachregeln geprüft.",
+  "landing.how.step3.title": "3 · Du prüfst & lädst herunter",
+  "landing.how.step3.body":
+    "Prüfe markierte unsichere Züge, korrigiere bei Bedarf und exportiere sauberes PGN.",
+
+  // Landing: Beispiel-/Credit-Beschriftungen
+  "landing.exampleBadge": "Echtes Beispiel",
+  "landing.input": "Eingabe",
+  "landing.output": "Ausgabe",
+  "landing.boardCredit":
+    "Brettfoto: Chess Recognition Dataset (ChessReD), CC BY-NC-SA 4.0.",
 
   // Login
   "login.title": "Anmelden",
