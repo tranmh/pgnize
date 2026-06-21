@@ -32,6 +32,9 @@ export default function SiteNav() {
         <Link href="/scan" className="text-sm text-gray-600 hover:text-gray-900">
           {t("nav.scan")}
         </Link>
+        <Link href="/new" className="text-sm text-gray-600 hover:text-gray-900">
+          {t("nav.new")}
+        </Link>
         {user && (
           <Link href="/library" className="text-sm text-gray-600 hover:text-gray-900">
             {t("nav.library")}

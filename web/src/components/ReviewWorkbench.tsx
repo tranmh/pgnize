@@ -15,8 +15,12 @@ import {
   type EditMove,
 } from "@/lib/chess";
 import { useGameAnalysis } from "@/hooks/useGameAnalysis";
+import { useCoach } from "@/hooks/useCoach";
+import { useAuth } from "./AuthProvider";
 import EngineBoard from "./EngineBoard";
 import EngineControls from "./EngineControls";
+import CoachButton from "./CoachButton";
+import CoachPanel from "./CoachPanel";
 import MoveList from "./MoveList";
 import HeaderFields from "./HeaderFields";
 import PhotoViewer from "./PhotoViewer";
@@ -94,6 +98,13 @@ export default function ReviewWorkbench({
 
   // Whole-game engine analysis (eval + blunder/mistake/inaccuracy per move).
   const analysis = useGameAnalysis(startFen, moves);
+
+  // LLM coach: explains moves / summarizes the game from the engine evals. Cache
+  // is keyed on a persisted game id, so only enable it for a signed-in owner.
+  const { user } = useAuth();
+  const coachGameId = user && draft.id ? draft.id : undefined;
+  const coach = useCoach(startFen, moves, analysis, header, coachGameId);
+  const hasAnnotations = Object.keys(analysis.annotations).length > 0;
 
   // Any edit invalidates prior analysis (ply indices and positions shift).
   useEffect(() => {
@@ -226,16 +237,23 @@ export default function ReviewWorkbench({
                   {t("review.view")}
                 </button>
               </div>
-              <EngineControls
-                engineOn={engineOn}
-                onToggleEngine={setEngineOn}
-                analyzing={analysis.analyzing}
-                progress={analysis.progress}
-                available={analysis.available}
-                hasAnnotations={Object.keys(analysis.annotations).length > 0}
-                onAnalyze={analysis.run}
-                onClear={analysis.clear}
-              />
+              <div className="flex flex-wrap items-center gap-3">
+                <EngineControls
+                  engineOn={engineOn}
+                  onToggleEngine={setEngineOn}
+                  analyzing={analysis.analyzing}
+                  progress={analysis.progress}
+                  available={analysis.available}
+                  hasAnnotations={hasAnnotations}
+                  onAnalyze={analysis.run}
+                  onClear={analysis.clear}
+                />
+                <CoachButton
+                  hasAnnotations={hasAnnotations}
+                  loading={coach.loadingPly === -1}
+                  onClick={coach.coachGame}
+                />
+              </div>
             </div>
           )}
 
@@ -252,6 +270,8 @@ export default function ReviewWorkbench({
             engine={engineOn}
             caption={ro ? t("review.captionView") : t("review.captionEdit")}
           />
+
+          <CoachPanel coach={coach} activeIndex={activeIndex} />
 
           <HeaderFields header={header} onChange={setHeader} readOnly={ro} />
 
@@ -285,6 +305,12 @@ export default function ReviewWorkbench({
             annotations={analysis.annotations}
             confirmed={confirmed}
             onConfirm={confirm}
+            onExplain={(i) => {
+              // Select the ply so the coach panel (keyed on activeIndex) shows its prose.
+              setActiveIndex(i);
+              coach.coachMove(i);
+            }}
+            coaching={coach.byPly}
           />
 
           {serverFailedAt != null && (

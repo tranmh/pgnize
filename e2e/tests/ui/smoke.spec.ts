@@ -4,7 +4,7 @@ import { trackPageErrors } from "../../helpers/ui";
 // Browser smoke for the key routes. Deeper review-workbench interaction is exercised
 // against the real DOM in CI where the web server is guaranteed up; these checks keep
 // the suite resilient to component-level markup changes.
-const routes = ["/", "/convert", "/scan", "/login", "/register", "/library", "/upload"];
+const routes = ["/", "/convert", "/scan", "/new", "/login", "/register", "/library", "/upload"];
 
 for (const route of routes) {
   test(`renders ${route} without crashing`, async ({ page }) => {

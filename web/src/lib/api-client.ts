@@ -436,3 +436,81 @@ export function searchPlayers(q: string): Promise<{ players: Player[] }> {
   const suffix = q ? `?q=${encodeURIComponent(q)}` : "";
   return requestJson(`/players${suffix}`, { method: "GET" });
 }
+
+// ---------------------------------------------------------------------------
+// Direct inputs: paste a FEN, or import PGN / a Lichess study|game URL
+// ---------------------------------------------------------------------------
+
+// pasteFen validates a FEN server-side (chesskit) and returns a position draft
+// (startFen set, no moves). 400 on an illegal FEN. Anonymous: not persisted.
+export function pasteFen(input: { fen: string }): Promise<GameDraft> {
+  return requestJson("/positions", { method: "POST", body: jsonBody(input) });
+}
+
+// importGames parses raw PGN, or fetches+parses a Lichess study/game URL
+// (server-side). Returns one draft per game/chapter. Anonymous: not persisted.
+export function importGames(input: {
+  pgn?: string;
+  url?: string;
+}): Promise<{ games: GameDraft[] }> {
+  return requestJson("/import", { method: "POST", body: jsonBody(input) });
+}
+
+// ---------------------------------------------------------------------------
+// Coach: turn engine numbers into German teaching prose
+// ---------------------------------------------------------------------------
+
+// White-POV evaluation; exactly one of cp / mate is meaningful (mate wins).
+export interface CoachEval {
+  cp?: number | null;
+  mate?: number | null;
+}
+
+export type MoveQualityTag = "blunder" | "mistake" | "inaccuracy" | "";
+
+// Per-move coach request. `fen` is the position BEFORE the move; `bestSan` /
+// `bestLine` are the engine's recommendation (already converted to SAN client-
+// side). `gameId` is sent only for persisted (registered) drafts → enables the
+// server-side cache; anonymous omits it.
+export interface CoachMoveRequest {
+  gameId?: string;
+  ply?: number;
+  fen: string;
+  side: Side;
+  playedSan: string;
+  bestSan: string;
+  bestLine?: string[];
+  evalBefore: CoachEval;
+  evalAfter: CoachEval;
+  quality?: MoveQualityTag;
+  lang?: string;
+}
+
+export interface CoachGameMove {
+  san: string;
+  side: Side;
+  evalAfter: CoachEval;
+  quality?: string;
+}
+
+export interface CoachGameRequest {
+  gameId?: string;
+  startFen: string;
+  header: Header;
+  moves: CoachGameMove[];
+  lang?: string;
+}
+
+export interface CoachResponse {
+  text: string;
+  model: string;
+  cached: boolean;
+}
+
+export function coachMove(req: CoachMoveRequest): Promise<CoachResponse> {
+  return requestJson("/coach/move", { method: "POST", body: jsonBody(req) });
+}
+
+export function coachGame(req: CoachGameRequest): Promise<CoachResponse> {
+  return requestJson("/coach/game", { method: "POST", body: jsonBody(req) });
+}

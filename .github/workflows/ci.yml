@@ -6,9 +6,11 @@ on:
   pull_request:
 
 # Recognition is pinned to the deterministic fake recognizer everywhere in CI; the real
-# Ollama VLM is never exercised here (it is an opt-in `-tags=ollama` harness).
+# Ollama VLM is never exercised here (it is an opt-in `-tags=ollama` harness). The engine→prose
+# coach is likewise pinned to the deterministic fake coach so the e2e API boot needs no LLM key.
 env:
   RECOGNIZER: fake
+  COACH: fake
 
 jobs:
   go-unit:

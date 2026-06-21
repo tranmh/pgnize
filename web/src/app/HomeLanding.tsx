@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 import Board from "@/components/Board";
 import ConvertClient from "./convert/ConvertClient";
 import ScanClient from "./scan/ScanClient";
@@ -67,6 +68,12 @@ export default function HomeLanding() {
           >
             {t("landing.hero.ctaScan")}
           </a>
+          <Link
+            href="/new"
+            className="rounded-lg border border-indigo-300 bg-indigo-50 px-5 py-2.5 text-sm font-semibold text-indigo-700 hover:bg-indigo-100"
+          >
+            {t("landing.hero.ctaCoach")}
+          </Link>
         </div>
         <p className="text-xs text-gray-400">{t("landing.hero.free")}</p>
       </section>
