@@ -40,7 +40,7 @@ type harness struct {
 	client *http.Client
 }
 
-func setup(t *testing.T) *harness {
+func setup(t *testing.T, opts ...func(*config.Config)) *harness {
 	t.Helper()
 	ctx := context.Background()
 	url := testDBURL(t)
@@ -62,6 +62,9 @@ func setup(t *testing.T) *harness {
 		t.Fatal(err)
 	}
 	cfg := config.Config{AuthSecret: "test-secret-32-bytes-xxxxxxxxxxxx", PublicBase: "http://x", UploadMaxBytes: 5 << 20, FewShotMax: 3}
+	for _, o := range opts {
+		o(&cfg)
+	}
 	reg := recognition.NewRegistry()
 	reg.Register("fake", "Built-in test recognizer", true, recognition.NewFake())
 	reg.SetDefault("fake")
@@ -454,4 +457,15 @@ func TestRateLimitConvert(t *testing.T) {
 		t.Fatal("expected a 429 within 12 anonymous convert requests (limit 10/hour)")
 	}
 	_ = time.Second
+}
+
+func TestRateLimitDisabled(t *testing.T) {
+	h := setup(t, func(c *config.Config) { c.RateLimitDisabled = true })
+	for i := 0; i < 12; i++ {
+		ct, buf := uploadBody(t, "image")
+		resp, _ := h.do(t, "POST", "/api/convert", ct, buf)
+		if resp.StatusCode == http.StatusTooManyRequests {
+			t.Fatalf("RATE_LIMIT_DISABLED should suppress the limiter, got 429 on request %d", i+1)
+		}
+	}
 }

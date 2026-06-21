@@ -67,6 +67,7 @@ services:
       OLLAMA_HOST: http://ollama:11434
       GEMINI_API_KEY: ${GEMINI_API_KEY:-}
       GEMINI_MODEL: ${GEMINI_MODEL:-gemini-2.5-flash}
+      RATE_LIMIT_DISABLED: ${RATE_LIMIT_DISABLED:-false}
     depends_on:
       db:
         condition: service_healthy

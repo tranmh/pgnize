@@ -36,6 +36,12 @@ func (s *Server) requireAuth(next http.Handler) http.Handler {
 
 // rateLimit enforces a per-key window; on exceed it writes 429 and returns false.
 func (s *Server) rateLimit(w http.ResponseWriter, r *http.Request, key string, limit int, window time.Duration) bool {
+	// Escape hatch for local automated testing (RATE_LIMIT_DISABLED=true).
+	// Gated by config — never keyed off the (spoofable) client IP — so it cannot
+	// be tripped in prod, where the flag defaults to false.
+	if s.Cfg.RateLimitDisabled {
+		return true
+	}
 	ok, err := s.Store.ConsumeRateLimit(r.Context(), key, limit, window)
 	if err != nil {
 		// Fail open on limiter errors, but never crash the request.

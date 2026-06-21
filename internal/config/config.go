@@ -35,6 +35,10 @@ type Config struct {
 
 	UploadMaxBytes  int64
 	AnonUploadTTLd  int
+
+	// RateLimitDisabled turns off all per-IP/per-user rate limiting. Intended for
+	// local automated testing only — defaults to false and must never be set in prod.
+	RateLimitDisabled bool
 }
 
 // Load reads configuration from environment variables, applying defaults.
@@ -62,6 +66,7 @@ func Load() (Config, error) {
 		FewShotMax:        envInt("FEWSHOT_MAX_EXAMPLES", 3),
 		UploadMaxBytes:    int64(envInt("UPLOAD_MAX_BYTES", 15<<20)),
 		AnonUploadTTLd:    envInt("ANON_UPLOAD_TTL_DAYS", 7),
+		RateLimitDisabled: envBool("RATE_LIMIT_DISABLED", false),
 	}
 	if c.AuthSecret == "" {
 		return c, fmt.Errorf("AUTH_SECRET is required")
