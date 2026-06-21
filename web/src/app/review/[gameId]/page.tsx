@@ -57,7 +57,7 @@ export default function ReviewPage({
     return () => {
       cancelled = true;
     };
-  }, [gameId, user]);
+  }, [gameId, user, t]);
 
   async function handleSave(payload: {
     header: Header;

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useCallback, useEffect } from "react";
 import { useT } from "@/i18n/I18nProvider";
 
 export interface MoveNavProps {
@@ -27,10 +27,13 @@ export default function MoveNav({
   const atStart = cur <= -1;
   const atEnd = cur >= count - 1;
 
-  const go = (next: number) => {
-    const clamped = Math.max(-1, Math.min(count - 1, next));
-    onChange(clamped < 0 ? null : clamped);
-  };
+  const go = useCallback(
+    (next: number) => {
+      const clamped = Math.max(-1, Math.min(count - 1, next));
+      onChange(clamped < 0 ? null : clamped);
+    },
+    [count, onChange],
+  );
 
   useEffect(() => {
     if (!keyboard) return;
@@ -54,7 +57,7 @@ export default function MoveNav({
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [keyboard, cur, count]);
+  }, [keyboard, cur, count, go, onChange]);
 
   return (
     <div className="flex items-center gap-1">

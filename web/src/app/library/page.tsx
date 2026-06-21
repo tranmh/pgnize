@@ -48,7 +48,7 @@ export default function LibraryPage() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [t]);
 
   useEffect(() => {
     if (user) void load(filters);

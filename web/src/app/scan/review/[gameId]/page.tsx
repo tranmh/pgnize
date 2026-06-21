@@ -55,7 +55,7 @@ export default function ScanReviewPage({
     return () => {
       cancelled = true;
     };
-  }, [gameId, user]);
+  }, [gameId, user, t]);
 
   async function handleSave(payload: { header: Header; startFen: string }) {
     setSaving(true);
