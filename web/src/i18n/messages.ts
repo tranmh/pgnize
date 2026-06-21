@@ -29,6 +29,7 @@ const en: Catalog = {
   // Nav
   "nav.convert": "Convert",
   "nav.scan": "Scan position",
+  "nav.new": "Analyze & coach",
   "nav.library": "Library",
   "nav.signOut": "Sign out",
   "nav.login": "Log in",
@@ -41,6 +42,7 @@ const en: Catalog = {
     "Snap a handwritten score sheet or a board position. PGNize reads it, you verify every move, and you download clean, engine-checked PGN. No typing.",
   "landing.hero.ctaConvert": "Convert a score sheet",
   "landing.hero.ctaScan": "Scan a position",
+  "landing.hero.ctaCoach": "Analyze & get coaching",
   "landing.hero.free": "Free to try — no account needed.",
 
   // Landing: feature 1 (score sheet → PGN)
@@ -352,6 +354,44 @@ const en: Catalog = {
   // View page
   "viewPage.title": "View game",
   "viewPage.edit": "Edit",
+
+  // New / analyze-&-coach page
+  "new.title": "Analyze & get coaching",
+  "new.subtitle":
+    "Paste a FEN or import a game (PGN or a Lichess study/game URL). The engine evaluates it in your browser, then a coach explains the why in plain words.",
+  "new.resultSubtitle":
+    "Run the engine, then click Explain on a move or Coach this game for a summary.",
+  "new.modeFen": "Paste FEN",
+  "new.modeImport": "Import PGN / Lichess",
+  "new.fenLabel": "FEN",
+  "new.importLabel": "PGN or Lichess URL",
+  "new.fenPlaceholder": "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
+  "new.importPlaceholder":
+    "Paste PGN here, or a Lichess study/game URL (https://lichess.org/…)",
+  "new.submit": "Load",
+  "new.working": "Loading…",
+  "new.errEmpty": "No game found in that input.",
+  "new.errInvalid": "That doesn't look like a valid position or game.",
+  "new.errRateLimit": "Rate limit reached. Please wait a moment and try again.",
+  "new.errGeneric": "Could not load that input.",
+  "new.gameLabel": "Game {n}",
+  "new.startOver": "Start over",
+  "new.save": "Save to library",
+  "new.downloadPgn": "Download PGN",
+  "new.saved": "Saved to your library.",
+  "new.viewGame": "View game",
+  "new.promoPrefix": "Have a photo of a score sheet instead?",
+  "new.promoConvert": "Convert a photo →",
+
+  // Coach (engine → LLM explanation)
+  "coach.title": "Coach",
+  "coach.thinking": "Coach is thinking…",
+  "coach.error": "Coaching failed. Please try again.",
+  "coach.gameSummary": "Game summary",
+  "coach.explain": "Explain",
+  "coach.explained": "Explained ✓",
+  "coach.explainHint": "Ask the coach why this move helps or hurts.",
+  "coach.coachGame": "Coach this game",
 };
 
 const de: Catalog = {
@@ -366,6 +406,7 @@ const de: Catalog = {
   // Nav
   "nav.convert": "Umwandeln",
   "nav.scan": "Stellung scannen",
+  "nav.new": "Analysieren & coachen",
   "nav.library": "Bibliothek",
   "nav.signOut": "Abmelden",
   "nav.login": "Anmelden",
@@ -378,6 +419,7 @@ const de: Catalog = {
     "Fotografiere ein handgeschriebenes Partieformular oder eine Brettstellung. PGNize liest es aus, du prüfst jeden Zug und lädst sauberes, engine-geprüftes PGN herunter. Kein Abtippen.",
   "landing.hero.ctaConvert": "Partieformular umwandeln",
   "landing.hero.ctaScan": "Stellung scannen",
+  "landing.hero.ctaCoach": "Analysieren & coachen lassen",
   "landing.hero.free": "Kostenlos ausprobieren – kein Konto nötig.",
 
   // Landing: Funktion 1 (Partieformular → PGN)
@@ -694,6 +736,45 @@ const de: Catalog = {
   // View page
   "viewPage.title": "Partie ansehen",
   "viewPage.edit": "Bearbeiten",
+
+  // New / Analysieren-&-coachen-Seite
+  "new.title": "Analysieren & coachen lassen",
+  "new.subtitle":
+    "Füge eine FEN ein oder importiere eine Partie (PGN oder eine Lichess-Studie/-Partie-URL). Die Engine bewertet sie in deinem Browser, dann erklärt dir ein Trainer das Warum in klaren Worten.",
+  "new.resultSubtitle":
+    "Starte die Engine, dann klicke bei einem Zug auf „Erklären“ oder auf „Partie coachen“ für eine Zusammenfassung.",
+  "new.modeFen": "FEN einfügen",
+  "new.modeImport": "PGN / Lichess importieren",
+  "new.fenLabel": "FEN",
+  "new.importLabel": "PGN oder Lichess-URL",
+  "new.fenPlaceholder": "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
+  "new.importPlaceholder":
+    "PGN hier einfügen oder eine Lichess-Studie/-Partie-URL (https://lichess.org/…)",
+  "new.submit": "Laden",
+  "new.working": "Wird geladen …",
+  "new.errEmpty": "In dieser Eingabe wurde keine Partie gefunden.",
+  "new.errInvalid": "Das sieht nicht nach einer gültigen Stellung oder Partie aus.",
+  "new.errRateLimit":
+    "Ratenlimit erreicht. Bitte warte einen Moment und versuche es erneut.",
+  "new.errGeneric": "Diese Eingabe konnte nicht geladen werden.",
+  "new.gameLabel": "Partie {n}",
+  "new.startOver": "Von vorne beginnen",
+  "new.save": "In Bibliothek speichern",
+  "new.downloadPgn": "PGN herunterladen",
+  "new.saved": "In deiner Bibliothek gespeichert.",
+  "new.viewGame": "Partie ansehen",
+  "new.promoPrefix": "Hast du stattdessen ein Foto eines Partieformulars?",
+  "new.promoConvert": "Foto umwandeln →",
+
+  // Coach (Engine → LLM-Erklärung)
+  "coach.title": "Trainer",
+  "coach.thinking": "Trainer denkt nach …",
+  "coach.error": "Coaching fehlgeschlagen. Bitte versuche es erneut.",
+  "coach.gameSummary": "Partie-Zusammenfassung",
+  "coach.explain": "Erklären",
+  "coach.explained": "Erklärt ✓",
+  "coach.explainHint": "Frag den Trainer, warum dieser Zug hilft oder schadet.",
+  "coach.coachGame": "Partie coachen",
 };
 
 export const messages: Record<Locale, Catalog> = { de, en };

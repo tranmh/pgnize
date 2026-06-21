@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/tranmh/pgnize/internal/auth"
+	"github.com/tranmh/pgnize/internal/coaching"
 	"github.com/tranmh/pgnize/internal/config"
 	"github.com/tranmh/pgnize/internal/httpapi"
 	"github.com/tranmh/pgnize/internal/jobs"
@@ -75,7 +76,10 @@ func main() {
 	reg := buildRegistry(cfg)
 	slog.Info("recognizers", "default", reg.Default(), "available", reg.Advertised())
 
-	srv := &httpapi.Server{Cfg: cfg, Store: st, Storage: blob, Recognizers: reg}
+	coach := buildCoach(cfg)
+	slog.Info("coach", "backend", coach.Name())
+
+	srv := &httpapi.Server{Cfg: cfg, Store: st, Storage: blob, Recognizers: reg, Coach: coach}
 
 	// In-process recognition worker pool.
 	pool := &jobs.Pool{
@@ -130,6 +134,34 @@ func buildRegistry(cfg config.Config) *recognition.Registry {
 		reg.SetDefault("fake")
 	}
 	return reg
+}
+
+// buildCoach selects the engine→prose coach backend. COACH chooses the implementation;
+// the LLM backends fall back to the Gemini host/model/key when COACH_HOST/COACH_MODEL are
+// unset, so a Gemini-configured deployment gets a Gemini coach for free. CI uses "fake".
+func buildCoach(cfg config.Config) coaching.Coach {
+	host := cfg.CoachHost
+	model := cfg.CoachModel
+	switch cfg.Coach {
+	case "gemini":
+		if host == "" {
+			host = cfg.GeminiHost
+		}
+		if model == "" {
+			model = cfg.GeminiModel
+		}
+		return coaching.NewGeminiCoach(host, model, cfg.GeminiAPIKey)
+	case "ollama":
+		if host == "" {
+			host = cfg.OllamaHost
+		}
+		if model == "" {
+			model = cfg.RecognizerModel
+		}
+		return coaching.NewOllamaCoach(host, model)
+	default:
+		return coaching.NewFake()
+	}
 }
 
 func seedDemo(ctx context.Context, st *store.Store) error {

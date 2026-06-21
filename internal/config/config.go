@@ -33,6 +33,10 @@ type Config struct {
 	RecognitionWorker int
 	FewShotMax        int
 
+	Coach      string // fake | gemini | ollama (the engine→prose coach)
+	CoachModel string // empty → falls back to the Gemini/recognizer model in boot
+	CoachHost  string // empty → falls back to the Gemini/Ollama host in boot
+
 	UploadMaxBytes int64
 	AnonUploadTTLd int
 
@@ -64,6 +68,9 @@ func Load() (Config, error) {
 		GeminiHost:        env("GEMINI_HOST", "https://generativelanguage.googleapis.com"),
 		RecognitionWorker: envInt("RECOGNITION_WORKERS", 2),
 		FewShotMax:        envInt("FEWSHOT_MAX_EXAMPLES", 3),
+		Coach:             env("COACH", "fake"),
+		CoachModel:        env("COACH_MODEL", ""),
+		CoachHost:         env("COACH_HOST", ""),
 		UploadMaxBytes:    int64(envInt("UPLOAD_MAX_BYTES", 15<<20)),
 		AnonUploadTTLd:    envInt("ANON_UPLOAD_TTL_DAYS", 7),
 		RateLimitDisabled: envBool("RATE_LIMIT_DISABLED", false),

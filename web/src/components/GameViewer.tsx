@@ -10,8 +10,12 @@ import {
   type EditMove,
 } from "@/lib/chess";
 import { useGameAnalysis } from "@/hooks/useGameAnalysis";
+import { useCoach } from "@/hooks/useCoach";
+import { useAuth } from "./AuthProvider";
 import EngineBoard from "./EngineBoard";
 import EngineControls from "./EngineControls";
+import CoachButton from "./CoachButton";
+import CoachPanel from "./CoachPanel";
 import MoveList from "./MoveList";
 
 const noop = () => {};
@@ -32,6 +36,10 @@ export default function GameViewer({ draft }: { draft: GameDraft }) {
   const [flip, setFlip] = useState(false);
 
   const analysis = useGameAnalysis(startFen, moves);
+  const { user } = useAuth();
+  const coachGameId = user && draft.id ? draft.id : undefined;
+  const coach = useCoach(startFen, moves, analysis, draft.header, coachGameId);
+  const hasAnnotations = Object.keys(analysis.annotations).length > 0;
 
   const boardFen =
     activeIndex === null ? startFen : moves[activeIndex]?.fenAfter ?? startFen;
@@ -70,16 +78,23 @@ export default function GameViewer({ draft }: { draft: GameDraft }) {
           >
             {t("viewer.flip")}
           </button>
-          <EngineControls
-            engineOn={engineOn}
-            onToggleEngine={setEngineOn}
-            analyzing={analysis.analyzing}
-            progress={analysis.progress}
-            available={analysis.available}
-            hasAnnotations={Object.keys(analysis.annotations).length > 0}
-            onAnalyze={analysis.run}
-            onClear={analysis.clear}
-          />
+          <div className="flex flex-wrap items-center gap-3">
+            <EngineControls
+              engineOn={engineOn}
+              onToggleEngine={setEngineOn}
+              analyzing={analysis.analyzing}
+              progress={analysis.progress}
+              available={analysis.available}
+              hasAnnotations={hasAnnotations}
+              onAnalyze={analysis.run}
+              onClear={analysis.clear}
+            />
+            <CoachButton
+              hasAnnotations={hasAnnotations}
+              loading={coach.loadingPly === -1}
+              onClick={coach.coachGame}
+            />
+          </div>
         </div>
 
         <EngineBoard
@@ -93,6 +108,8 @@ export default function GameViewer({ draft }: { draft: GameDraft }) {
           caption={t("viewer.stepCaption")}
         />
 
+        <CoachPanel coach={coach} activeIndex={activeIndex} />
+
         <MoveList
           moves={moves}
           activeIndex={activeIndex}
@@ -104,6 +121,12 @@ export default function GameViewer({ draft }: { draft: GameDraft }) {
           onTruncate={noop}
           readOnly
           annotations={analysis.annotations}
+          onExplain={(i) => {
+            // Select the ply so the coach panel (keyed on activeIndex) shows its prose.
+            setActiveIndex(i);
+            coach.coachMove(i);
+          }}
+          coaching={coach.byPly}
         />
       </section>
     </div>

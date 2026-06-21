@@ -34,6 +34,10 @@ export interface MoveListProps {
   confirmed?: Set<number>;
   // Mark a low-confidence ply as verified.
   onConfirm?: (index: number) => void;
+  // Ask the LLM coach to explain a ply (shown on engine-flagged moves only).
+  onExplain?: (index: number) => void;
+  // Per-ply coaching prose already fetched (toggles the button label).
+  coaching?: Record<number, string>;
 }
 
 function badgeClasses(legality: Legality): string {
@@ -88,6 +92,8 @@ export default function MoveList({
   annotations,
   confirmed,
   onConfirm,
+  onExplain,
+  coaching,
 }: MoveListProps) {
   const t = useT();
   return (
@@ -131,6 +137,8 @@ export default function MoveList({
             onPlaceholder={onPlaceholder}
             onTruncate={onTruncate}
             onConfirm={onConfirm}
+            onExplain={onExplain}
+            explained={coaching?.[i] !== undefined}
           />
         ))}
       </ol>
@@ -161,6 +169,8 @@ interface MoveRowProps {
   onPlaceholder: (index: number) => void;
   onTruncate: (index: number) => void;
   onConfirm?: (index: number) => void;
+  onExplain?: (index: number) => void;
+  explained?: boolean;
 }
 
 function MoveRow({
@@ -178,6 +188,8 @@ function MoveRow({
   onPlaceholder,
   onTruncate,
   onConfirm,
+  onExplain,
+  explained,
 }: MoveRowProps) {
   const t = useT();
   const [editing, setEditing] = useState(false);
@@ -292,6 +304,17 @@ function MoveRow({
             )}
             <span className="text-gray-400">{formatScore(annotation.score)}</span>
           </span>
+        )}
+
+        {annotation && onExplain && (
+          <button
+            type="button"
+            onClick={() => onExplain(index)}
+            className="rounded border border-indigo-300 bg-indigo-50 px-1.5 py-0.5 text-[10px] font-medium text-indigo-700 hover:bg-indigo-100"
+            title={t("coach.explainHint")}
+          >
+            {explained ? t("coach.explained") : t("coach.explain")}
+          </button>
         )}
 
         {!readOnly && (

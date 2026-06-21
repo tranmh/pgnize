@@ -11,6 +11,7 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/tranmh/pgnize/internal/auth"
+	"github.com/tranmh/pgnize/internal/coaching"
 	"github.com/tranmh/pgnize/internal/config"
 	"github.com/tranmh/pgnize/internal/domain"
 	"github.com/tranmh/pgnize/internal/recognition"
@@ -24,6 +25,7 @@ type Server struct {
 	Store       *store.Store
 	Storage     storage.Storage
 	Recognizers *recognition.Registry
+	Coach       coaching.Coach
 }
 
 // Routes builds the HTTP handler.
@@ -58,6 +60,16 @@ func (s *Server) Routes() http.Handler {
 		r.Get("/scan/{jobID}", s.handleConvertStatus)
 		r.Get("/scan/{jobID}/game", s.handleConvertGame)
 		r.Post("/scan/{jobID}/export", s.handleConvertExport)
+
+		// Anonymous direct inputs that bypass photo recognition (no auth required).
+		// They return the verified draft inline; when the requester is logged in the
+		// draft is also persisted to their library.
+		r.Post("/positions", s.handlePasteFEN)
+		r.Post("/import", s.handleImport)
+
+		// Engine→prose coaching (public; gameId optional — caches only for the owner).
+		r.Post("/coach/move", s.handleCoachMove)
+		r.Post("/coach/game", s.handleCoachGame)
 
 		// Image streaming (authorized per object).
 		r.Get("/images/{uploadID}", s.handleImage)
