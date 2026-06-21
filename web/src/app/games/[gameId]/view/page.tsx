@@ -45,7 +45,7 @@ export default function GameViewPage({
     return () => {
       cancelled = true;
     };
-  }, [gameId, user]);
+  }, [gameId, user, t]);
 
   if (authLoading || (!user && !loadError) || loading) {
     return (
