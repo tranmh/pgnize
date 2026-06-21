@@ -3,7 +3,8 @@
 @CODEMAP.md
 
 PGNize — convert photos of handwritten chess score sheets (German *Partieformular*) into human-verified
-PGN, with a browsable per-user game library. (The Go module path / code identifiers stay lowercase
+PGN, and photos of a board (physical or digital diagram) into an editable position (FEN), with a
+browsable per-user game library. (The Go module path / code identifiers stay lowercase
 `pgnize` by convention; the product name is **PGNize**.)
 
 ## Stack
