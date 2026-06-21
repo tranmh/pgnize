@@ -93,18 +93,21 @@ services:
   caddy:
     image: caddy:2-alpine
     profiles: ["prod"]
-    # Caddy reads {$PGNIZE_DOMAIN} from its own process env to pick the site
-    # address (and thus which domain to provision TLS for). Compose substitutes
-    # the host value exported by scripts/deploy.sh; falls back to localhost.
-    environment:
-      PGNIZE_DOMAIN: ${PGNIZE_DOMAIN:-localhost}
-    ports:
-      - "80:80"
-      - "443:443"
+    # This host's 80/443 belong to the shared EDGE Caddy (the swiss-manager
+    # stack), which terminates TLS for pgnize.openpairing.org and reverse-proxies
+    # into this container over the external 'edge' network. So we publish NO host
+    # ports here and serve plain HTTP on :80 (see Caddyfile) — this inner Caddy
+    # only does path routing (/api, /healthz -> api; everything else -> web).
+    # The edge reaches us via the 'pgnize-edge' network alias.
     volumes:
       - ./Caddyfile:/etc/caddy/Caddyfile:ro
       - caddy_data:/data
       - caddy_config:/config
+    networks:
+      default: {}
+      edge:
+        aliases:
+          - pgnize-edge
     depends_on:
       - api
       - web
@@ -139,3 +142,11 @@ volumes:
   ollama_models:
   caddy_data:
   caddy_config:
+
+networks:
+  # Shared with the swiss-manager edge Caddy so it can reverse-proxy
+  # pgnize.openpairing.org into this stack — without anyone binding host 80/443
+  # twice. Create it once on the host (the deploy does this automatically):
+  #   docker network create edge
+  edge:
+    external: true

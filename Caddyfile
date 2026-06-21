@@ -1,6 +1,10 @@
-# Reverse proxy: /api/* -> Go backend, everything else -> Next.js.
-# Set the site address via env at deploy time (e.g. pgnize.example.com).
-{$PGNIZE_DOMAIN:localhost} {
+# Inner reverse proxy: /api/* -> Go backend, everything else -> Next.js.
+#
+# TLS and the public hostname (pgnize.openpairing.org) are handled by the shared
+# EDGE Caddy in the swiss-manager stack, which proxies here over the 'edge'
+# docker network. This block therefore serves plain HTTP on :80 and only does
+# path routing — it must NOT provision its own certificate.
+:80 {
 	encode gzip
 
 	handle /api/* {

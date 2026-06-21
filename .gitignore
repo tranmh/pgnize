@@ -21,6 +21,9 @@ e2e/test-results/
 # Local storage driver target
 /data/uploads/
 
+# DB dumps written by the db-backup container (bind mount ./backups)
+/backups/
+
 # OS
 .DS_Store
 
