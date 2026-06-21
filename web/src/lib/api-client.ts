@@ -263,13 +263,59 @@ export function exportConvertPgn(
 }
 
 // ---------------------------------------------------------------------------
+// Anonymous scan (board photo -> editable position -> PGN)
+// ---------------------------------------------------------------------------
+
+// scan uploads a board photo for position recognition. Mirrors `convert`, but
+// the produced draft carries the recognized position in `startFen` (no moves).
+export function scan(
+  image: File,
+  backend?: string,
+): Promise<{ jobId: string }> {
+  const fd = new FormData();
+  fd.append("image", image);
+  if (backend) {
+    fd.append("backend", backend);
+  }
+  return requestJson("/scan", { method: "POST", body: fd });
+}
+
+export function getScanJob(jobId: string): Promise<JobState> {
+  return requestJson(`/scan/${encodeURIComponent(jobId)}`, {
+    method: "GET",
+  });
+}
+
+export function getScanGame(jobId: string): Promise<GameDraft> {
+  return requestJson(`/scan/${encodeURIComponent(jobId)}/game`, {
+    method: "GET",
+  });
+}
+
+// exportScanPgn takes the SAME payload shape as convert export — the corrected
+// position is sent in `startFen` with an empty `moves` array.
+export function exportScanPgn(
+  jobId: string,
+  payload: Pick<SavePayload, "header" | "startFen" | "moves">,
+): Promise<string> {
+  return requestText(`/scan/${encodeURIComponent(jobId)}/export`, {
+    method: "POST",
+    body: jsonBody(payload),
+  });
+}
+
+// ---------------------------------------------------------------------------
 // Account: upload -> job -> review -> save
 // ---------------------------------------------------------------------------
+
+// What the uploaded image represents: a scoresheet (moves) or a board position.
+export type UploadKind = "scoresheet" | "position";
 
 export function upload(
   image: File,
   consentTraining: boolean,
   backend?: string,
+  kind?: UploadKind,
 ): Promise<{ uploadId: string; jobId: string }> {
   const fd = new FormData();
   fd.append("image", image);
@@ -278,6 +324,9 @@ export function upload(
   }
   if (backend) {
     fd.append("backend", backend);
+  }
+  if (kind) {
+    fd.append("kind", kind);
   }
   return requestJson("/uploads", { method: "POST", body: fd });
 }

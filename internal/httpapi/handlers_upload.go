@@ -84,7 +84,12 @@ func (s *Server) handleUpload(w http.ResponseWriter, r *http.Request) {
 	if !ok {
 		return
 	}
-	jobID, err := s.Store.CreateJob(r.Context(), uploadID, &u.ID, recName, backend)
+	// kind selects the recognition pipeline; an unrecognized value falls back to scoresheet.
+	kind := r.FormValue("kind")
+	if kind != "scoresheet" && kind != "position" {
+		kind = "scoresheet"
+	}
+	jobID, err := s.Store.CreateJob(r.Context(), uploadID, &u.ID, recName, backend, kind)
 	if err != nil {
 		s.writeErr(w, http.StatusInternalServerError, "internal", "could not enqueue job")
 		return

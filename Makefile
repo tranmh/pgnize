@@ -1,4 +1,4 @@
-.PHONY: help build build-go build-web dev test test-go test-int e2e-api e2e-ui lint tidy migrate migrate-down seed up down
+.PHONY: help build build-go build-web dev test test-go test-int e2e-api e2e-ui lint tidy migrate migrate-down seed poseval up down
 
 GO ?= go
 TEST_DATABASE_URL ?= postgres://pgnize:pgnize@localhost:5432/pgnize_test?sslmode=disable
@@ -62,6 +62,12 @@ seed: AUTH_SECRET ?= seed-placeholder-secret-not-used-by-server
 seed: ## Seed the demo user + 100 sample games across 3 players
 	AUTH_SECRET="$(AUTH_SECRET)" $(GO) run ./cmd/api -seed
 	AUTH_SECRET="$(AUTH_SECRET)" $(GO) run ./cmd/seedgames -n 100
+
+# Not part of CI: needs a running Ollama (localhost:11434) and/or GEMINI_API_KEY.
+# Gemini is skipped automatically when no key is set. CPU runs are slow (tens of
+# seconds per image), so the full corpus can take 10-25 min.
+poseval: ## Evaluate board photo → FEN recognition quality (Ollama and/or Gemini)
+	$(GO) run ./cmd/poseval -backend=both
 
 up: ## docker compose up (dev profile)
 	docker compose up -d db minio

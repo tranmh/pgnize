@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { ApiError, getJob, upload } from "@/lib/api-client";
+import { ApiError, getJob, upload, type UploadKind } from "@/lib/api-client";
 import { useJobPoller } from "@/hooks/useJobPoller";
 import { useAuth } from "@/components/AuthProvider";
 import UploadDropzone from "@/components/UploadDropzone";
@@ -18,6 +18,7 @@ export default function UploadPage() {
   const [file, setFile] = useState<File | null>(null);
   const [consent, setConsent] = useState(false);
   const [backend, setBackend] = useState("");
+  const [kind, setKind] = useState<UploadKind>("scoresheet");
   const [jobId, setJobId] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -30,7 +31,12 @@ export default function UploadPage() {
 
   useEffect(() => {
     if (poll.phase === "done" && poll.gameId) {
-      router.replace(`/review/${poll.gameId}`);
+      // Board positions land in the dedicated position-editor review screen.
+      router.replace(
+        kind === "position"
+          ? `/scan/review/${poll.gameId}`
+          : `/review/${poll.gameId}`,
+      );
     } else if (poll.phase === "failed" || poll.phase === "timeout") {
       setError(
         poll.phase === "timeout"
@@ -39,14 +45,19 @@ export default function UploadPage() {
       );
       setJobId(null);
     }
-  }, [poll.phase, poll.gameId, poll.error, router, t]);
+  }, [poll.phase, poll.gameId, poll.error, router, t, kind]);
 
   async function submit() {
     if (!file) return;
     setSubmitting(true);
     setError(null);
     try {
-      const { jobId } = await upload(file, consent, backend || undefined);
+      const { jobId } = await upload(
+        file,
+        consent,
+        backend || undefined,
+        kind === "position" ? "position" : undefined,
+      );
       setJobId(jobId);
     } catch (e) {
       setError(
@@ -91,6 +102,30 @@ export default function UploadPage() {
         </div>
       ) : (
         <>
+          <fieldset className="flex flex-col gap-2">
+            <legend className="text-[11px] font-medium uppercase tracking-wide text-gray-500">
+              {t("upload.kind.label")}
+            </legend>
+            <div className="inline-flex overflow-hidden rounded border border-gray-300 text-sm">
+              <button
+                type="button"
+                onClick={() => setKind("scoresheet")}
+                disabled={submitting}
+                className={`px-3 py-1 ${kind === "scoresheet" ? "bg-blue-600 text-white" : "bg-white text-gray-600 hover:bg-gray-100"}`}
+              >
+                {t("upload.kind.scoresheet")}
+              </button>
+              <button
+                type="button"
+                onClick={() => setKind("position")}
+                disabled={submitting}
+                className={`px-3 py-1 ${kind === "position" ? "bg-blue-600 text-white" : "bg-white text-gray-600 hover:bg-gray-100"}`}
+              >
+                {t("upload.kind.scan")}
+              </button>
+            </div>
+          </fieldset>
+
           <UploadDropzone onFile={setFile} disabled={submitting} />
 
           <RecognizerSelect

@@ -2,6 +2,7 @@ package chesskit
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/notnil/chess"
 )
@@ -28,4 +29,42 @@ func positionFromFEN(f FEN) (*chess.Position, error) {
 	}
 	g := chess.NewGame(opt)
 	return g.Position(), nil
+}
+
+// NormalizeFEN parses and canonicalizes a FEN, layering on the sanity checks that
+// notnil/chess does not perform: exactly one king of each color, and no pawn on the
+// back ranks (rank 8 or rank 1). It returns the canonical FEN on success.
+func NormalizeFEN(f FEN) (FEN, error) {
+	pos, err := positionFromFEN(f)
+	if err != nil {
+		return "", err
+	}
+	board := strings.Split(strings.Fields(pos.String())[0], "/")
+	if len(board) != 8 {
+		return "", fmt.Errorf("chesskit: FEN board must have 8 ranks, got %d", len(board))
+	}
+	whiteKings, blackKings := 0, 0
+	for _, rank := range board {
+		for _, r := range rank {
+			switch r {
+			case 'K':
+				whiteKings++
+			case 'k':
+				blackKings++
+			}
+		}
+	}
+	if whiteKings != 1 {
+		return "", fmt.Errorf("chesskit: FEN must have exactly one white king, got %d", whiteKings)
+	}
+	if blackKings != 1 {
+		return "", fmt.Errorf("chesskit: FEN must have exactly one black king, got %d", blackKings)
+	}
+	if strings.ContainsAny(board[0], "Pp") {
+		return "", fmt.Errorf("chesskit: FEN has a pawn on rank 8")
+	}
+	if strings.ContainsAny(board[7], "Pp") {
+		return "", fmt.Errorf("chesskit: FEN has a pawn on rank 1")
+	}
+	return FEN(pos.String()), nil
 }

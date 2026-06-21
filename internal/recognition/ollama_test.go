@@ -2,9 +2,14 @@ package recognition
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"image"
 	"image/jpeg"
+	"io"
+	"net/http"
+	"net/http/httptest"
+	"strings"
 	"testing"
 	"time"
 )
@@ -70,6 +75,44 @@ func TestSalvageMovesIgnoresHeaderOnlyJSON(t *testing.T) {
 	// No move objects with white/black -> nothing to salvage.
 	if got := salvageMoves(`{"header":{"event":"X"},"moves":[`); len(got) != 0 {
 		t.Fatalf("expected 0 tokens, got %d", len(got))
+	}
+}
+
+func TestOllamaRecognizePositionParsesGrid(t *testing.T) {
+	var gotPath, gotBody string
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		gotPath = r.URL.Path
+		body, _ := io.ReadAll(r.Body)
+		gotBody = string(body)
+		inner := `{"grid":["....k...","........","........","........","........","........","........","....K..R"],` +
+			`"sideToMove":"black","orientation":"white_bottom"}`
+		resp := map[string]any{"response": inner}
+		w.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(w).Encode(resp)
+	}))
+	defer srv.Close()
+
+	o := NewOllama(srv.URL, "minicpm-v")
+	o.MaxDim = 0 // skip image decode/resize
+	res, err := o.RecognizePosition(context.Background(), PositionInput{Image: []byte("img"), MimeType: "image/png"})
+	if err != nil {
+		t.Fatalf("RecognizePosition: %v", err)
+	}
+	if gotPath != "/api/generate" {
+		t.Errorf("path = %q", gotPath)
+	}
+	if !strings.Contains(gotBody, "single chess position") {
+		t.Errorf("request missing position prompt: %s", gotBody)
+	}
+	if len(res.Grid) != 8 || res.Grid[0] != "....k..." || res.Grid[7] != "....K..R" {
+		t.Fatalf("grid = %+v", res.Grid)
+	}
+	if res.SideToMove != "black" {
+		t.Errorf("sideToMove = %q", res.SideToMove)
+	}
+	fen, err := AssembleFEN(res)
+	if err != nil || fen != "4k3/8/8/8/8/8/8/4K2R b - - 0 1" {
+		t.Fatalf("AssembleFEN = %q (%v)", fen, err)
 	}
 }
 

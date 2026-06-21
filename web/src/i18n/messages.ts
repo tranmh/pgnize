@@ -28,6 +28,7 @@ const en: Catalog = {
 
   // Nav
   "nav.convert": "Convert",
+  "nav.scan": "Scan position",
   "nav.library": "Library",
   "nav.signOut": "Sign out",
   "nav.login": "Log in",
@@ -60,6 +61,9 @@ const en: Catalog = {
   "upload.submitting": "Uploading…",
   "upload.errRateLimit": "Rate limit reached. Please wait and try again.",
   "upload.errGeneric": "Upload failed.",
+  "upload.kind.label": "What's in the photo?",
+  "upload.kind.scoresheet": "Scoresheet (moves)",
+  "upload.kind.scan": "Board position",
 
   // Convert (anonymous) flow
   "convert.title": "Convert a score sheet",
@@ -75,6 +79,44 @@ const en: Catalog = {
   "convert.errLoadGame": "Could not load the game.",
   "convert.errExport": "Export failed.",
   "convert.errUpload": "Upload failed.",
+
+  // Scan (anonymous board photo -> position) flow
+  "scan.title": "Scan a board position",
+  "scan.subtitle":
+    "Upload a photo of a chess board. We'll recognize the position; you correct it on the editable board before downloading the PGN.",
+  "scan.takesSeconds": "This usually takes a few seconds.",
+  "scan.loadingRecognized": "Loading recognized position…",
+  "scan.downloadPgn": "Download PGN",
+  "scan.confidence": "Recognition confidence: {pct}%",
+  "scan.errTitle": "Something went wrong",
+  "scan.tryAgain": "Try again",
+  "scan.errRateLimit": "Rate limit reached. Please wait a moment and try again.",
+  "scan.errLoadGame": "Could not load the position.",
+  "scan.errExport": "Export failed.",
+  "scan.errUpload": "Upload failed.",
+  "scan.promoPrefix": "Have a photo of a board instead of a score sheet?",
+  "scan.promoLink": "Scan a position →",
+
+  // Position editor
+  "editor.palette": "Pieces",
+  "editor.tool.erase": "Erase",
+  "editor.clearBoard": "Clear board",
+  "editor.startingPosition": "Starting position",
+  "editor.flip": "Flip board",
+  "editor.sideToMove": "Side to move",
+  "editor.white": "White",
+  "editor.black": "Black",
+  "editor.castling": "Castling",
+  "editor.castling.K": "White O-O",
+  "editor.castling.Q": "White O-O-O",
+  "editor.castling.k": "Black O-O",
+  "editor.castling.q": "Black O-O-O",
+  "editor.enPassant": "En passant",
+  "editor.enPassant.none": "none",
+  "editor.illegalWarning":
+    "This position may be illegal. The PGN will still be created, but check it carefully.",
+  "editor.placeHint":
+    "Pick a piece, then click a square to place it. Drag a piece to move it.",
 
   // Anonymous banner
   "anon.prefix": "Anonymous conversions are",
@@ -248,6 +290,7 @@ const de: Catalog = {
 
   // Nav
   "nav.convert": "Umwandeln",
+  "nav.scan": "Stellung scannen",
   "nav.library": "Bibliothek",
   "nav.signOut": "Abmelden",
   "nav.login": "Anmelden",
@@ -280,6 +323,9 @@ const de: Catalog = {
   "upload.submitting": "Wird hochgeladen …",
   "upload.errRateLimit": "Ratenlimit erreicht. Bitte warte kurz und versuche es erneut.",
   "upload.errGeneric": "Upload fehlgeschlagen.",
+  "upload.kind.label": "Was ist auf dem Foto?",
+  "upload.kind.scoresheet": "Partieformular (Züge)",
+  "upload.kind.scan": "Brettstellung",
 
   // Convert (anonymous) flow
   "convert.title": "Partieformular umwandeln",
@@ -296,6 +342,45 @@ const de: Catalog = {
   "convert.errLoadGame": "Die Partie konnte nicht geladen werden.",
   "convert.errExport": "Export fehlgeschlagen.",
   "convert.errUpload": "Upload fehlgeschlagen.",
+
+  // Scan (anonymes Brettfoto -> Stellung) Ablauf
+  "scan.title": "Brettstellung scannen",
+  "scan.subtitle":
+    "Lade ein Foto eines Schachbretts hoch. Wir erkennen die Stellung; du korrigierst sie auf dem bearbeitbaren Brett, bevor du das PGN herunterlädst.",
+  "scan.takesSeconds": "Das dauert in der Regel einige Sekunden.",
+  "scan.loadingRecognized": "Erkannte Stellung wird geladen …",
+  "scan.downloadPgn": "PGN herunterladen",
+  "scan.confidence": "Erkennungssicherheit: {pct} %",
+  "scan.errTitle": "Etwas ist schiefgelaufen",
+  "scan.tryAgain": "Erneut versuchen",
+  "scan.errRateLimit":
+    "Ratenlimit erreicht. Bitte warte einen Moment und versuche es erneut.",
+  "scan.errLoadGame": "Die Stellung konnte nicht geladen werden.",
+  "scan.errExport": "Export fehlgeschlagen.",
+  "scan.errUpload": "Upload fehlgeschlagen.",
+  "scan.promoPrefix": "Hast du ein Foto eines Bretts statt eines Partieformulars?",
+  "scan.promoLink": "Stellung scannen →",
+
+  // Stellungseditor
+  "editor.palette": "Figuren",
+  "editor.tool.erase": "Löschen",
+  "editor.clearBoard": "Brett leeren",
+  "editor.startingPosition": "Grundstellung",
+  "editor.flip": "Brett drehen",
+  "editor.sideToMove": "Am Zug",
+  "editor.white": "Weiß",
+  "editor.black": "Schwarz",
+  "editor.castling": "Rochade",
+  "editor.castling.K": "Weiß O-O",
+  "editor.castling.Q": "Weiß O-O-O",
+  "editor.castling.k": "Schwarz O-O",
+  "editor.castling.q": "Schwarz O-O-O",
+  "editor.enPassant": "En passant",
+  "editor.enPassant.none": "keine",
+  "editor.illegalWarning":
+    "Diese Stellung ist möglicherweise illegal. Das PGN wird trotzdem erstellt, prüfe es aber sorgfältig.",
+  "editor.placeHint":
+    "Wähle eine Figur und klicke dann auf ein Feld, um sie zu setzen. Ziehe eine Figur, um sie zu bewegen.",
 
   // Anonymous banner
   "anon.prefix": "Anonyme Umwandlungen werden",

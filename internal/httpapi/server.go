@@ -52,6 +52,13 @@ func (s *Server) Routes() http.Handler {
 		r.Get("/convert/{jobID}/game", s.handleConvertGame)
 		r.Post("/convert/{jobID}/export", s.handleConvertExport)
 
+		// Anonymous board-photo → position scan (no auth required). Status/game/export
+		// reuse the convert handlers (they are job-kind agnostic).
+		r.Post("/scan", s.handleScan)
+		r.Get("/scan/{jobID}", s.handleConvertStatus)
+		r.Get("/scan/{jobID}/game", s.handleConvertGame)
+		r.Post("/scan/{jobID}/export", s.handleConvertExport)
+
 		// Image streaming (authorized per object).
 		r.Get("/images/{uploadID}", s.handleImage)
 

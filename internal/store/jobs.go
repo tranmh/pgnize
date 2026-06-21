@@ -10,12 +10,16 @@ import (
 
 // CreateJob enqueues a recognition job for an upload. backend is the selectable
 // recognizer key ("" = server default) the worker resolves at claim time; recognizerName
-// is the resolved Recognizer.Name() recorded for provenance.
-func (s *Store) CreateJob(ctx context.Context, uploadID string, userID *string, recognizerName, backend string) (string, error) {
+// is the resolved Recognizer.Name() recorded for provenance. kind selects the recognition
+// pipeline ("scoresheet" → move list, "position" → single FEN); "" defaults to "scoresheet".
+func (s *Store) CreateJob(ctx context.Context, uploadID string, userID *string, recognizerName, backend, kind string) (string, error) {
+	if kind == "" {
+		kind = "scoresheet"
+	}
 	var id string
 	err := s.Pool.QueryRow(ctx,
-		`INSERT INTO recognition_jobs (upload_id, user_id, recognizer_name, backend) VALUES ($1, $2, $3, $4) RETURNING id`,
-		uploadID, userID, recognizerName, backend).Scan(&id)
+		`INSERT INTO recognition_jobs (upload_id, user_id, recognizer_name, backend, kind) VALUES ($1, $2, $3, $4, $5) RETURNING id`,
+		uploadID, userID, recognizerName, backend, kind).Scan(&id)
 	return id, err
 }
 
@@ -26,6 +30,7 @@ type ClaimedJob struct {
 	UserID     *string
 	StorageKey string
 	Backend    string
+	Kind       string
 }
 
 // ClaimNextJob atomically claims one queued job (FOR UPDATE SKIP LOCKED) and marks it running.
@@ -43,8 +48,8 @@ func (s *Store) ClaimNextJob(ctx context.Context) (ClaimedJob, error) {
 		         FOR UPDATE SKIP LOCKED
 		         LIMIT 1)
 		    AND u.id = j.upload_id
-		 RETURNING j.id, j.upload_id, j.user_id, u.storage_key, j.backend`,
-	).Scan(&c.JobID, &c.UploadID, &c.UserID, &c.StorageKey, &c.Backend)
+		 RETURNING j.id, j.upload_id, j.user_id, u.storage_key, j.backend, j.kind`,
+	).Scan(&c.JobID, &c.UploadID, &c.UserID, &c.StorageKey, &c.Backend, &c.Kind)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return c, ErrNotFound
 	}

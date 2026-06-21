@@ -212,6 +212,75 @@ func (g *Gemini) Recognize(ctx context.Context, in ScoreSheetInput) (Recognition
 	}, nil
 }
 
+func (g *Gemini) RecognizePosition(ctx context.Context, in PositionInput) (PositionResult, error) {
+	img, mime := g.prepImage(in.Image, in.MimeType)
+
+	parts := []geminiPart{
+		{Text: buildPositionPrompt(in)},
+		{InlineData: &geminiInlineData{MimeType: mime, Data: base64.StdEncoding.EncodeToString(img)}},
+	}
+
+	reqBody := geminiRequest{
+		Contents: []geminiContent{{Role: "user", Parts: parts}},
+		GenerationConfig: geminiGenerationConfig{
+			Temperature:      0.1,
+			ResponseMimeType: "application/json",
+			ResponseSchema:   geminiPositionSchema,
+			MaxOutputTokens:  g.MaxTokens,
+			// Explicitly cap thinking so reasoning tokens cannot starve the JSON answer.
+			ThinkingConfig: &geminiThinkingConfig{ThinkingBudget: g.ThinkingBudget},
+		},
+	}
+	buf, _ := json.Marshal(reqBody)
+
+	url := fmt.Sprintf("%s/v1beta/models/%s:generateContent", g.Host, g.Model)
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, url, bytes.NewReader(buf))
+	if err != nil {
+		return PositionResult{}, err
+	}
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("X-Goog-Api-Key", g.APIKey)
+
+	resp, err := g.Client.Do(req)
+	if err != nil {
+		return PositionResult{}, fmt.Errorf("gemini request: %w", err)
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		body, _ := io.ReadAll(io.LimitReader(resp.Body, 2048))
+		return PositionResult{}, fmt.Errorf("gemini status %d: %s", resp.StatusCode, strings.TrimSpace(string(body)))
+	}
+
+	var gr geminiResponse
+	if err := json.NewDecoder(resp.Body).Decode(&gr); err != nil {
+		return PositionResult{}, fmt.Errorf("decode gemini envelope: %w", err)
+	}
+	if len(gr.Candidates) == 0 {
+		if reason := gr.PromptFeedback.BlockReason; reason != "" {
+			return PositionResult{}, fmt.Errorf("gemini blocked the request: %s", reason)
+		}
+		return PositionResult{}, fmt.Errorf("gemini returned no candidates")
+	}
+
+	var text strings.Builder
+	for _, p := range gr.Candidates[0].Content.Parts {
+		text.WriteString(p.Text)
+	}
+	raw := text.String()
+
+	var mp modelPosition
+	if err := json.Unmarshal([]byte(raw), &mp); err != nil {
+		return PositionResult{RawJSON: raw}, fmt.Errorf("decode model json: %w", err)
+	}
+	return PositionResult{
+		Grid:        mp.Grid,
+		SideToMove:  mp.SideToMove,
+		Orientation: mp.Orientation,
+		Confidence:  0.5, // models do not reliably self-report; the editable board is the safety net
+		RawJSON:     raw,
+	}, nil
+}
+
 // prepImage downscales oversized images and reports the MIME type to send. It returns the
 // original bytes (with the detected MIME) when no resize is needed, and re-encodes to JPEG
 // when it must shrink the image. On any decode error it falls back to the input bytes and

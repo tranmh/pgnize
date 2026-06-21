@@ -43,6 +43,47 @@ var jsonSchema = map[string]any{
 	"required": []string{"moves"},
 }
 
+// positionSystemPrompt steers the VLM to read a single chess position. FEN assembly and
+// orientation correction happen deterministically in positions.go.
+const positionSystemPrompt = `You read a single chess position from a photograph of a board OR a 2D diagram.
+Report the piece standing on every square as 8 strings, one per rank, ordered rank 8 (top) down to rank 1 (bottom).
+Each string is exactly 8 characters left-to-right for files a through h.
+White pieces are UPPERCASE: K Q R B N P. Black pieces are lowercase: k q r b n p. An empty square is '.'.
+Do NOT use FEN run-length digits; write one character per square.
+If White's pieces are at the TOP of the image, report the ranks top-to-bottom exactly as you see them and set orientation="black_bottom"; otherwise set orientation="white_bottom".
+Report who is to move as sideToMove="white" or "black"; if you cannot tell, set sideToMove="".
+Return ONLY JSON.`
+
+// positionJSONSchema constrains the position output (Ollama "format" field).
+var positionJSONSchema = map[string]any{
+	"type": "object",
+	"properties": map[string]any{
+		"grid":        map[string]any{"type": "array", "items": map[string]any{"type": "string"}},
+		"sideToMove":  map[string]any{"type": "string"},
+		"orientation": map[string]any{"type": "string"},
+	},
+	"required": []string{"grid"},
+}
+
+// geminiPositionSchema is the Gemini-style (upper-case type names) position schema.
+var geminiPositionSchema = map[string]any{
+	"type": "OBJECT",
+	"properties": map[string]any{
+		"grid":        map[string]any{"type": "ARRAY", "items": map[string]any{"type": "STRING"}},
+		"sideToMove":  map[string]any{"type": "STRING"},
+		"orientation": map[string]any{"type": "STRING"},
+	},
+	"required": []string{"grid"},
+}
+
+// buildPositionPrompt assembles the position prompt text.
+func buildPositionPrompt(_ PositionInput) string {
+	var b strings.Builder
+	b.WriteString(positionSystemPrompt)
+	b.WriteString("\nReturn JSON {grid:[8 strings of 8 chars], sideToMove, orientation}.")
+	return b.String()
+}
+
 // buildPrompt assembles the user prompt text, weaving in few-shot examples.
 func buildPrompt(in ScoreSheetInput) string {
 	var b strings.Builder

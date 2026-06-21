@@ -71,6 +71,48 @@ func TestGeminiRecognizeParsesCandidate(t *testing.T) {
 	}
 }
 
+func TestGeminiRecognizePositionParsesGrid(t *testing.T) {
+	var gotBody string
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		body, _ := io.ReadAll(r.Body)
+		gotBody = string(body)
+		inner := `{"grid":["....k...","........","........","........","........","........","........","....K..R"],` +
+			`"sideToMove":"white","orientation":"white_bottom"}`
+		resp := map[string]any{
+			"candidates": []map[string]any{{
+				"content": map[string]any{"parts": []map[string]any{{"text": inner}}},
+			}},
+		}
+		w.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(w).Encode(resp)
+	}))
+	defer srv.Close()
+
+	g := NewGemini(srv.URL, "gemini-2.5-flash", "key")
+	g.MaxDim = 0
+	res, err := g.RecognizePosition(context.Background(), PositionInput{Image: []byte("img"), MimeType: "image/png"})
+	if err != nil {
+		t.Fatalf("RecognizePosition: %v", err)
+	}
+	// The request must carry the position schema and prompt.
+	if !strings.Contains(gotBody, "orientation") {
+		t.Errorf("request missing position schema: %s", gotBody)
+	}
+	if !strings.Contains(gotBody, "single chess position") {
+		t.Errorf("request missing position prompt: %s", gotBody)
+	}
+	if len(res.Grid) != 8 || res.Grid[0] != "....k..." || res.Grid[7] != "....K..R" {
+		t.Fatalf("grid = %+v", res.Grid)
+	}
+	if res.SideToMove != "white" || res.Orientation != "white_bottom" {
+		t.Errorf("side/orientation = %q/%q", res.SideToMove, res.Orientation)
+	}
+	fen, err := AssembleFEN(res)
+	if err != nil || fen != "4k3/8/8/8/8/8/8/4K2R w - - 0 1" {
+		t.Fatalf("AssembleFEN = %q (%v)", fen, err)
+	}
+}
+
 func TestGeminiRecognizeErrorStatus(t *testing.T) {
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		w.WriteHeader(http.StatusTooManyRequests)

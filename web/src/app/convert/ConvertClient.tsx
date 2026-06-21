@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Link from "next/link";
 import {
   ApiError,
   convert,
@@ -13,8 +12,10 @@ import {
 import { useJobPoller } from "@/hooks/useJobPoller";
 import UploadDropzone from "@/components/UploadDropzone";
 import RecognizerSelect from "@/components/RecognizerSelect";
+import Link from "next/link";
 import Spinner from "@/components/Spinner";
 import ReviewWorkbench from "@/components/ReviewWorkbench";
+import AnonymousBanner from "@/components/AnonymousBanner";
 import { downloadText, pgnFilename } from "@/lib/download";
 import { useT } from "@/i18n/I18nProvider";
 
@@ -120,6 +121,12 @@ export default function ConvertClient() {
         <div className="flex flex-col gap-4">
           <RecognizerSelect value={backend} onChange={setBackend} />
           <UploadDropzone onFile={start} />
+          <p className="text-sm text-gray-500">
+            {t("scan.promoPrefix")}{" "}
+            <Link href="/scan" className="font-medium text-blue-600 underline">
+              {t("scan.promoLink")}
+            </Link>
+          </p>
         </div>
       )}
 
@@ -172,24 +179,6 @@ export default function ConvertClient() {
           </button>
         </div>
       )}
-    </div>
-  );
-}
-
-function AnonymousBanner() {
-  const t = useT();
-  return (
-    <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
-      {t("anon.prefix")} <strong>{t("anon.notSaved")}</strong>{" "}
-      {t("anon.middle")}{" "}
-      <Link href="/register" className="font-medium underline">
-        {t("anon.createAccount")}
-      </Link>{" "}
-      {t("anon.or")}{" "}
-      <Link href="/login" className="font-medium underline">
-        {t("anon.login")}
-      </Link>
-      {t("anon.suffix")}
     </div>
   );
 }

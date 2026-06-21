@@ -21,7 +21,7 @@ func (s *Server) handleConvert(w http.ResponseWriter, r *http.Request) {
 	if !ok {
 		return
 	}
-	jobID, err := s.Store.CreateJob(r.Context(), uploadID, nil, recName, backend)
+	jobID, err := s.Store.CreateJob(r.Context(), uploadID, nil, recName, backend, "scoresheet")
 	if err != nil {
 		s.writeErr(w, http.StatusInternalServerError, "internal", "could not enqueue job")
 		return

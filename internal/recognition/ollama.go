@@ -152,6 +152,48 @@ func (o *Ollama) Recognize(ctx context.Context, in ScoreSheetInput) (Recognition
 	}, nil
 }
 
+func (o *Ollama) RecognizePosition(ctx context.Context, in PositionInput) (PositionResult, error) {
+	img := o.downscale(in.Image)
+	reqBody := ollamaRequest{
+		Model:     o.Model,
+		Prompt:    buildPositionPrompt(in),
+		Images:    []string{base64.StdEncoding.EncodeToString(img)},
+		Format:    "json",
+		Stream:    false,
+		KeepAlive: o.KeepAlive,
+		Options:   map[string]any{"temperature": 0.1, "num_predict": o.NumPredict},
+	}
+	buf, _ := json.Marshal(reqBody)
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, o.Host+"/api/generate", bytes.NewReader(buf))
+	if err != nil {
+		return PositionResult{}, err
+	}
+	req.Header.Set("Content-Type", "application/json")
+	resp, err := o.Client.Do(req)
+	if err != nil {
+		return PositionResult{}, fmt.Errorf("ollama request: %w", err)
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		return PositionResult{}, fmt.Errorf("ollama status %d", resp.StatusCode)
+	}
+	var or ollamaResponse
+	if err := json.NewDecoder(resp.Body).Decode(&or); err != nil {
+		return PositionResult{}, fmt.Errorf("decode ollama envelope: %w", err)
+	}
+	var mp modelPosition
+	if err := json.Unmarshal([]byte(or.Response), &mp); err != nil {
+		return PositionResult{RawJSON: or.Response}, fmt.Errorf("decode model json: %w", err)
+	}
+	return PositionResult{
+		Grid:        mp.Grid,
+		SideToMove:  mp.SideToMove,
+		Orientation: mp.Orientation,
+		Confidence:  0.5, // local models do not self-report; the editable board is the safety net
+		RawJSON:     or.Response,
+	}, nil
+}
+
 func flattenModelMoves(mo modelOutput) []MoveToken {
 	var out []MoveToken
 	ply := 0

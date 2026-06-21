@@ -7,8 +7,10 @@ import (
 	"context"
 	"encoding/json"
 	"io"
+	"log/slog"
 
 	"github.com/tranmh/chesskit"
+	"github.com/tranmh/pgnize/internal/domain"
 	"github.com/tranmh/pgnize/internal/recognition"
 	"github.com/tranmh/pgnize/internal/store"
 )
@@ -27,14 +29,13 @@ type storageGetter interface {
 
 // Process runs one claimed job to completion, marking it done or failed.
 func Process(ctx context.Context, d Deps, job store.ClaimedJob) error {
-	rc, mime, err := d.Storage.Get(ctx, job.StorageKey)
-	if err != nil {
-		return d.Store.MarkJobFailed(ctx, job.JobID, "load image: "+err.Error())
+	if job.Kind == "position" {
+		return processPosition(ctx, d, job)
 	}
-	img, err := io.ReadAll(rc)
-	rc.Close()
+
+	img, mime, err := loadImage(ctx, d, job)
 	if err != nil {
-		return d.Store.MarkJobFailed(ctx, job.JobID, "read image: "+err.Error())
+		return err
 	}
 
 	rec, ok := d.Registry.Resolve(job.Backend)
@@ -73,6 +74,66 @@ func Process(ctx context.Context, d Deps, job store.ClaimedJob) error {
 		return d.Store.MarkJobFailed(ctx, job.JobID, "create draft: "+err.Error())
 	}
 	return d.Store.MarkJobDone(ctx, job.JobID, gameID, res.Confidence, safeRawJSON(res.RawJSON))
+}
+
+// loadImage fetches the upload bytes and MIME type. On a storage/read error it marks the
+// job failed (preserving the graceful behavior) and returns a non-nil error so the caller
+// stops; the returned MarkJobFailed error, if any, is what Process surfaces.
+func loadImage(ctx context.Context, d Deps, job store.ClaimedJob) ([]byte, string, error) {
+	rc, mime, err := d.Storage.Get(ctx, job.StorageKey)
+	if err != nil {
+		return nil, "", d.Store.MarkJobFailed(ctx, job.JobID, "load image: "+err.Error())
+	}
+	img, err := io.ReadAll(rc)
+	rc.Close()
+	if err != nil {
+		return nil, "", d.Store.MarkJobFailed(ctx, job.JobID, "read image: "+err.Error())
+	}
+	return img, mime, nil
+}
+
+// processPosition recognizes a single board position and stores it as a draft game whose
+// StartFEN is the recognized position and whose move list is empty. A failed FEN assembly
+// falls back to the standard start (the editable board is the correction path), so the job
+// never fails on assembly alone.
+func processPosition(ctx context.Context, d Deps, job store.ClaimedJob) error {
+	img, mime, err := loadImage(ctx, d, job)
+	if err != nil {
+		return err
+	}
+
+	rec, ok := d.Registry.Resolve(job.Backend)
+	if !ok {
+		return d.Store.MarkJobFailed(ctx, job.JobID, "unknown recognition backend: "+job.Backend)
+	}
+
+	res, err := rec.RecognizePosition(ctx, recognition.PositionInput{Image: img, MimeType: mime})
+	if err != nil {
+		return d.Store.MarkJobFailed(ctx, job.JobID, "recognize position: "+err.Error())
+	}
+
+	fen, err := recognition.AssembleFEN(res)
+	conf := res.Confidence
+	if err != nil {
+		slog.Warn("position FEN assembly failed; falling back to starting position",
+			"jobID", job.JobID, "err", err)
+		fen = string(chesskit.StartingFEN())
+		conf = 0
+	}
+
+	gameID, err := d.Store.CreateDraftGame(ctx, store.NewDraft{
+		UserID:     job.UserID,
+		UploadID:   &job.UploadID,
+		Source:     "recognized",
+		Header:     domain.Header{Result: "*"},
+		StartFEN:   fen,
+		Confidence: conf,
+		Moves:      nil,
+	})
+	if err != nil {
+		return d.Store.MarkJobFailed(ctx, job.JobID, "create draft: "+err.Error())
+	}
+	return d.Store.MarkJobDone(ctx, job.JobID, gameID, conf, safeRawJSON(res.RawJSON))
 }
 
 // safeRawJSON returns raw when it is valid JSON, else "{}". result_raw_json is a

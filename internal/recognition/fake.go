@@ -6,6 +6,13 @@ import (
 	"github.com/tranmh/pgnize/internal/domain"
 )
 
+// Compile-time assertions that every recognizer satisfies the interface.
+var (
+	_ Recognizer = (*Fake)(nil)
+	_ Recognizer = (*Ollama)(nil)
+	_ Recognizer = (*Gemini)(nil)
+)
+
 // Fake is a deterministic recognizer for tests and CI (RECOGNIZER=fake). It ignores the
 // image and returns a fixed German-notation opening that postprocessing turns into legal SAN.
 type Fake struct{}
@@ -41,5 +48,26 @@ func (f *Fake) Recognize(_ context.Context, _ ScoreSheetInput) (RecognitionResul
 		MoveTokens: mt,
 		Confidence: 0.9,
 		RawJSON:    `{"recognizer":"fake"}`,
+	}, nil
+}
+
+func (f *Fake) RecognizePosition(_ context.Context, _ PositionInput) (PositionResult, error) {
+	// A deliberately non-starting position (white King+Rook vs lone black King) so the
+	// SetUp/FEN export branch is exercised: 4k3/8/8/8/8/8/8/4K2R w - - 0 1.
+	return PositionResult{
+		Grid: []string{
+			"....k...",
+			"........",
+			"........",
+			"........",
+			"........",
+			"........",
+			"........",
+			"....K..R",
+		},
+		SideToMove:  SideWhite,
+		Orientation: "white_bottom",
+		Confidence:  0.9,
+		RawJSON:     `{"recognizer":"fake","kind":"position"}`,
 	}, nil
 }

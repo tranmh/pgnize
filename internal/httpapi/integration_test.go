@@ -391,6 +391,54 @@ func TestAnonymousConvert(t *testing.T) {
 	}
 }
 
+func TestAnonymousScan(t *testing.T) {
+	h := setup(t)
+	ct, buf := uploadBody(t, "image")
+	resp, body := h.do(t, "POST", "/api/scan", ct, buf)
+	if resp.StatusCode != http.StatusAccepted {
+		t.Fatalf("scan %d: %s", resp.StatusCode, body)
+	}
+	var c struct{ JobID string }
+	json.Unmarshal(body, &c)
+	h.drainJob(t)
+
+	resp, body = h.do(t, "GET", "/api/scan/"+c.JobID, "", nil)
+	var js struct{ Status string }
+	json.Unmarshal(body, &js)
+	if js.Status != "done" {
+		t.Fatalf("scan job not done: %s", body)
+	}
+
+	resp, body = h.do(t, "GET", "/api/scan/"+c.JobID+"/game", "", nil)
+	if resp.StatusCode != 200 {
+		t.Fatalf("scan game %d: %s", resp.StatusCode, body)
+	}
+	var draft struct {
+		StartFEN string           `json:"startFen"`
+		Moves    []map[string]any `json:"moves"`
+	}
+	json.Unmarshal(body, &draft)
+	if draft.StartFEN != "4k3/8/8/8/8/8/8/4K2R w - - 0 1" {
+		t.Fatalf("startFen = %q, body=%s", draft.StartFEN, body)
+	}
+	if len(draft.Moves) != 0 {
+		t.Fatalf("expected empty move list, got %d: %s", len(draft.Moves), body)
+	}
+
+	resp, body = h.json(t, "POST", "/api/scan/"+c.JobID+"/export", map[string]any{
+		"header":   map[string]string{"white": "Anon", "black": "Mouse", "result": "*"},
+		"startFen": draft.StartFEN,
+		"moves":    []map[string]any{},
+	})
+	if resp.StatusCode != 200 {
+		t.Fatalf("scan export failed %d: %s", resp.StatusCode, body)
+	}
+	pgn := string(body)
+	if !strings.Contains(pgn, `[SetUp "1"]`) || !strings.Contains(pgn, `[FEN "4k3/`) {
+		t.Fatalf("scan export missing SetUp/FEN tags: %s", pgn)
+	}
+}
+
 func TestRateLimitConvert(t *testing.T) {
 	h := setup(t)
 	var got429 bool

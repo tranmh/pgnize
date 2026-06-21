@@ -15,6 +15,9 @@ export interface BoardProps {
   squareStyles?: Record<string, React.CSSProperties>;
   // Overlay arrows (e.g. the engine's best move).
   arrows?: { from: string; to: string; color?: string }[];
+  // Called when the user clicks a square (used by the position editor to stamp
+  // or erase the selected palette piece). Additive; unused outside edit mode.
+  onSquareClick?: (square: string) => void;
 }
 
 // Thin wrapper over react-chessboard v5's options-based API so the rest of the
@@ -26,6 +29,7 @@ export default function Board({
   onMove,
   squareStyles,
   arrows,
+  onSquareClick,
 }: BoardProps) {
   return (
     <div className="w-full max-w-[480px]">
@@ -47,6 +51,7 @@ export default function Board({
             if (!onMove || !targetSquare) return false;
             return onMove(sourceSquare, targetSquare);
           },
+          onSquareClick: ({ square }) => onSquareClick?.(square),
         }}
       />
     </div>
