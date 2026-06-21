@@ -16,7 +16,7 @@ searchable per-user library with an in-browser Stockfish analysis viewer.
 
 - **Backend**: Go (REST) — chi router, pgx, goose migrations.
 - **Reusable core**: [`chesskit`](./chesskit) — a standalone Go chess library (SAN/FEN/PGN/legality)
-  wrapping `notnil/chess`, designed for reuse by other projects (e.g. swiss-manager).
+  wrapping `notnil/chess`, designed for reuse by other projects (e.g. OpenPairing.org).
 - **Frontend**: Next.js + TypeScript + React — review workbench, editable position editor, and a
   Stockfish (WASM) analysis viewer. German (default) and English i18n.
 - **Recognition**: a swappable `Recognizer` interface with `fake` (deterministic, CI default),

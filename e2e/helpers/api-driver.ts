@@ -26,7 +26,7 @@ export type Draft = {
 };
 
 // ApiDriver wraps the REST surface. The APIRequestContext carries the session cookie,
-// mirroring swiss-manager's ApiDriver strategy.
+// mirroring OpenPairing.org's ApiDriver strategy.
 export class ApiDriver {
   constructor(private request: APIRequestContext) {}
 

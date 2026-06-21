@@ -15,7 +15,7 @@ Confirmed decisions:
   user's past corrected examples as few-shot context; store shaped to later export JSONL for cloud-GPU
   LoRA. No on-box training.
 - **Reusable Go chess library (`chesskit`)** = the core job: wraps `github.com/notnil/chess`, exposes
-  board/FEN, SAN parse+generate, legality, PGN read/write, results. Own module so swiss-manager (or
+  board/FEN, SAN parse+generate, legality, PGN read/write, results. Own module so OpenPairing.org (or
   anything) can reuse it; designed to be exposable as an HTTP microservice with minimal change. Chess
   domain only — recognition orchestration stays in pgnize app code.
 - **Auth**: multi-user accounts (private library) **plus** anonymous one-off convert (no saved library).

@@ -1,6 +1,6 @@
 # e2e (Playwright)
 
-Two projects, mirroring swiss-manager:
+Two projects, mirroring OpenPairing.org:
 
 - **api** (default, no browser) — pure REST against the Go backend.
 - **ui** (chromium) — the Next.js frontend.

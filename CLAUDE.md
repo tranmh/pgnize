@@ -49,6 +49,6 @@ make lint        # go vet + eslint
 
 - Postgres enums as `text + CHECK` (goose-friendly). UUID pks (`gen_random_uuid()`).
 - API: chi router, session-cookie auth, JSON in/out, Zod-equivalent validation in Go; rate-limit mutating
-  + auth endpoints per-IP (port of swiss-manager `consumeRateLimit`).
+  + auth endpoints per-IP (port of OpenPairing.org `consumeRateLimit`).
 - German score-sheet specifics (piece letters, castling, e.p., promotion, draw/resign words) are handled
   deterministically in `internal/recognition/postprocess.go`, never left to the model.

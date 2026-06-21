@@ -2,7 +2,7 @@
 #
 # deploy.sh — deploy PGNize to a production host (default: pgnize.openpairing.org).
 #
-# Mirrors swiss-manager's deploy approach: pull the latest code, (re)build the
+# Mirrors OpenPairing.org's deploy approach: pull the latest code, (re)build the
 # images, bring up the `prod` Docker Compose stack, and verify the API is
 # healthy. Migrations run automatically on API boot (see cmd/api/main.go), so no
 # separate migration step is needed.
