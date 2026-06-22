@@ -65,11 +65,30 @@ func TestHandleCoachMoveIllegalFEN(t *testing.T) {
 	}
 }
 
-func TestHandleCoachMoveMissingMoves(t *testing.T) {
+func TestHandleCoachMoveMissingPlayedSan(t *testing.T) {
 	s := coachTestServer()
-	rec := postCoach(s, coachMoveRequest{FEN: startFENForTest, Side: "white"})
+	// No playedSan (the move being explained) → 400.
+	rec := postCoach(s, coachMoveRequest{FEN: startFENForTest, Side: "white", BestSan: "d4"})
 	if rec.Code != http.StatusBadRequest {
 		t.Fatalf("code=%d want 400", rec.Code)
+	}
+}
+
+func TestHandleCoachMoveNoBestSan(t *testing.T) {
+	s := coachTestServer()
+	// bestSan (the engine's alternative) is optional: the coach still explains the move.
+	rec := postCoach(s, coachMoveRequest{
+		FEN: startFENForTest, Side: "white", PlayedSan: "e4", BestSan: "",
+		EvalBefore: coaching.Eval{Cp: coachIntPtr(20)},
+		EvalAfter:  coaching.Eval{Cp: coachIntPtr(15)},
+	})
+	if rec.Code != http.StatusOK {
+		t.Fatalf("code=%d want 200 (bestSan optional): %s", rec.Code, rec.Body.String())
+	}
+	var resp coachResponse
+	json.Unmarshal(rec.Body.Bytes(), &resp)
+	if resp.Text == "" {
+		t.Error("expected coaching text even without a best move")
 	}
 }
 

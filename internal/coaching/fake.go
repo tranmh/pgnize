@@ -25,14 +25,24 @@ func (f *Fake) CoachMove(_ context.Context, in MoveInput) (Coaching, error) {
 	lang := normLang(in.Lang)
 	var text string
 	if lang == "en" {
-		text = fmt.Sprintf("The engine prefers %s (eval %s); your %s leaves the evaluation at %s.",
-			in.BestSAN, formatEval(in.EvalBefore), in.PlayedSAN, formatEval(in.EvalAfter))
+		if in.BestSAN != "" {
+			text = fmt.Sprintf("The engine prefers %s (eval %s); your %s leaves the evaluation at %s.",
+				in.BestSAN, formatEval(in.EvalBefore), in.PlayedSAN, formatEval(in.EvalAfter))
+		} else {
+			text = fmt.Sprintf("Your %s leaves the evaluation at %s (from %s).",
+				in.PlayedSAN, formatEval(in.EvalAfter), formatEval(in.EvalBefore))
+		}
 		if in.Quality != "" {
 			text += fmt.Sprintf(" That move is %s.", qualityWord(in.Quality, lang))
 		}
 	} else {
-		text = fmt.Sprintf("Die Engine bevorzugt %s (Bewertung %s); dein %s führt zur Bewertung %s.",
-			in.BestSAN, formatEval(in.EvalBefore), in.PlayedSAN, formatEval(in.EvalAfter))
+		if in.BestSAN != "" {
+			text = fmt.Sprintf("Die Engine bevorzugt %s (Bewertung %s); dein %s führt zur Bewertung %s.",
+				in.BestSAN, formatEval(in.EvalBefore), in.PlayedSAN, formatEval(in.EvalAfter))
+		} else {
+			text = fmt.Sprintf("Dein %s führt zur Bewertung %s (vorher %s).",
+				in.PlayedSAN, formatEval(in.EvalAfter), formatEval(in.EvalBefore))
+		}
 		if in.Quality != "" {
 			text += fmt.Sprintf(" Dieser Zug ist %s.", qualityWord(in.Quality, lang))
 		}

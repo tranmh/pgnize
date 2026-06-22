@@ -136,29 +136,16 @@ func buildRegistry(cfg config.Config) *recognition.Registry {
 	return reg
 }
 
-// buildCoach selects the engine→prose coach backend. COACH chooses the implementation;
-// the LLM backends fall back to the Gemini host/model/key when COACH_HOST/COACH_MODEL are
-// unset, so a Gemini-configured deployment gets a Gemini coach for free. CI uses "fake".
+// buildCoach selects the engine→prose coach backend from the SAME configuration as the
+// recognizer (buildRegistry) — there is no separate COACH knob. Gemini when GEMINI_API_KEY
+// is set (it is then also the default recognizer), Ollama when RECOGNIZER=ollama, else the
+// deterministic fake (tests/CI).
 func buildCoach(cfg config.Config) coaching.Coach {
-	host := cfg.CoachHost
-	model := cfg.CoachModel
-	switch cfg.Coach {
-	case "gemini":
-		if host == "" {
-			host = cfg.GeminiHost
-		}
-		if model == "" {
-			model = cfg.GeminiModel
-		}
-		return coaching.NewGeminiCoach(host, model, cfg.GeminiAPIKey)
-	case "ollama":
-		if host == "" {
-			host = cfg.OllamaHost
-		}
-		if model == "" {
-			model = cfg.RecognizerModel
-		}
-		return coaching.NewOllamaCoach(host, model)
+	switch {
+	case cfg.GeminiAPIKey != "":
+		return coaching.NewGeminiCoach(cfg.GeminiHost, cfg.GeminiModel, cfg.GeminiAPIKey)
+	case cfg.Recognizer == "ollama":
+		return coaching.NewOllamaCoach(cfg.OllamaHost, cfg.RecognizerModel)
 	default:
 		return coaching.NewFake()
 	}

@@ -128,6 +128,30 @@ func TestCoachMoveAnonymousNoCache(t *testing.T) {
 	}
 }
 
+func TestCoachMoveNoBestSan(t *testing.T) {
+	h := setup(t)
+	// The engine may return no alternative line; bestSan is optional and the call must
+	// still succeed (regression: previously 400 → "Coaching failed" in the UI).
+	resp, body := h.json(t, "POST", "/api/coach/move", map[string]any{
+		"fen":        startFEN,
+		"side":       "white",
+		"playedSan":  "e4",
+		"bestSan":    "",
+		"evalBefore": map[string]any{"cp": 20},
+		"evalAfter":  map[string]any{"cp": 15},
+	})
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("coach with empty bestSan %d: %s", resp.StatusCode, body)
+	}
+	var cr struct {
+		Text string `json:"text"`
+	}
+	json.Unmarshal(body, &cr)
+	if cr.Text == "" {
+		t.Error("expected coaching text even without a best move")
+	}
+}
+
 func TestCoachMoveCachingRegistered(t *testing.T) {
 	h := setup(t)
 	h.register(t, "Carla", "carla@example.com")
