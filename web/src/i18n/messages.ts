@@ -395,6 +395,16 @@ const en: Catalog = {
   "coach.explainHint": "Ask the coach why this move helps or hurts.",
   "coach.coachGame": "Coach this game",
   "coach.coachPosition": "Coach this position",
+  "coach.play": "Play",
+  "coach.stop": "Stop",
+  "coach.replay": "Replay",
+
+  // Text-to-speech (global toggle + source)
+  "tts.on": "Speech on",
+  "tts.off": "Speech off",
+  "tts.sourceLabel": "Speech source",
+  "tts.source.server": "Server",
+  "tts.source.browser": "Browser",
 };
 
 const de: Catalog = {
@@ -781,6 +791,16 @@ const de: Catalog = {
   "coach.explainHint": "Frag den Trainer, warum dieser Zug hilft oder schadet.",
   "coach.coachGame": "Partie coachen",
   "coach.coachPosition": "Stellung coachen",
+  "coach.play": "Abspielen",
+  "coach.stop": "Stopp",
+  "coach.replay": "Wiederholen",
+
+  // Sprachausgabe (globaler Schalter + Quelle)
+  "tts.on": "Sprachausgabe an",
+  "tts.off": "Sprachausgabe aus",
+  "tts.sourceLabel": "Sprachquelle",
+  "tts.source.server": "Server",
+  "tts.source.browser": "Browser",
 };
 
 export const messages: Record<Locale, Catalog> = { de, en };

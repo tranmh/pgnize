@@ -46,6 +46,19 @@ services:
       - ollama_models:/root/.ollama
     restart: unless-stopped
 
+  # Optional self-hosted TTS fallback (chain: Gemini TTS -> Piper -> browser).
+  # rhasspy/wyoming-piper is the community Piper image; with `--http` it exposes a
+  # tiny HTTP server on :10200 that returns a WAV for `POST /` with a `text` query
+  # or JSON body. It downloads the requested voice (PIPER_VOICE) on first run into
+  # the named volume. Enable with the "vlm" profile alongside ollama.
+  piper:
+    image: rhasspy/wyoming-piper:latest
+    profiles: ["vlm"]
+    command: --voice ${PIPER_VOICE:-de_DE-thorsten-medium} --http-port 10200 --data-dir /data --download-dir /data
+    volumes:
+      - piper_voices:/data
+    restart: unless-stopped
+
   api:
     build:
       context: .
@@ -67,6 +80,14 @@ services:
       OLLAMA_HOST: http://ollama:11434
       GEMINI_API_KEY: ${GEMINI_API_KEY:-}
       GEMINI_MODEL: ${GEMINI_MODEL:-gemini-2.5-flash}
+      # ---- Coach text-to-speech (TTS) ----
+      # Gemini TTS stays the primary synthesizer (uses GEMINI_API_KEY). Piper is the
+      # self-hosted fallback: leave PIPER_HOST empty to keep it off; set it to
+      # http://piper:10200 (with `--profile vlm`) to enable the local fallback.
+      PIPER_HOST: ${PIPER_HOST:-}
+      PIPER_VOICE: ${PIPER_VOICE:-de_DE-thorsten-medium}
+      GEMINI_TTS_MODEL: ${GEMINI_TTS_MODEL:-gemini-2.5-flash-preview-tts}
+      TTS_GEMINI_VOICE: ${TTS_GEMINI_VOICE:-Kore}
       RATE_LIMIT_DISABLED: ${RATE_LIMIT_DISABLED:-false}
     depends_on:
       db:
@@ -141,6 +162,7 @@ volumes:
   pg_data:
   minio_data:
   ollama_models:
+  piper_voices:
   caddy_data:
   caddy_config:
 

@@ -77,3 +77,47 @@ test.describe("coach move caching (registered)", () => {
     expect(second.text).toBe(first.text);
   });
 });
+
+test.describe("coach speak (TTS, anonymous)", () => {
+  test.use({ extraHTTPHeaders: { "X-Forwarded-For": "10.0.7.40" } });
+
+  test("speak synthesizes audio, serves it, and caches on repeat", async ({ request }) => {
+    // Unique text so this test owns its content-addressed cache entry.
+    const text = `Guten Zug, Springer nach f3 — ${Date.now()}-${Math.random()}`;
+
+    // First call: synthesizes via the fake synthesizer (RECOGNIZER=fake).
+    const res = await request.post("/api/coach/speak", { data: { text, lang: "de" } });
+    expect(res.ok(), await res.text()).toBeTruthy();
+    const body = await res.json();
+    expect(body.audioUrl).toMatch(/^\/api\/coach\/audio\//);
+    expect(body.cached).toBe(false);
+    expect(body.provider).toBe("fake");
+    expect(typeof body.voice).toBe("string");
+
+    // The returned audio URL streams a non-empty audio body.
+    const audio = await request.get(body.audioUrl);
+    expect(audio.ok(), await audio.text()).toBeTruthy();
+    expect(audio.headers()["content-type"]).toMatch(/^audio\//);
+    const bytes = await audio.body();
+    expect(bytes.length).toBeGreaterThan(0);
+
+    // Identical request is served from the content-addressed cache.
+    const repeat = await request.post("/api/coach/speak", { data: { text, lang: "de" } });
+    expect(repeat.ok(), await repeat.text()).toBeTruthy();
+    const repeatBody = await repeat.json();
+    expect(repeatBody.cached).toBe(true);
+    expect(repeatBody.audioUrl).toBe(body.audioUrl);
+  });
+
+  test("empty text is rejected", async ({ request }) => {
+    const res = await request.post("/api/coach/speak", { data: { text: "", lang: "de" } });
+    expect(res.status()).toBe(400);
+  });
+
+  test("over-long text is rejected", async ({ request }) => {
+    const res = await request.post("/api/coach/speak", {
+      data: { text: "a".repeat(4001), lang: "de" },
+    });
+    expect(res.status()).toBe(400);
+  });
+});

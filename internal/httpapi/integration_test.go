@@ -23,6 +23,7 @@ import (
 	"github.com/tranmh/pgnize/internal/recognition"
 	"github.com/tranmh/pgnize/internal/storage"
 	"github.com/tranmh/pgnize/internal/store"
+	"github.com/tranmh/pgnize/internal/tts"
 	"github.com/tranmh/pgnize/migrations"
 )
 
@@ -54,7 +55,7 @@ func setup(t *testing.T, opts ...func(*config.Config)) *harness {
 	}
 	// Fresh slate.
 	_, err = st.Pool.Exec(ctx, `TRUNCATE users, sessions, players, uploads, games, moves,
-		recognition_jobs, feedback_corrections, rate_limit_entries RESTART IDENTITY CASCADE`)
+		recognition_jobs, feedback_corrections, rate_limit_entries, tts_audio RESTART IDENTITY CASCADE`)
 	if err != nil {
 		t.Fatalf("truncate: %v", err)
 	}
@@ -71,7 +72,7 @@ func setup(t *testing.T, opts ...func(*config.Config)) *harness {
 	reg.SetDefault("fake")
 	// The integration harness injects backends directly (it does not read RECOGNIZER/COACH
 	// env), so the fake coach must be set here for COACH=fake parity with CI.
-	srv := &httpapi.Server{Cfg: cfg, Store: st, Storage: blob, Recognizers: reg, Coach: coaching.NewFake()}
+	srv := &httpapi.Server{Cfg: cfg, Store: st, Storage: blob, Recognizers: reg, Coach: coaching.NewFake(), TTS: tts.NewFake()}
 	jar, _ := cookiejar.New(nil)
 	h := &harness{
 		ts:     httptest.NewServer(srv.Routes()),
