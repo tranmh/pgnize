@@ -16,7 +16,8 @@ export default function CoachPanel({
   const moveText = activeIndex !== null ? coach.byPly[activeIndex] : undefined;
   const busy = coach.loadingPly !== null;
 
-  if (!moveText && !coach.gameText && !coach.error && !busy) return null;
+  if (!moveText && !coach.gameText && !coach.positionText && !coach.error && !busy)
+    return null;
 
   return (
     <div className="flex flex-col gap-2 rounded-lg border border-indigo-200 bg-indigo-50 p-4">
@@ -29,6 +30,11 @@ export default function CoachPanel({
       )}
       {moveText && (
         <p data-testid="coach-move-text" className="whitespace-pre-wrap text-sm text-indigo-900">{moveText}</p>
+      )}
+      {coach.positionText && (
+        <p data-testid="coach-position-text" className="whitespace-pre-wrap text-sm text-indigo-900">
+          {coach.positionText}
+        </p>
       )}
       {coach.gameText && (
         <div className="flex flex-col gap-1">

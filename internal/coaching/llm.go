@@ -166,6 +166,15 @@ func (c *GeminiCoach) CoachGame(ctx context.Context, in GameInput) (Coaching, er
 	return Coaching{Text: text, Model: c.Name(), Lang: lang}, nil
 }
 
+func (c *GeminiCoach) CoachPosition(ctx context.Context, in PositionInput) (Coaching, error) {
+	lang := normLang(in.Lang)
+	text, err := c.generate(ctx, buildPositionPrompt(in))
+	if err != nil {
+		return Coaching{}, err
+	}
+	return Coaching{Text: text, Model: c.Name(), Lang: lang}, nil
+}
+
 // ---- Ollama ----
 
 // OllamaCoach is a Coach backed by a local Ollama server (text generation).
@@ -247,6 +256,15 @@ func (c *OllamaCoach) CoachMove(ctx context.Context, in MoveInput) (Coaching, er
 func (c *OllamaCoach) CoachGame(ctx context.Context, in GameInput) (Coaching, error) {
 	lang := normLang(in.Lang)
 	text, err := c.generate(ctx, buildGamePrompt(in))
+	if err != nil {
+		return Coaching{}, err
+	}
+	return Coaching{Text: text, Model: c.Name(), Lang: lang}, nil
+}
+
+func (c *OllamaCoach) CoachPosition(ctx context.Context, in PositionInput) (Coaching, error) {
+	lang := normLang(in.Lang)
+	text, err := c.generate(ctx, buildPositionPrompt(in))
 	if err != nil {
 		return Coaching{}, err
 	}

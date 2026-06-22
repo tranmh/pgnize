@@ -90,7 +90,8 @@ export default function GameViewer({ draft }: { draft: GameDraft }) {
               onClear={analysis.clear}
             />
             <CoachButton
-              hasAnnotations={hasAnnotations}
+              label={t("coach.coachGame")}
+              visible={hasAnnotations}
               loading={coach.loadingPly === -1}
               onClick={coach.coachGame}
             />

@@ -8,22 +8,31 @@ import type { Header } from "@/lib/api-client";
 import {
   coachGame as apiCoachGame,
   coachMove as apiCoachMove,
+  coachPosition as apiCoachPosition,
   type CoachGameMove,
 } from "@/lib/api-client";
-import { buildCoachMoveRequest, scoreToEval } from "@/lib/coach";
+import { buildCoachMoveRequest, pvToSanLine, scoreToEval, uciToSan } from "@/lib/coach";
+
+// Sentinel loadingPly values for the non-per-move coaching actions.
+const PLY_GAME = -1;
+const PLY_POSITION = -2;
 
 export interface CoachState {
   // Per-ply coaching prose, keyed by ply index.
   byPly: Record<number, string>;
   // Whole-game summary, once requested.
   gameText: string | null;
-  // Ply index currently being coached, -1 for the whole-game summary, else null.
+  // Single-position explanation (a pasted FEN with no moves), once requested.
+  positionText: string | null;
+  // Ply index currently being coached: -1 game summary, -2 position, else the ply, or null.
   loadingPly: number | null;
   error: string | null;
   // Explain a single ply (must already be engine-analyzed so the eval/quality exist).
   coachMove: (ply: number) => Promise<void>;
   // Summarize the whole game.
   coachGame: () => Promise<void>;
+  // Explain the start position (used when the draft has no moves).
+  coachPosition: () => Promise<void>;
   clear: () => void;
 }
 
@@ -44,6 +53,7 @@ export function useCoach(
 ): CoachState {
   const [byPly, setByPly] = useState<Record<number, string>>({});
   const [gameText, setGameText] = useState<string | null>(null);
+  const [positionText, setPositionText] = useState<string | null>(null);
   const [loadingPly, setLoadingPly] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
   const abortRef = useRef<AbortController | null>(null);
@@ -53,6 +63,7 @@ export function useCoach(
     abortRef.current = null;
     setByPly({});
     setGameText(null);
+    setPositionText(null);
     setLoadingPly(null);
     setError(null);
   }, []);
@@ -121,7 +132,7 @@ export function useCoach(
     const controller = new AbortController();
     abortRef.current = controller;
     setError(null);
-    setLoadingPly(-1);
+    setLoadingPly(PLY_GAME);
     try {
       const gameMoves: CoachGameMove[] = legal.map((m, i) => ({
         san: m.san,
@@ -147,5 +158,58 @@ export function useCoach(
     }
   }, [moves, analysis, startFen, header, gameId, lang]);
 
-  return { byPly, gameText, loadingPly, error, coachMove, coachGame, clear };
+  // coachPosition explains the start position itself — used when the draft has no moves
+  // (a pasted FEN). It runs a fresh engine search at startFen for the eval + best line.
+  const coachPosition = useCallback(async () => {
+    const engine = getEngine();
+    if (!engine) {
+      setError("engine_unavailable");
+      return;
+    }
+    abortRef.current?.abort();
+    const controller = new AbortController();
+    abortRef.current = controller;
+    setError(null);
+    setLoadingPly(PLY_POSITION);
+    try {
+      const { best } = await engine.analyze(startFen, {
+        multipv: 1,
+        depth,
+        signal: controller.signal,
+      });
+      if (controller.signal.aborted) return;
+      const bestUci = best.bestMove ?? best.pv[0] ?? null;
+      const bestSan = bestUci ? uciToSan(startFen, bestUci) ?? "" : "";
+      const side = startFen.split(" ")[1] === "b" ? "black" : "white";
+      const res = await apiCoachPosition({
+        gameId,
+        fen: startFen,
+        side,
+        bestSan,
+        bestLine: pvToSanLine(startFen, best.pv),
+        eval: scoreToEval(best),
+        lang,
+      });
+      if (controller.signal.aborted) return;
+      setPositionText(res.text);
+    } catch (e) {
+      if (!controller.signal.aborted) {
+        setError(e instanceof Error ? e.message : "coach_failed");
+      }
+    } finally {
+      if (abortRef.current === controller) setLoadingPly(null);
+    }
+  }, [startFen, gameId, lang, depth]);
+
+  return {
+    byPly,
+    gameText,
+    positionText,
+    loadingPly,
+    error,
+    coachMove,
+    coachGame,
+    coachPosition,
+    clear,
+  };
 }

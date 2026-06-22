@@ -105,6 +105,8 @@ export default function ReviewWorkbench({
   const coachGameId = user && draft.id ? draft.id : undefined;
   const coach = useCoach(startFen, moves, analysis, header, coachGameId);
   const hasAnnotations = Object.keys(analysis.annotations).length > 0;
+  // A pasted FEN has no moves: coach the position itself instead of per-move/whole-game.
+  const isPosition = moves.length === 0;
 
   // Any edit invalidates prior analysis (ply indices and positions shift).
   useEffect(() => {
@@ -245,14 +247,25 @@ export default function ReviewWorkbench({
                   progress={analysis.progress}
                   available={analysis.available}
                   hasAnnotations={hasAnnotations}
+                  canAnalyze={!isPosition}
                   onAnalyze={analysis.run}
                   onClear={analysis.clear}
                 />
-                <CoachButton
-                  hasAnnotations={hasAnnotations}
-                  loading={coach.loadingPly === -1}
-                  onClick={coach.coachGame}
-                />
+                {isPosition ? (
+                  <CoachButton
+                    label={t("coach.coachPosition")}
+                    visible={analysis.available}
+                    loading={coach.loadingPly === -2}
+                    onClick={coach.coachPosition}
+                  />
+                ) : (
+                  <CoachButton
+                    label={t("coach.coachGame")}
+                    visible={hasAnnotations}
+                    loading={coach.loadingPly === -1}
+                    onClick={coach.coachGame}
+                  />
+                )}
               </div>
             </div>
           )}

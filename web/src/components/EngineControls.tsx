@@ -9,6 +9,8 @@ export interface EngineControlsProps {
   progress: number; // 0..1
   available: boolean;
   hasAnnotations: boolean;
+  // Whether a full-game analysis is meaningful (false for a single pasted position).
+  canAnalyze?: boolean;
   onAnalyze: () => void;
   onClear: () => void;
 }
@@ -22,6 +24,7 @@ export default function EngineControls({
   progress,
   available,
   hasAnnotations,
+  canAnalyze = true,
   onAnalyze,
   onClear,
 }: EngineControlsProps) {
@@ -61,7 +64,7 @@ export default function EngineControls({
         >
           {t("engine.clear")}
         </button>
-      ) : (
+      ) : canAnalyze ? (
         <button
           type="button"
           onClick={onAnalyze}
@@ -69,7 +72,7 @@ export default function EngineControls({
         >
           {t("engine.analyze")}
         </button>
-      )}
+      ) : null}
     </div>
   );
 }

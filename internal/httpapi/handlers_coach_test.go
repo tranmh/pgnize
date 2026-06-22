@@ -92,6 +92,38 @@ func TestHandleCoachMoveNoBestSan(t *testing.T) {
 	}
 }
 
+func TestHandleCoachPosition(t *testing.T) {
+	s := coachTestServer()
+	buf, _ := json.Marshal(coachPositionRequest{
+		FEN:     "1r6/5pp1/R1R4p/1r1pP3/2pkQPP1/7P/1P6/2K5 w - - 0 41",
+		Side:    "white",
+		BestSan: "Rxc4+",
+		Eval:    coaching.Eval{Mate: coachIntPtr(2)},
+	})
+	req := httptest.NewRequest(http.MethodPost, "/api/coach/position", bytes.NewReader(buf))
+	rec := httptest.NewRecorder()
+	s.handleCoachPosition(rec, req)
+	if rec.Code != http.StatusOK {
+		t.Fatalf("code=%d want 200: %s", rec.Code, rec.Body.String())
+	}
+	var resp coachResponse
+	json.Unmarshal(rec.Body.Bytes(), &resp)
+	if resp.Text == "" {
+		t.Error("expected position coaching text")
+	}
+}
+
+func TestHandleCoachPositionIllegalFEN(t *testing.T) {
+	s := coachTestServer()
+	buf, _ := json.Marshal(coachPositionRequest{FEN: "not-a-fen", Side: "white"})
+	req := httptest.NewRequest(http.MethodPost, "/api/coach/position", bytes.NewReader(buf))
+	rec := httptest.NewRecorder()
+	s.handleCoachPosition(rec, req)
+	if rec.Code != http.StatusBadRequest {
+		t.Fatalf("code=%d want 400", rec.Code)
+	}
+}
+
 func TestHandleCoachMoveIllegalPlayedMove(t *testing.T) {
 	s := coachTestServer()
 	// e5 is not legal for White from the starting position.

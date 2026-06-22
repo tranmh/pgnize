@@ -175,6 +175,41 @@ func buildGamePrompt(in GameInput) string {
 	return b.String()
 }
 
+// buildPositionPrompt assembles the single-position coaching prompt (a pasted FEN with no
+// played move): explain whose move it is, the engine evaluation, the recommended move and
+// the plan behind it.
+func buildPositionPrompt(in PositionInput) string {
+	lang := normLang(in.Lang)
+	var b strings.Builder
+	b.WriteString(systemInstruction(lang))
+	b.WriteString("\n\n")
+
+	if lang == "en" {
+		fmt.Fprintf(&b, "Position (FEN): %s\n", in.FEN)
+		fmt.Fprintf(&b, "Side to move: %s\n", sideWord(in.Side, lang))
+		fmt.Fprintf(&b, "Engine evaluation (White's POV): %s\n", formatEval(in.Eval))
+		if in.BestSAN != "" {
+			fmt.Fprintf(&b, "Engine's recommended move: %s\n", in.BestSAN)
+		}
+		if len(in.BestLine) > 0 {
+			fmt.Fprintf(&b, "Engine main line: %s\n", strings.Join(in.BestLine, " "))
+		}
+		b.WriteString("\nExplain this position: who stands better and why, what the key features are, and the plan behind the engine's recommendation.")
+	} else {
+		fmt.Fprintf(&b, "Stellung (FEN): %s\n", in.FEN)
+		fmt.Fprintf(&b, "Am Zug: %s\n", sideWord(in.Side, lang))
+		fmt.Fprintf(&b, "Engine-Bewertung (aus Weiß-Sicht): %s\n", formatEval(in.Eval))
+		if in.BestSAN != "" {
+			fmt.Fprintf(&b, "Empfohlener Zug der Engine: %s\n", in.BestSAN)
+		}
+		if len(in.BestLine) > 0 {
+			fmt.Fprintf(&b, "Hauptvariante der Engine: %s\n", strings.Join(in.BestLine, " "))
+		}
+		b.WriteString("\nErkläre diese Stellung: wer besser steht und warum, was die wichtigen Merkmale sind und welcher Plan hinter der Engine-Empfehlung steckt.")
+	}
+	return b.String()
+}
+
 func dotForSide(side string) string {
 	if side == "black" {
 		return "..."

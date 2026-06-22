@@ -37,6 +37,17 @@ type MoveInput struct {
 	Lang       string // "" -> LangDefault
 }
 
+// PositionInput is a single-position coaching request (e.g. a pasted FEN with no moves):
+// explain whose move it is, how the engine evaluates it, and the recommended plan.
+type PositionInput struct {
+	FEN      string
+	Side     string // side to move: "white" | "black"
+	BestSAN  string // engine's recommended move (optional)
+	BestLine []string
+	Eval     Eval // White-POV engine evaluation of the position
+	Lang     string
+}
+
 // GameMove summarizes one ply for whole-game coaching.
 type GameMove struct {
 	Ply       int
@@ -66,6 +77,7 @@ type Coaching struct {
 type Coach interface {
 	CoachMove(ctx context.Context, in MoveInput) (Coaching, error)
 	CoachGame(ctx context.Context, in GameInput) (Coaching, error)
+	CoachPosition(ctx context.Context, in PositionInput) (Coaching, error)
 	Name() string
 }
 
