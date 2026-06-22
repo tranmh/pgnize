@@ -28,14 +28,14 @@ export default function CoachPanel({
         <p className="text-sm text-red-600">{t("coach.error")}</p>
       )}
       {moveText && (
-        <p className="whitespace-pre-wrap text-sm text-indigo-900">{moveText}</p>
+        <p data-testid="coach-move-text" className="whitespace-pre-wrap text-sm text-indigo-900">{moveText}</p>
       )}
       {coach.gameText && (
         <div className="flex flex-col gap-1">
           <p className="text-xs font-semibold text-indigo-500">
             {t("coach.gameSummary")}
           </p>
-          <p className="whitespace-pre-wrap text-sm text-indigo-900">
+          <p data-testid="coach-game-text" className="whitespace-pre-wrap text-sm text-indigo-900">
             {coach.gameText}
           </p>
         </div>

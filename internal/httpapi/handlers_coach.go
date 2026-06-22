@@ -58,17 +58,22 @@ func (s *Server) handleCoachMove(w http.ResponseWriter, r *http.Request) {
 		s.writeErr(w, http.StatusBadRequest, "bad_request", "illegal fen")
 		return
 	}
-	if req.PlayedSan == "" || req.BestSan == "" {
-		s.writeErr(w, http.StatusBadRequest, "bad_request", "playedSan and bestSan are required")
+	if req.PlayedSan == "" {
+		s.writeErr(w, http.StatusBadRequest, "bad_request", "playedSan is required")
 		return
 	}
 	if _, err := chesskit.Validate(fen, chesskit.SAN(req.PlayedSan)); err != nil {
 		s.writeErr(w, http.StatusBadRequest, "bad_request", "playedSan is not legal in this position")
 		return
 	}
-	if _, err := chesskit.Validate(fen, chesskit.SAN(req.BestSan)); err != nil {
-		s.writeErr(w, http.StatusBadRequest, "bad_request", "bestSan is not legal in this position")
-		return
+	// bestSan is the engine's *alternative* — optional. The engine may not return one
+	// (e.g. an in-flight search yielded no line); the coach still explains from the eval
+	// delta + the played move. Validate it only when supplied.
+	if req.BestSan != "" {
+		if _, err := chesskit.Validate(fen, chesskit.SAN(req.BestSan)); err != nil {
+			s.writeErr(w, http.StatusBadRequest, "bad_request", "bestSan is not legal in this position")
+			return
+		}
 	}
 
 	lang := coachLang(req.Lang)

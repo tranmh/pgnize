@@ -93,28 +93,40 @@ func buildMovePrompt(in MoveInput) string {
 		fmt.Fprintf(&b, "Move played: %s\n", in.PlayedSAN)
 		fmt.Fprintf(&b, "Evaluation before the move: %s\n", formatEval(in.EvalBefore))
 		fmt.Fprintf(&b, "Evaluation after the move: %s\n", formatEval(in.EvalAfter))
-		fmt.Fprintf(&b, "Engine's best move: %s\n", in.BestSAN)
+		if in.BestSAN != "" {
+			fmt.Fprintf(&b, "Engine's best move: %s\n", in.BestSAN)
+		}
 		if len(in.BestLine) > 0 {
 			fmt.Fprintf(&b, "Engine main line: %s\n", strings.Join(in.BestLine, " "))
 		}
 		if in.Quality != "" {
 			fmt.Fprintf(&b, "This move is classified as %s.\n", qualityWord(in.Quality, lang))
 		}
-		b.WriteString("\nExplain why the played move is good or bad, and what the better idea is.")
+		if in.BestSAN != "" {
+			b.WriteString("\nExplain why the played move is good or bad, and what the better idea is.")
+		} else {
+			b.WriteString("\nExplain why the played move is good or bad and what to keep in mind here.")
+		}
 	} else {
 		fmt.Fprintf(&b, "Stellung (FEN): %s\n", in.FEN)
 		fmt.Fprintf(&b, "Am Zug: %s\n", sideWord(in.Side, lang))
 		fmt.Fprintf(&b, "Gespielter Zug: %s\n", in.PlayedSAN)
 		fmt.Fprintf(&b, "Bewertung vor dem Zug: %s\n", formatEval(in.EvalBefore))
 		fmt.Fprintf(&b, "Bewertung nach dem Zug: %s\n", formatEval(in.EvalAfter))
-		fmt.Fprintf(&b, "Bester Zug der Engine: %s\n", in.BestSAN)
+		if in.BestSAN != "" {
+			fmt.Fprintf(&b, "Bester Zug der Engine: %s\n", in.BestSAN)
+		}
 		if len(in.BestLine) > 0 {
 			fmt.Fprintf(&b, "Hauptvariante der Engine: %s\n", strings.Join(in.BestLine, " "))
 		}
 		if in.Quality != "" {
 			fmt.Fprintf(&b, "Dieser Zug gilt als %s.\n", qualityWord(in.Quality, lang))
 		}
-		b.WriteString("\nErkläre, warum der gespielte Zug gut oder schlecht ist und was die bessere Idee wäre.")
+		if in.BestSAN != "" {
+			b.WriteString("\nErkläre, warum der gespielte Zug gut oder schlecht ist und was die bessere Idee wäre.")
+		} else {
+			b.WriteString("\nErkläre, warum der gespielte Zug gut oder schlecht ist und worauf es hier ankommt.")
+		}
 	}
 	return b.String()
 }

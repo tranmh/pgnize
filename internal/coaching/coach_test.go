@@ -91,6 +91,41 @@ func TestBuildMovePromptStableAndComplete(t *testing.T) {
 	}
 }
 
+func TestFakeCoachMoveNoBestMove(t *testing.T) {
+	// The engine may not supply an alternative (BestSAN empty). The coach must still
+	// produce sensible prose from the played move + evals, not a dangling "prefers  ".
+	f := NewFake()
+	in := sampleMove()
+	in.BestSAN = ""
+	in.BestLine = nil
+	c, err := f.CoachMove(context.Background(), in)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if c.Text == "" {
+		t.Fatal("empty text")
+	}
+	if strings.Contains(c.Text, "bevorzugt  ") || strings.Contains(c.Text, "bevorzugt (") {
+		t.Errorf("dangling empty best move in prose: %q", c.Text)
+	}
+	if !strings.Contains(c.Text, in.PlayedSAN) {
+		t.Errorf("text should mention the played move %q: %s", in.PlayedSAN, c.Text)
+	}
+}
+
+func TestBuildMovePromptNoBestMove(t *testing.T) {
+	in := sampleMove()
+	in.BestSAN = ""
+	in.BestLine = nil
+	p := buildMovePrompt(in)
+	if strings.Contains(p, "Bester Zug der Engine:") {
+		t.Errorf("must not emit an empty best-move line:\n%s", p)
+	}
+	if !strings.Contains(p, in.PlayedSAN) {
+		t.Errorf("prompt should still contain the played move:\n%s", p)
+	}
+}
+
 func TestBuildMovePromptEnglish(t *testing.T) {
 	in := sampleMove()
 	in.Lang = "en"
