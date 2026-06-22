@@ -81,7 +81,11 @@ export default function NewClient() {
       <div className="flex flex-col gap-6">
         <div>
           <h1 className="text-2xl font-bold">{t("new.title")}</h1>
-          <p className="mt-1 text-sm text-gray-500">{t("new.resultSubtitle")}</p>
+          <p className="mt-1 text-sm text-gray-500">
+            {draft.moves.length === 0
+              ? t("new.resultSubtitlePosition")
+              : t("new.resultSubtitle")}
+          </p>
         </div>
 
         {!user && <AnonymousBanner />}

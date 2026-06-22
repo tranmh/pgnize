@@ -70,6 +70,7 @@ func (s *Server) Routes() http.Handler {
 		// Engine→prose coaching (public; gameId optional — caches only for the owner).
 		r.Post("/coach/move", s.handleCoachMove)
 		r.Post("/coach/game", s.handleCoachGame)
+		r.Post("/coach/position", s.handleCoachPosition)
 
 		// Image streaming (authorized per object).
 		r.Get("/images/{uploadID}", s.handleImage)

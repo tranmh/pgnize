@@ -514,3 +514,18 @@ export function coachMove(req: CoachMoveRequest): Promise<CoachResponse> {
 export function coachGame(req: CoachGameRequest): Promise<CoachResponse> {
   return requestJson("/coach/game", { method: "POST", body: jsonBody(req) });
 }
+
+// Coach a single position (a pasted FEN with no played move).
+export interface CoachPositionRequest {
+  gameId?: string;
+  fen: string;
+  side: Side;
+  bestSan?: string;
+  bestLine?: string[];
+  eval: CoachEval;
+  lang?: string;
+}
+
+export function coachPosition(req: CoachPositionRequest): Promise<CoachResponse> {
+  return requestJson("/coach/position", { method: "POST", body: jsonBody(req) });
+}

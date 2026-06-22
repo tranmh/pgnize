@@ -152,6 +152,28 @@ func TestCoachMoveNoBestSan(t *testing.T) {
 	}
 }
 
+func TestCoachPositionPastedFEN(t *testing.T) {
+	h := setup(t)
+	// A pasted position (no moves) must be coachable directly — this is the path that
+	// previously had no usable coaching affordance at all.
+	resp, body := h.json(t, "POST", "/api/coach/position", map[string]any{
+		"fen":     "1r6/5pp1/R1R4p/1r1pP3/2pkQPP1/7P/1P6/2K5 w - - 0 41",
+		"side":    "white",
+		"bestSan": "Rxc4+",
+		"eval":    map[string]any{"mate": 2},
+	})
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("coach position %d: %s", resp.StatusCode, body)
+	}
+	var cr struct {
+		Text string `json:"text"`
+	}
+	json.Unmarshal(body, &cr)
+	if cr.Text == "" {
+		t.Error("expected position coaching text")
+	}
+}
+
 func TestCoachMoveCachingRegistered(t *testing.T) {
 	h := setup(t)
 	h.register(t, "Carla", "carla@example.com")

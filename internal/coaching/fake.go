@@ -50,6 +50,24 @@ func (f *Fake) CoachMove(_ context.Context, in MoveInput) (Coaching, error) {
 	return Coaching{Text: text, Model: f.Name(), Lang: lang}, nil
 }
 
+func (f *Fake) CoachPosition(_ context.Context, in PositionInput) (Coaching, error) {
+	lang := normLang(in.Lang)
+	side := sideWord(in.Side, lang)
+	var text string
+	if lang == "en" {
+		text = fmt.Sprintf("%s to move; the engine evaluates this position at %s.", side, formatEval(in.Eval))
+		if in.BestSAN != "" {
+			text += fmt.Sprintf(" It recommends %s.", in.BestSAN)
+		}
+	} else {
+		text = fmt.Sprintf("%s ist am Zug; die Engine bewertet die Stellung mit %s.", side, formatEval(in.Eval))
+		if in.BestSAN != "" {
+			text += fmt.Sprintf(" Sie empfiehlt %s.", in.BestSAN)
+		}
+	}
+	return Coaching{Text: text, Model: f.Name(), Lang: lang}, nil
+}
+
 func (f *Fake) CoachGame(_ context.Context, in GameInput) (Coaching, error) {
 	lang := normLang(in.Lang)
 	var text string

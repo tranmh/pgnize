@@ -172,6 +172,77 @@ func (s *Server) handleCoachGame(w http.ResponseWriter, r *http.Request) {
 	s.writeJSON(w, http.StatusOK, coachResponse{Text: out.Text, Model: out.Model, Lang: out.Lang, Cached: false})
 }
 
+type coachPositionRequest struct {
+	GameID   string        `json:"gameId"`
+	FEN      string        `json:"fen"`
+	Side     string        `json:"side"`
+	BestSan  string        `json:"bestSan"`
+	BestLine []string      `json:"bestLine"`
+	Eval     coaching.Eval `json:"eval"`
+	Lang     string        `json:"lang"`
+}
+
+// positionSummaryPly is the cache ply for a single-position explanation (distinct from the
+// whole-game summary at gameSummaryPly).
+const positionSummaryPly = -2
+
+// handleCoachPosition explains a single position (a pasted FEN with no played move): whose
+// move it is, the engine eval, and the recommended plan.
+func (s *Server) handleCoachPosition(w http.ResponseWriter, r *http.Request) {
+	if !s.rateLimit(w, r, "coach:"+clientIP(r), 60, time.Hour) {
+		return
+	}
+	var req coachPositionRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		s.writeErr(w, http.StatusBadRequest, "bad_request", "invalid json")
+		return
+	}
+	fen, err := chesskit.NormalizeFEN(chesskit.FEN(req.FEN))
+	if err != nil {
+		s.writeErr(w, http.StatusBadRequest, "bad_request", "illegal fen")
+		return
+	}
+	// bestSan is optional (the engine may not have produced a line yet); validate only if set.
+	if req.BestSan != "" {
+		if _, err := chesskit.Validate(fen, chesskit.SAN(req.BestSan)); err != nil {
+			s.writeErr(w, http.StatusBadRequest, "bad_request", "bestSan is not legal in this position")
+			return
+		}
+	}
+	side := req.Side
+	if side == "" {
+		side = sideToMove(string(fen))
+	}
+
+	lang := coachLang(req.Lang)
+	model := s.Coach.Name()
+	cacheable := req.GameID != "" && s.ownsGameID(r, req.GameID)
+
+	if cacheable {
+		if txt, err := s.Store.GetCoaching(r.Context(), req.GameID, positionSummaryPly, model, lang); err == nil {
+			s.writeJSON(w, http.StatusOK, coachResponse{Text: txt, Model: model, Lang: lang, Cached: true})
+			return
+		}
+	}
+
+	out, err := s.Coach.CoachPosition(r.Context(), coaching.PositionInput{
+		FEN:      string(fen),
+		Side:     side,
+		BestSAN:  req.BestSan,
+		BestLine: req.BestLine,
+		Eval:     req.Eval,
+		Lang:     lang,
+	})
+	if err != nil {
+		s.writeErr(w, http.StatusBadGateway, "coach_failed", "coaching is unavailable")
+		return
+	}
+	if cacheable {
+		_ = s.Store.UpsertCoaching(r.Context(), req.GameID, positionSummaryPly, model, lang, out.Text)
+	}
+	s.writeJSON(w, http.StatusOK, coachResponse{Text: out.Text, Model: out.Model, Lang: out.Lang, Cached: false})
+}
+
 // ownsGameID reports whether the current (logged-in) user owns gameID. Anonymous callers,
 // missing games, and games owned by someone else all return false — so caching is confined
 // to the owner's own library rows.

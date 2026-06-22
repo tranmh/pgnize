@@ -361,6 +361,8 @@ const en: Catalog = {
     "Paste a FEN or import a game (PGN or a Lichess study/game URL). The engine evaluates it in your browser, then a coach explains the why in plain words.",
   "new.resultSubtitle":
     "Run the engine, then click Explain on a move or Coach this game for a summary.",
+  "new.resultSubtitlePosition":
+    "Toggle the engine eval to see the assessment, then click Coach this position for an explanation.",
   "new.modeFen": "Paste FEN",
   "new.modeImport": "Import PGN / Lichess",
   "new.fenLabel": "FEN",
@@ -392,6 +394,7 @@ const en: Catalog = {
   "coach.explained": "Explained ✓",
   "coach.explainHint": "Ask the coach why this move helps or hurts.",
   "coach.coachGame": "Coach this game",
+  "coach.coachPosition": "Coach this position",
 };
 
 const de: Catalog = {
@@ -743,6 +746,8 @@ const de: Catalog = {
     "Füge eine FEN ein oder importiere eine Partie (PGN oder eine Lichess-Studie/-Partie-URL). Die Engine bewertet sie in deinem Browser, dann erklärt dir ein Trainer das Warum in klaren Worten.",
   "new.resultSubtitle":
     "Starte die Engine, dann klicke bei einem Zug auf „Erklären“ oder auf „Partie coachen“ für eine Zusammenfassung.",
+  "new.resultSubtitlePosition":
+    "Aktiviere die Engine-Bewertung, um die Einschätzung zu sehen, und klicke dann auf „Stellung coachen“ für eine Erklärung.",
   "new.modeFen": "FEN einfügen",
   "new.modeImport": "PGN / Lichess importieren",
   "new.fenLabel": "FEN",
@@ -775,6 +780,7 @@ const de: Catalog = {
   "coach.explained": "Erklärt ✓",
   "coach.explainHint": "Frag den Trainer, warum dieser Zug hilft oder schadet.",
   "coach.coachGame": "Partie coachen",
+  "coach.coachPosition": "Stellung coachen",
 };
 
 export const messages: Record<Locale, Catalog> = { de, en };

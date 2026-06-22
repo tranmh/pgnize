@@ -135,6 +135,60 @@ func TestBuildMovePromptEnglish(t *testing.T) {
 	}
 }
 
+func samplePosition() PositionInput {
+	return PositionInput{
+		FEN:      "1r6/5pp1/R1R4p/1r1pP3/2pkQPP1/7P/1P6/2K5 w - - 0 41",
+		Side:     "white",
+		BestSAN:  "Rxc4+",
+		BestLine: []string{"Rxc4+", "bxc4", "Qd4#"},
+		Eval:     Eval{Mate: ptrInt(2)},
+	}
+}
+
+func TestFakeCoachPosition(t *testing.T) {
+	f := NewFake()
+	c, err := f.CoachPosition(context.Background(), samplePosition())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if c.Text == "" {
+		t.Fatal("empty position coaching")
+	}
+	if c.Lang != "de" {
+		t.Fatalf("lang=%q want de", c.Lang)
+	}
+	if !strings.Contains(c.Text, "Rxc4+") {
+		t.Errorf("text should mention the engine's best move: %s", c.Text)
+	}
+}
+
+func TestFakeCoachPositionNoBest(t *testing.T) {
+	f := NewFake()
+	in := samplePosition()
+	in.BestSAN = ""
+	in.BestLine = nil
+	c, err := f.CoachPosition(context.Background(), in)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if c.Text == "" {
+		t.Fatal("empty")
+	}
+}
+
+func TestBuildPositionPromptStableAndComplete(t *testing.T) {
+	in := samplePosition()
+	if buildPositionPrompt(in) != buildPositionPrompt(in) {
+		t.Fatal("position prompt not byte-stable")
+	}
+	p := buildPositionPrompt(in)
+	for _, want := range []string{in.FEN, "Rxc4+", "Deutsch", "Weiß"} {
+		if !strings.Contains(p, want) {
+			t.Errorf("prompt missing %q:\n%s", want, p)
+		}
+	}
+}
+
 func TestBuildGamePromptStable(t *testing.T) {
 	in := GameInput{
 		StartFEN: "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
