@@ -32,6 +32,49 @@ test.describe("anonymous /new: import → analyze → coach", () => {
     expect((await prose.innerText()).trim().length).toBeGreaterThan(10);
     await expect(page.getByText("Coaching failed. Please try again.")).toHaveCount(0);
 
+    // Speech controls render alongside the visible coach text.
+    await expect(page.getByTestId("coach-speak-toggle")).toBeVisible();
+    await expect(page.getByTestId("coach-speak-replay")).toBeVisible();
+
+    expect(errors, `uncaught page errors:\n${errors.join("\n")}`).toEqual([]);
+  });
+
+  test("TTS: global toggle renders and auto-speak fires a /coach/speak request", async ({
+    page,
+  }) => {
+    const errors = trackPageErrors(page);
+    await useEnglish(page);
+
+    // NOTE: the app registers a service worker, and SW-issued fetches bypass
+    // Playwright's page/context `route` interception — so a `route` counter is
+    // non-deterministic (it can stay 0 while the request truly fires). Instead
+    // we prove auto-speak via `page.waitForRequest` (which observes the network
+    // regardless of who issues it) and let the real fake TTS backend serve the
+    // synthesize + audio responses. This is both deterministic and a truer e2e.
+
+    await page.goto("/new");
+
+    // The global speech toggle lives in the nav (server source by default).
+    await expect(page.getByTestId("speech-toggle")).toBeVisible();
+
+    await page
+      .getByLabel("FEN")
+      .fill("1r6/5pp1/R1R4p/1r1pP3/2pkQPP1/7P/1P6/2K5 w - - 0 41");
+    await page.getByRole("button", { name: "Load" }).click();
+
+    await expect(page.getByRole("heading", { name: "Moves" })).toBeVisible({ timeout: 15_000 });
+
+    const coachPos = page.getByRole("button", { name: "Coach this position" });
+    await expect(coachPos).toBeVisible({ timeout: 15_000 });
+
+    const speakReq = page.waitForRequest("**/api/coach/speak", { timeout: 45_000 });
+    await coachPos.click();
+
+    // Prose appears, then auto-speak fires a POST /coach/speak request.
+    await expect(page.getByTestId("coach-position-text")).toBeVisible({ timeout: 45_000 });
+    const req = await speakReq;
+    expect(req.method()).toBe("POST");
+
     expect(errors, `uncaught page errors:\n${errors.join("\n")}`).toEqual([]);
   });
 

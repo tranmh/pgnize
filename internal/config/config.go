@@ -33,6 +33,13 @@ type Config struct {
 	RecognitionWorker int
 	FewShotMax        int
 
+	// Text-to-speech (coach voice). Gemini is primary when GeminiAPIKey is set; Piper is the
+	// self-hosted fallback (chained in when PiperHost is set, or sole backend otherwise).
+	PiperHost      string
+	GeminiTTSModel string
+	TTSGeminiVoice string
+	PiperVoice     string
+
 	UploadMaxBytes int64
 	AnonUploadTTLd int
 
@@ -64,6 +71,10 @@ func Load() (Config, error) {
 		GeminiHost:        env("GEMINI_HOST", "https://generativelanguage.googleapis.com"),
 		RecognitionWorker: envInt("RECOGNITION_WORKERS", 2),
 		FewShotMax:        envInt("FEWSHOT_MAX_EXAMPLES", 3),
+		PiperHost:         env("PIPER_HOST", ""),
+		GeminiTTSModel:    env("GEMINI_TTS_MODEL", "gemini-2.5-flash-preview-tts"),
+		TTSGeminiVoice:    env("TTS_GEMINI_VOICE", "Kore"),
+		PiperVoice:        env("PIPER_VOICE", "de_DE-thorsten-medium"),
 		UploadMaxBytes:    int64(envInt("UPLOAD_MAX_BYTES", 15<<20)),
 		AnonUploadTTLd:    envInt("ANON_UPLOAD_TTL_DAYS", 7),
 		RateLimitDisabled: envBool("RATE_LIMIT_DISABLED", false),

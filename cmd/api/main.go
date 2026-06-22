@@ -20,6 +20,7 @@ import (
 	"github.com/tranmh/pgnize/internal/recognition"
 	"github.com/tranmh/pgnize/internal/storage"
 	"github.com/tranmh/pgnize/internal/store"
+	"github.com/tranmh/pgnize/internal/tts"
 	"github.com/tranmh/pgnize/migrations"
 )
 
@@ -79,7 +80,10 @@ func main() {
 	coach := buildCoach(cfg)
 	slog.Info("coach", "backend", coach.Name())
 
-	srv := &httpapi.Server{Cfg: cfg, Store: st, Storage: blob, Recognizers: reg, Coach: coach}
+	speaker := buildTTS(cfg)
+	slog.Info("tts", "backend", speaker.Name())
+
+	srv := &httpapi.Server{Cfg: cfg, Store: st, Storage: blob, Recognizers: reg, Coach: coach, TTS: speaker}
 
 	// In-process recognition worker pool.
 	pool := &jobs.Pool{
@@ -148,6 +152,29 @@ func buildCoach(cfg config.Config) coaching.Coach {
 		return coaching.NewOllamaCoach(cfg.OllamaHost, cfg.RecognizerModel)
 	default:
 		return coaching.NewFake()
+	}
+}
+
+// buildTTS selects the coach-voice synthesizer, mirroring buildCoach. Gemini is primary
+// when GEMINI_API_KEY is set; a configured PIPER_HOST is chained in as the local fallback
+// (or used alone when no Gemini key is present). With neither configured, the deterministic
+// fake is used (tests/CI), and the handler returns 503 so the client falls back to browser
+// speech.
+func buildTTS(cfg config.Config) tts.Synthesizer {
+	var synths []tts.Synthesizer
+	if cfg.GeminiAPIKey != "" {
+		synths = append(synths, tts.NewGeminiTTS(cfg.GeminiHost, cfg.GeminiTTSModel, cfg.GeminiAPIKey, cfg.TTSGeminiVoice))
+	}
+	if cfg.PiperHost != "" {
+		synths = append(synths, tts.NewPiperTTS(cfg.PiperHost, cfg.PiperVoice))
+	}
+	switch len(synths) {
+	case 0:
+		return tts.NewFake()
+	case 1:
+		return synths[0]
+	default:
+		return tts.NewChain(synths...)
 	}
 }
 

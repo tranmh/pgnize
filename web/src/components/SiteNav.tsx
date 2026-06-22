@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { useAuth } from "./AuthProvider";
 import { useT } from "@/i18n/I18nProvider";
 import LanguageSwitcher from "@/i18n/LanguageSwitcher";
+import SpeechToggle from "@/components/SpeechToggle";
 
 export default function SiteNav() {
   const { user, loading, signOut } = useAuth();
@@ -43,6 +44,7 @@ export default function SiteNav() {
 
         <div className="ml-auto flex items-center gap-3 text-sm">
           <LanguageSwitcher />
+          <SpeechToggle />
           {loading ? null : user ? (
             <>
               <span className="text-gray-500">{user.name}</span>

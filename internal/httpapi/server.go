@@ -17,6 +17,7 @@ import (
 	"github.com/tranmh/pgnize/internal/recognition"
 	"github.com/tranmh/pgnize/internal/storage"
 	"github.com/tranmh/pgnize/internal/store"
+	"github.com/tranmh/pgnize/internal/tts"
 )
 
 // Server holds API dependencies.
@@ -26,6 +27,7 @@ type Server struct {
 	Storage     storage.Storage
 	Recognizers *recognition.Registry
 	Coach       coaching.Coach
+	TTS         tts.Synthesizer
 }
 
 // Routes builds the HTTP handler.
@@ -71,6 +73,10 @@ func (s *Server) Routes() http.Handler {
 		r.Post("/coach/move", s.handleCoachMove)
 		r.Post("/coach/game", s.handleCoachGame)
 		r.Post("/coach/position", s.handleCoachPosition)
+
+		// Coach voice (public; content-addressed audio, no ownership check).
+		r.Post("/coach/speak", s.handleSpeak)
+		r.Get("/coach/audio/{hash}", s.handleSpeakAudio)
 
 		// Image streaming (authorized per object).
 		r.Get("/images/{uploadID}", s.handleImage)

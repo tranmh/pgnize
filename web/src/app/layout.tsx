@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { AuthProvider } from "@/components/AuthProvider";
 import { I18nProvider } from "@/i18n/I18nProvider";
+import { SpeechSettingsProvider } from "@/i18n/SpeechSettingsProvider";
 import SiteNav from "@/components/SiteNav";
 import ServiceWorkerRegister from "@/components/ServiceWorkerRegister";
 
@@ -34,12 +35,14 @@ export default function RootLayout({
       <body className="flex min-h-full flex-col bg-gray-50 text-gray-900">
         <ServiceWorkerRegister />
         <I18nProvider>
-          <AuthProvider>
-            <SiteNav />
-            <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-6">
-              {children}
-            </main>
-          </AuthProvider>
+          <SpeechSettingsProvider>
+            <AuthProvider>
+              <SiteNav />
+              <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-6">
+                {children}
+              </main>
+            </AuthProvider>
+          </SpeechSettingsProvider>
         </I18nProvider>
       </body>
     </html>

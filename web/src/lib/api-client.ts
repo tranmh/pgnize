@@ -529,3 +529,27 @@ export interface CoachPositionRequest {
 export function coachPosition(req: CoachPositionRequest): Promise<CoachResponse> {
   return requestJson("/coach/position", { method: "POST", body: jsonBody(req) });
 }
+
+// ---------------------------------------------------------------------------
+// Coach TTS: synthesize coach prose to speech (server-side, content-addressed)
+// ---------------------------------------------------------------------------
+
+export interface SpeakRequest {
+  text: string;
+  lang?: string;
+  voice?: string;
+}
+
+export interface SpeakResponse {
+  // Relative URL under /api, usable directly as an <audio> src.
+  audioUrl: string;
+  cached: boolean;
+  provider: string;
+  voice: string;
+}
+
+// speak asks the server to synthesize `text` to audio. 503 (tts_unavailable)
+// signals the client to fall back to browser speech synthesis.
+export function speak(req: SpeakRequest): Promise<SpeakResponse> {
+  return requestJson("/coach/speak", { method: "POST", body: jsonBody(req) });
+}
