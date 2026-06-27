@@ -1,14 +1,19 @@
 "use client";
 
 import { useT } from "@/i18n/I18nProvider";
-import { useSpeechSettings } from "@/i18n/SpeechSettingsProvider";
+import {
+  useSpeechSettings,
+  type SttSource,
+} from "@/i18n/SpeechSettingsProvider";
 import { getSpeechController, type SpeechSource } from "@/lib/tts";
 
-// Global speech control for the nav: a mute/unmute toggle plus a source select
-// (server cloud TTS vs. browser Web Speech). Persists via SpeechSettingsProvider.
+// Global speech control for the nav: a mute/unmute toggle plus a TTS source select
+// (server cloud TTS vs. browser Web Speech) and the voice-input (STT) source for the
+// conversational coach. Persists via SpeechSettingsProvider.
 export default function SpeechToggle() {
   const t = useT();
-  const { enabled, source, setEnabled, setSource } = useSpeechSettings();
+  const { enabled, source, sttSource, setEnabled, setSource, setSttSource } =
+    useSpeechSettings();
 
   return (
     <div
@@ -42,6 +47,17 @@ export default function SpeechToggle() {
       >
         <option value="server">{t("tts.source.server")}</option>
         <option value="browser">{t("tts.source.browser")}</option>
+      </select>
+      <select
+        data-testid="stt-source"
+        value={sttSource}
+        onChange={(e) => setSttSource(e.target.value as SttSource)}
+        aria-label={t("stt.sourceLabel")}
+        title={t("stt.sourceLabel")}
+        className="rounded border border-gray-300 bg-white px-1 py-1 text-gray-700"
+      >
+        <option value="server">🎤 {t("stt.source.server")}</option>
+        <option value="browser">🎤 {t("stt.source.browser")}</option>
       </select>
     </div>
   );

@@ -11,12 +11,14 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/tranmh/pgnize/internal/auth"
+	"github.com/tranmh/pgnize/internal/chat"
 	"github.com/tranmh/pgnize/internal/coaching"
 	"github.com/tranmh/pgnize/internal/config"
 	"github.com/tranmh/pgnize/internal/domain"
 	"github.com/tranmh/pgnize/internal/recognition"
 	"github.com/tranmh/pgnize/internal/storage"
 	"github.com/tranmh/pgnize/internal/store"
+	"github.com/tranmh/pgnize/internal/stt"
 	"github.com/tranmh/pgnize/internal/tts"
 )
 
@@ -28,6 +30,8 @@ type Server struct {
 	Recognizers *recognition.Registry
 	Coach       coaching.Coach
 	TTS         tts.Synthesizer
+	Chat        chat.Chatter    // conversational coach (function-calling LLM over the engine)
+	STT         stt.Transcriber // speech-to-text for voice questions; nil disables server STT
 }
 
 // Routes builds the HTTP handler.
@@ -77,6 +81,12 @@ func (s *Server) Routes() http.Handler {
 		// Coach voice (public; content-addressed audio, no ownership check).
 		r.Post("/coach/speak", s.handleSpeak)
 		r.Get("/coach/audio/{hash}", s.handleSpeakAudio)
+
+		// Conversational coach (public; anon gets an ephemeral, stateless turn — history is
+		// persisted only for logged-in callers). Audio turns use multipart; text/transcript JSON.
+		r.Post("/coach/chat", s.handleChatTurn)
+		r.Post("/coach/chat/audio", s.handleChatTurn) // multipart audio turn (server STT)
+		r.Get("/coach/chat/history", s.handleChatHistory)
 
 		// Image streaming (authorized per object).
 		r.Get("/images/{uploadID}", s.handleImage)

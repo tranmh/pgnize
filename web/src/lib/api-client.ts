@@ -553,3 +553,91 @@ export interface SpeakResponse {
 export function speak(req: SpeakRequest): Promise<SpeakResponse> {
   return requestJson("/coach/speak", { method: "POST", body: jsonBody(req) });
 }
+
+// ---------------------------------------------------------------------------
+// Coach chat: multi-turn Q&A about a position (server-side Stockfish + LLM).
+// The browser sends the position context + the question (typed, a browser-STT
+// transcript, or recorded audio); the server analyzes and answers. History
+// persists only for logged-in callers (conversationId is "" for anonymous).
+// ---------------------------------------------------------------------------
+
+// One engine consultation the coach made while answering, surfaced for the UI.
+export interface ChatEngineFact {
+  name: string;
+  args?: Record<string, unknown>;
+  result?: Record<string, unknown>;
+  err?: string;
+}
+
+export interface ChatContext {
+  fen: string;
+  side: Side;
+  gameId?: string;
+  ply?: number | null;
+}
+
+// A prior turn replayed for anonymous continuity (logged-in callers use conversationId).
+export interface ChatHistoryTurn {
+  role: "user" | "coach";
+  text: string;
+}
+
+export interface ChatTurnRequest extends ChatContext {
+  conversationId?: string | null;
+  question: string; // typed text or a browser-STT transcript
+  lang?: string;
+  history?: ChatHistoryTurn[];
+}
+
+export interface ChatTurnResponse {
+  conversationId: string; // "" for anonymous
+  userText: string; // what was heard/typed (for audio turns: the transcript)
+  reply: string; // coach prose -> feed to speak()
+  model: string;
+  engineFacts: ChatEngineFact[];
+}
+
+// chatTurn sends a typed/transcript question as JSON.
+export function chatTurn(req: ChatTurnRequest): Promise<ChatTurnResponse> {
+  const { question, history, ...ctx } = req;
+  return requestJson("/coach/chat", {
+    method: "POST",
+    body: jsonBody({ ...ctx, text: question, history }),
+  });
+}
+
+// chatTurnAudio uploads recorded audio (server STT) as multipart. A 503
+// (stt_unavailable) signals the caller to fall back to browser speech recognition.
+export function chatTurnAudio(input: {
+  audio: Blob;
+  filename?: string;
+  context: ChatContext;
+  conversationId?: string | null;
+  lang?: string;
+}): Promise<ChatTurnResponse> {
+  const fd = new FormData();
+  fd.append("audio", input.audio, input.filename ?? "turn.webm");
+  fd.append("fen", input.context.fen);
+  fd.append("side", input.context.side);
+  if (input.context.gameId) fd.append("gameId", input.context.gameId);
+  if (input.context.ply != null) fd.append("ply", String(input.context.ply));
+  if (input.conversationId) fd.append("conversationId", input.conversationId);
+  if (input.lang) fd.append("lang", input.lang);
+  // requestJson omits Content-Type for FormData so the browser sets the boundary.
+  return requestJson("/coach/chat/audio", { method: "POST", body: fd });
+}
+
+export interface ChatHistoryResponse {
+  conversationId: string;
+  messages: ChatHistoryTurn[];
+}
+
+// getChatHistory re-hydrates the latest conversation for a persisted game (logged-in owner).
+export function getChatHistory(params: {
+  gameId: string;
+}): Promise<ChatHistoryResponse> {
+  return requestJson(
+    `/coach/chat/history?gameId=${encodeURIComponent(params.gameId)}`,
+    { method: "GET" },
+  );
+}

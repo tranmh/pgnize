@@ -153,6 +153,23 @@ func Validate(from FEN, san SAN) (to FEN, err error) {
 	return m.ToFEN, nil
 }
 
+// UCItoSAN converts a UCI long-algebraic move (e.g. "e2e4", "e7e8q") played from `from`
+// into canonical SAN (e.g. "e4", "e8=Q"). Returns ErrIllegalMove if no legal move matches.
+// This lets callers that hold engine output (UCI) render it as human-readable SAN without
+// leaking any notnil/chess types across the API.
+func UCItoSAN(from FEN, uci string) (SAN, error) {
+	pos, err := positionFromFEN(from)
+	if err != nil {
+		return "", err
+	}
+	for _, mv := range pos.ValidMoves() {
+		if mv.String() == uci {
+			return SAN(algebraic.Encode(pos, mv)), nil
+		}
+	}
+	return "", ErrIllegalMove
+}
+
 // LegalMovesSAN lists every legal move from a position in canonical SAN
 // (with disambiguation like Nbd2 / Rfd1 where needed).
 func LegalMovesSAN(from FEN) ([]SAN, error) {

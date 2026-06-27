@@ -21,6 +21,7 @@ import EngineBoard from "./EngineBoard";
 import EngineControls from "./EngineControls";
 import CoachButton from "./CoachButton";
 import CoachPanel from "./CoachPanel";
+import ChatCoachPanel from "./ChatCoachPanel";
 import MoveList from "./MoveList";
 import HeaderFields from "./HeaderFields";
 import PhotoViewer from "./PhotoViewer";
@@ -285,6 +286,13 @@ export default function ReviewWorkbench({
           />
 
           <CoachPanel coach={coach} activeIndex={activeIndex} />
+
+          <ChatCoachPanel
+            fen={boardFen}
+            side={boardFen.split(" ")[1] === "b" ? "black" : "white"}
+            gameId={coachGameId}
+            ply={activeIndex}
+          />
 
           <HeaderFields header={header} onChange={setHeader} readOnly={ro} />
 

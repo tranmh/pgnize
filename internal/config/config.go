@@ -40,6 +40,27 @@ type Config struct {
 	TTSGeminiVoice string
 	PiperVoice     string
 
+	// Server-side chess engine for the conversational coach. ENGINE=stockfish opts into the
+	// UCI binary; otherwise the deterministic fake engine is used (tests/CI/dev without a
+	// binary). The remaining knobs tune the Stockfish pool.
+	Engine              string // fake | stockfish
+	EnginePath          string
+	EngineInstances     int
+	EngineThreads       int
+	EngineHashMB        int
+	EngineMoveTimeMs    int
+	EngineMaxMoveTimeMs int
+
+	// Conversational coach (function-calling chat). The backend mirrors the recognizer/coach
+	// selection (Gemini when GeminiAPIKey is set, else Ollama when RECOGNIZER=ollama, else fake).
+	ChatMaxToolIters int
+
+	// Speech-to-text for voice questions. STT=gemini uses Gemini multimodal audio (needs
+	// GeminiAPIKey); otherwise the deterministic fake transcript is used (tests/CI).
+	STT         string
+	STTModel    string
+	STTMaxBytes int64
+
 	UploadMaxBytes int64
 	AnonUploadTTLd int
 
@@ -75,6 +96,19 @@ func Load() (Config, error) {
 		GeminiTTSModel:    env("GEMINI_TTS_MODEL", "gemini-2.5-flash-preview-tts"),
 		TTSGeminiVoice:    env("TTS_GEMINI_VOICE", "Kore"),
 		PiperVoice:        env("PIPER_VOICE", "de_DE-thorsten-medium"),
+
+		Engine:              env("ENGINE", "fake"),
+		EnginePath:          env("ENGINE_PATH", "stockfish"),
+		EngineInstances:     envInt("ENGINE_INSTANCES", 2),
+		EngineThreads:       envInt("ENGINE_THREADS", 1),
+		EngineHashMB:        envInt("ENGINE_HASH_MB", 64),
+		EngineMoveTimeMs:    envInt("ENGINE_MOVETIME_MS", 300),
+		EngineMaxMoveTimeMs: envInt("ENGINE_MAX_MOVETIME_MS", 2000),
+		ChatMaxToolIters:    envInt("CHAT_MAX_TOOL_ITERS", 5),
+		STT:                 env("STT", "fake"),
+		STTModel:            env("STT_MODEL", "gemini-2.5-flash"),
+		STTMaxBytes:         int64(envInt("STT_MAX_BYTES", 5<<20)),
+
 		UploadMaxBytes:    int64(envInt("UPLOAD_MAX_BYTES", 15<<20)),
 		AnonUploadTTLd:    envInt("ANON_UPLOAD_TTL_DAYS", 7),
 		RateLimitDisabled: envBool("RATE_LIMIT_DISABLED", false),

@@ -16,13 +16,16 @@ import (
 	"testing"
 	"time"
 
+	"github.com/tranmh/pgnize/internal/chat"
 	"github.com/tranmh/pgnize/internal/coaching"
 	"github.com/tranmh/pgnize/internal/config"
+	"github.com/tranmh/pgnize/internal/engine"
 	"github.com/tranmh/pgnize/internal/httpapi"
 	"github.com/tranmh/pgnize/internal/jobs"
 	"github.com/tranmh/pgnize/internal/recognition"
 	"github.com/tranmh/pgnize/internal/storage"
 	"github.com/tranmh/pgnize/internal/store"
+	"github.com/tranmh/pgnize/internal/stt"
 	"github.com/tranmh/pgnize/internal/tts"
 	"github.com/tranmh/pgnize/migrations"
 )
@@ -72,7 +75,11 @@ func setup(t *testing.T, opts ...func(*config.Config)) *harness {
 	reg.SetDefault("fake")
 	// The integration harness injects backends directly (it does not read RECOGNIZER/COACH
 	// env), so the fake coach must be set here for COACH=fake parity with CI.
-	srv := &httpapi.Server{Cfg: cfg, Store: st, Storage: blob, Recognizers: reg, Coach: coaching.NewFake(), TTS: tts.NewFake()}
+	srv := &httpapi.Server{
+		Cfg: cfg, Store: st, Storage: blob, Recognizers: reg,
+		Coach: coaching.NewFake(), TTS: tts.NewFake(),
+		Chat: chat.NewFake(engine.NewFake()), STT: stt.NewFake(),
+	}
 	jar, _ := cookiejar.New(nil)
 	h := &harness{
 		ts:     httptest.NewServer(srv.Routes()),
