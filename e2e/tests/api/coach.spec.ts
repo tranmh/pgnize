@@ -121,3 +121,109 @@ test.describe("coach speak (TTS, anonymous)", () => {
     expect(res.status()).toBe(400);
   });
 });
+
+test.describe("coach chat (conversational, anonymous)", () => {
+  test.use({ extraHTTPHeaders: { "X-Forwarded-For": "10.0.7.50" } });
+
+  test("answers a typed question with engine-grounded prose, no persistence", async ({
+    request,
+  }) => {
+    const res = await request.post("/api/coach/chat", {
+      data: { fen: START, side: "white", text: "What is the best move?", lang: "en" },
+    });
+    expect(res.ok(), await res.text()).toBeTruthy();
+    const body = await res.json();
+    expect(body.reply.length).toBeGreaterThan(0);
+    expect(body.userText).toBe("What is the best move?");
+    // Anonymous turns are stateless.
+    expect(body.conversationId).toBe("");
+    // The fake coach drives the real (fake) engine tool loop.
+    expect(Array.isArray(body.engineFacts)).toBeTruthy();
+    expect(body.engineFacts.length).toBeGreaterThan(0);
+  });
+
+  test("transcript mode is echoed as userText", async ({ request }) => {
+    const res = await request.post("/api/coach/chat", {
+      data: { fen: START, side: "white", transcript: "Gibt es ein Matt?", lang: "de" },
+    });
+    expect(res.ok(), await res.text()).toBeTruthy();
+    const body = await res.json();
+    expect(body.userText).toBe("Gibt es ein Matt?");
+  });
+
+  test("audio turn runs server STT (fake) and returns a transcript + reply", async ({
+    request,
+  }) => {
+    const res = await request.post("/api/coach/chat/audio", {
+      multipart: {
+        fen: START,
+        side: "white",
+        audio: { name: "turn.webm", mimeType: "audio/webm", buffer: Buffer.from("fake-audio") },
+      },
+    });
+    expect(res.ok(), await res.text()).toBeTruthy();
+    const body = await res.json();
+    expect(body.userText.length).toBeGreaterThan(0);
+    expect(body.reply.length).toBeGreaterThan(0);
+  });
+
+  test("illegal fen is rejected", async ({ request }) => {
+    const res = await request.post("/api/coach/chat", {
+      data: { fen: "not-a-fen", text: "hi" },
+    });
+    expect(res.status()).toBe(400);
+  });
+
+  test("a question is required", async ({ request }) => {
+    const res = await request.post("/api/coach/chat", { data: { fen: START } });
+    expect(res.status()).toBe(400);
+  });
+
+  test("anonymous cannot continue a stored conversation", async ({ request }) => {
+    const res = await request.post("/api/coach/chat", {
+      data: { fen: START, text: "hi", conversationId: "some-id" },
+    });
+    expect(res.status()).toBe(401);
+  });
+});
+
+test.describe("coach chat (registered, persisted)", () => {
+  test.use({ extraHTTPHeaders: { "X-Forwarded-For": "10.0.7.60" } });
+
+  test("persists, continues by conversationId, and re-hydrates by game", async ({ request }) => {
+    const api = new ApiDriver(request);
+    await api.registerUnique("chat");
+
+    // A persisted draft gives us a game id to attach the conversation to.
+    const draft = await (await request.post("/api/positions", { data: { fen: START } })).json();
+    expect(draft.id).toBeTruthy();
+
+    const first = await (
+      await request.post("/api/coach/chat", {
+        data: { gameId: draft.id, fen: START, side: "white", text: "Best move?", lang: "en" },
+      })
+    ).json();
+    expect(first.conversationId, "registered chat returns a conversationId").toBeTruthy();
+
+    // Continue the same conversation.
+    const second = await request.post("/api/coach/chat", {
+      data: {
+        conversationId: first.conversationId,
+        gameId: draft.id,
+        fen: START,
+        side: "white",
+        text: "And why?",
+        lang: "en",
+      },
+    });
+    expect(second.ok(), await second.text()).toBeTruthy();
+
+    // History re-hydrates by game (4 turns: 2 user + 2 coach).
+    const hist = await (
+      await request.get(`/api/coach/chat/history?gameId=${draft.id}`)
+    ).json();
+    expect(hist.messages.length).toBe(4);
+    expect(hist.messages[0].role).toBe("user");
+    expect(hist.messages[1].role).toBe("coach");
+  });
+});

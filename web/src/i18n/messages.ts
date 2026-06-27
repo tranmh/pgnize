@@ -405,6 +405,29 @@ const en: Catalog = {
   "tts.sourceLabel": "Speech source",
   "tts.source.server": "Server",
   "tts.source.browser": "Browser",
+
+  // Conversational coach (ask the coach by typing or speaking)
+  "chat.title": "Ask the coach",
+  "chat.open": "Ask the coach",
+  "chat.close": "Close",
+  "chat.placeholder": "Ask about this position…",
+  "chat.send": "Send",
+  "chat.thinking": "The coach is thinking…",
+  "chat.error": "The coach could not answer. Please try again.",
+  "chat.empty": "Ask anything about the position — best move, why a move is bad, mate, plans…",
+  "chat.you": "You",
+  "chat.coach": "Coach",
+  "chat.mic.start": "Speak your question",
+  "chat.mic.stop": "Stop recording",
+  "chat.mic.recording": "Recording…",
+  "chat.mic.listening": "Listening…",
+  "chat.mic.denied": "Microphone access was denied. You can still type your question.",
+  "chat.mic.unavailable": "Voice input is unavailable in this browser. Please type your question.",
+
+  // Speech-to-text source
+  "stt.sourceLabel": "Voice input",
+  "stt.source.server": "Server",
+  "stt.source.browser": "Browser",
 };
 
 const de: Catalog = {
@@ -801,6 +824,29 @@ const de: Catalog = {
   "tts.sourceLabel": "Sprachquelle",
   "tts.source.server": "Server",
   "tts.source.browser": "Browser",
+
+  // Dialog-Trainer (den Trainer per Text oder Sprache fragen)
+  "chat.title": "Frag den Trainer",
+  "chat.open": "Frag den Trainer",
+  "chat.close": "Schließen",
+  "chat.placeholder": "Frag etwas zu dieser Stellung …",
+  "chat.send": "Senden",
+  "chat.thinking": "Der Trainer überlegt …",
+  "chat.error": "Der Trainer konnte nicht antworten. Bitte versuche es erneut.",
+  "chat.empty": "Frag alles zur Stellung — bester Zug, warum ein Zug schlecht ist, Matt, Pläne …",
+  "chat.you": "Du",
+  "chat.coach": "Trainer",
+  "chat.mic.start": "Frage sprechen",
+  "chat.mic.stop": "Aufnahme stoppen",
+  "chat.mic.recording": "Aufnahme …",
+  "chat.mic.listening": "Höre zu …",
+  "chat.mic.denied": "Mikrofonzugriff wurde verweigert. Du kannst deine Frage auch eintippen.",
+  "chat.mic.unavailable": "Spracheingabe ist in diesem Browser nicht verfügbar. Bitte tippe deine Frage.",
+
+  // Spracheingabe-Quelle (Speech-to-Text)
+  "stt.sourceLabel": "Spracheingabe",
+  "stt.source.server": "Server",
+  "stt.source.browser": "Browser",
 };
 
 export const messages: Record<Locale, Catalog> = { de, en };

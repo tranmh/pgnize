@@ -16,6 +16,7 @@ import EngineBoard from "./EngineBoard";
 import EngineControls from "./EngineControls";
 import CoachButton from "./CoachButton";
 import CoachPanel from "./CoachPanel";
+import ChatCoachPanel from "./ChatCoachPanel";
 import MoveList from "./MoveList";
 
 const noop = () => {};
@@ -110,6 +111,13 @@ export default function GameViewer({ draft }: { draft: GameDraft }) {
         />
 
         <CoachPanel coach={coach} activeIndex={activeIndex} />
+
+        <ChatCoachPanel
+          fen={boardFen}
+          side={boardFen.split(" ")[1] === "b" ? "black" : "white"}
+          gameId={coachGameId}
+          ply={activeIndex}
+        />
 
         <MoveList
           moves={moves}

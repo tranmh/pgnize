@@ -222,3 +222,37 @@ func TestApplyMoves_Empty(t *testing.T) {
 		t.Fatalf("expected no positions, got %d", len(positions))
 	}
 }
+
+func TestUCItoSAN(t *testing.T) {
+	start := StartingFEN()
+	cases := []struct {
+		uci  string
+		want SAN
+	}{
+		{"e2e4", "e4"},
+		{"g1f3", "Nf3"},
+	}
+	for _, c := range cases {
+		got, err := UCItoSAN(start, c.uci)
+		if err != nil {
+			t.Fatalf("UCItoSAN(%q): %v", c.uci, err)
+		}
+		if got != c.want {
+			t.Errorf("UCItoSAN(%q) = %q, want %q", c.uci, got, c.want)
+		}
+	}
+	if _, err := UCItoSAN(start, "e2e5"); err == nil {
+		t.Error("expected error for illegal UCI move")
+	}
+}
+
+func TestUCItoSANPromotion(t *testing.T) {
+	fen := FEN("8/4P3/8/8/8/8/8/4K1k1 w - - 0 1")
+	got, err := UCItoSAN(fen, "e7e8q")
+	if err != nil {
+		t.Fatalf("UCItoSAN promotion: %v", err)
+	}
+	if got != "e8=Q+" && got != "e8=Q" {
+		t.Errorf("UCItoSAN promotion = %q, want e8=Q(+)", got)
+	}
+}

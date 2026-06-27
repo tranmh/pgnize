@@ -13,13 +13,16 @@ import (
 	"time"
 
 	"github.com/tranmh/pgnize/internal/auth"
+	"github.com/tranmh/pgnize/internal/chat"
 	"github.com/tranmh/pgnize/internal/coaching"
 	"github.com/tranmh/pgnize/internal/config"
+	"github.com/tranmh/pgnize/internal/engine"
 	"github.com/tranmh/pgnize/internal/httpapi"
 	"github.com/tranmh/pgnize/internal/jobs"
 	"github.com/tranmh/pgnize/internal/recognition"
 	"github.com/tranmh/pgnize/internal/storage"
 	"github.com/tranmh/pgnize/internal/store"
+	"github.com/tranmh/pgnize/internal/stt"
 	"github.com/tranmh/pgnize/internal/tts"
 	"github.com/tranmh/pgnize/migrations"
 )
@@ -83,7 +86,20 @@ func main() {
 	speaker := buildTTS(cfg)
 	slog.Info("tts", "backend", speaker.Name())
 
-	srv := &httpapi.Server{Cfg: cfg, Store: st, Storage: blob, Recognizers: reg, Coach: coach, TTS: speaker}
+	eng := buildEngine(cfg)
+	defer eng.Close()
+	slog.Info("engine", "backend", eng.Name())
+
+	chatter := buildChat(cfg, eng)
+	slog.Info("chat", "backend", chatter.Name())
+
+	transcriber := buildSTT(cfg)
+	slog.Info("stt", "backend", sttName(transcriber))
+
+	srv := &httpapi.Server{
+		Cfg: cfg, Store: st, Storage: blob, Recognizers: reg,
+		Coach: coach, TTS: speaker, Chat: chatter, STT: transcriber,
+	}
 
 	// In-process recognition worker pool.
 	pool := &jobs.Pool{
@@ -176,6 +192,57 @@ func buildTTS(cfg config.Config) tts.Synthesizer {
 	default:
 		return tts.NewChain(synths...)
 	}
+}
+
+// buildEngine selects the server-side chess engine for the conversational coach. ENGINE=
+// stockfish starts a UCI subprocess pool; if the binary is missing/unresponsive it logs and
+// falls back to the deterministic fake so the API still boots (the coach just can't analyze).
+func buildEngine(cfg config.Config) engine.Engine {
+	if cfg.Engine == "stockfish" {
+		eng, err := engine.NewStockfish(cfg.EnginePath, engine.PoolOpts{
+			Instances:     cfg.EngineInstances,
+			Threads:       cfg.EngineThreads,
+			HashMB:        cfg.EngineHashMB,
+			MoveTimeMs:    cfg.EngineMoveTimeMs,
+			MaxMoveTimeMs: cfg.EngineMaxMoveTimeMs,
+		})
+		if err != nil {
+			slog.Warn("stockfish unavailable, using fake engine", "err", err)
+			return engine.NewFake()
+		}
+		return eng
+	}
+	return engine.NewFake()
+}
+
+// buildChat selects the conversational-coach backend, mirroring buildCoach: Gemini function-
+// calling when GEMINI_API_KEY is set, Ollama tool-calling when RECOGNIZER=ollama, else the
+// deterministic fake (which still drives the real engine tool loop for tests/CI).
+func buildChat(cfg config.Config, eng engine.Engine) chat.Chatter {
+	switch {
+	case cfg.GeminiAPIKey != "":
+		return chat.NewGemini(cfg.GeminiHost, cfg.GeminiModel, cfg.GeminiAPIKey, eng)
+	case cfg.Recognizer == "ollama":
+		return chat.NewOllama(cfg.OllamaHost, cfg.RecognizerModel, eng)
+	default:
+		return chat.NewFake(eng)
+	}
+}
+
+// buildSTT selects the speech-to-text backend. STT=gemini uses Gemini multimodal audio (needs
+// a key); otherwise the deterministic fake transcript is used (tests/CI).
+func buildSTT(cfg config.Config) stt.Transcriber {
+	if cfg.STT == "gemini" && cfg.GeminiAPIKey != "" {
+		return stt.NewGemini(cfg.GeminiHost, cfg.STTModel, cfg.GeminiAPIKey)
+	}
+	return stt.NewFake()
+}
+
+func sttName(t stt.Transcriber) string {
+	if t == nil {
+		return "disabled"
+	}
+	return t.Name()
 }
 
 func seedDemo(ctx context.Context, st *store.Store) error {
