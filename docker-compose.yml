@@ -88,6 +88,16 @@ services:
       PIPER_VOICE: ${PIPER_VOICE:-de_DE-thorsten-medium}
       GEMINI_TTS_MODEL: ${GEMINI_TTS_MODEL:-gemini-2.5-flash-preview-tts}
       TTS_GEMINI_VOICE: ${TTS_GEMINI_VOICE:-Kore}
+      # ---- Conversational coach: engine + speech-to-text ----
+      # Stockfish is baked into the api image at /app/stockfish (ENGINE_PATH is set in
+      # the Dockerfile), so enabling the real engine in prod is just ENGINE=stockfish —
+      # do NOT override ENGINE_PATH with a host path. STT=gemini turns on voice
+      # questions via Gemini multimodal audio (reuses GEMINI_API_KEY).
+      ENGINE: ${ENGINE:-fake}
+      ENGINE_PATH: ${ENGINE_PATH:-/app/stockfish}
+      STT: ${STT:-fake}
+      STT_MODEL: ${STT_MODEL:-gemini-2.5-flash}
+      CHAT_MAX_TOOL_ITERS: ${CHAT_MAX_TOOL_ITERS:-5}
       RATE_LIMIT_DISABLED: ${RATE_LIMIT_DISABLED:-false}
     depends_on:
       db:
